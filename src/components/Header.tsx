@@ -1,6 +1,9 @@
 'use client'
 
 import { useAppStore } from '@/store/appStore'
+import { signOut, getCurrentUser } from '@/lib/supabase-auth'
+import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
 
 interface HeaderProps {
   showBackButton?: boolean
@@ -9,8 +12,19 @@ interface HeaderProps {
 }
 
 export default function Header({ showBackButton = false, onBack, title }: HeaderProps) {
-  const { currentRole, isAdmin, setShowHomePage, setRole, setAdmin, getCurrentUser } = useAppStore()
-  const currentUser = getCurrentUser()
+  const router = useRouter()
+  const { currentRole, isAdmin, setShowHomePage, setRole, setAdmin, setCurrentUserId } = useAppStore()
+  const [userEmail, setUserEmail] = useState<string>('')
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const user = await getCurrentUser()
+      if (user) {
+        setUserEmail(user.email)
+      }
+    }
+    loadUser()
+  }, [currentRole])
 
   const handleLogoClick = () => {
     setAdmin(false)
@@ -21,6 +35,16 @@ export default function Header({ showBackButton = false, onBack, title }: Header
   const handleRoleSwitch = (role: 'walker' | 'farmer') => {
     setAdmin(false)
     setRole(role)
+  }
+
+  const handleLogout = async () => {
+    await signOut()
+    setCurrentUserId(null)
+    setRole(null)
+    setAdmin(false)
+    setShowHomePage(true)
+    setUserEmail('')
+    router.push('/')
   }
 
   const getRoleLabel = () => {
@@ -70,12 +94,12 @@ export default function Header({ showBackButton = false, onBack, title }: Header
             )}
           </div>
 
-          {/* Right side - User info and role switcher */}
+          {/* Right side - User info and controls */}
           <div className="flex items-center gap-3">
-            {/* Current user name */}
-            {currentUser && (
+            {/* User email (if logged in) */}
+            {userEmail && (
               <span className={`text-sm ${isAdmin ? 'text-slate-300' : 'text-slate-600'}`}>
-                {currentUser.name}
+                {userEmail}
               </span>
             )}
 
@@ -92,8 +116,8 @@ export default function Header({ showBackButton = false, onBack, title }: Header
               </span>
             )}
 
-            {/* Role switcher dropdown */}
-            {!isAdmin && (
+            {/* Role switcher dropdown (only if logged in) */}
+            {!isAdmin && currentRole && (
               <div className="relative group">
                 <button className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
                   <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -120,23 +144,23 @@ export default function Header({ showBackButton = false, onBack, title }: Header
                     </button>
                     <div className="border-t border-slate-200 my-1"></div>
                     <button
-                      onClick={handleLogoClick}
-                      className="w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 hover:bg-slate-50 text-slate-600"
+                      onClick={handleLogout}
+                      className="w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 hover:bg-red-50 text-red-600"
                     >
-                      <span>🏠</span> Home
+                      <span>🚪</span> Logout
                     </button>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Admin exit button */}
+            {/* Admin logout button */}
             {isAdmin && (
               <button
-                onClick={handleLogoClick}
+                onClick={handleLogout}
                 className="px-3 py-1 bg-slate-700 text-slate-200 rounded-lg text-sm hover:bg-slate-600"
               >
-                Exit Admin
+                Logout
               </button>
             )}
           </div>
