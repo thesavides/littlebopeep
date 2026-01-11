@@ -15,12 +15,15 @@ import {
 import { useAppStore } from '@/store/appStore'
 
 export function useTranslation() {
-  const { currentUser } = useAppStore()
+  const { currentUserId, users } = useAppStore()
   const [translations, setTranslations] = useState<TranslationDictionary>({})
   const [languages, setLanguages] = useState<Language[]>([])
   const [currentLanguage, setCurrentLanguage] = useState<string>('en')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Get current user from store
+  const currentUser = currentUserId ? users.find(u => u.id === currentUserId) : null
 
   // Determine initial language
   useEffect(() => {
