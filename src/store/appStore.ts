@@ -112,6 +112,17 @@ export interface Notification {
   createdAt: Date
 }
 
+export interface MapPreferences {
+  layersEnabled: {
+    footpaths: boolean
+    bridleways: boolean
+    trails: boolean
+    contours: boolean
+  }
+  lastZoomLevel: number
+  disclaimerAccepted: boolean
+}
+
 interface AppState {
   // Session
   currentRole: UserRole
@@ -124,6 +135,9 @@ interface AppState {
   farms: Farm[]
   reports: SheepReport[]
   notifications: Notification[]
+  
+  // Map preferences
+  mapPreferences: MapPreferences
   
   // Report draft state
   currentReportStep: number
@@ -175,6 +189,9 @@ interface AppState {
   activateSubscription: (userId: string) => void
   cancelSubscription: (userId: string) => void
   
+  // Map preferences actions
+  updateMapPreferences: (preferences: Partial<MapPreferences>) => void
+  
   // Helpers
   getCurrentUser: () => User | undefined
   getFarmsByFarmerId: (farmerId: string) => Farm[]
@@ -193,6 +210,17 @@ export const useAppStore = create<AppState>()(
       farms: [],
       reports: [],
       notifications: [],
+      
+      mapPreferences: {
+        layersEnabled: {
+          footpaths: false,
+          bridleways: false,
+          trails: false,
+          contours: false
+        },
+        lastZoomLevel: MAP_CONFIG.STANDARD_ZOOM_5KM,
+        disclaimerAccepted: false
+      },
       
       currentReportStep: 1,
       draftReport: {},
@@ -421,6 +449,11 @@ export const useAppStore = create<AppState>()(
         users: state.users.map((u) => 
           u.id === userId ? { ...u, subscriptionStatus: 'cancelled' as SubscriptionStatus } : u
         )
+      })),
+      
+      // Map preferences actions
+      updateMapPreferences: (preferences) => set((state) => ({
+        mapPreferences: { ...state.mapPreferences, ...preferences }
       })),
       
       // Helpers

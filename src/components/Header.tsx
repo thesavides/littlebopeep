@@ -15,12 +15,18 @@ export default function Header({ showBackButton = false, onBack, title }: Header
   const router = useRouter()
   const { currentRole, isAdmin, setShowHomePage, setRole, setAdmin, setCurrentUserId } = useAppStore()
   const [userEmail, setUserEmail] = useState<string>('')
+  const [userPrimaryRole, setUserPrimaryRole] = useState<'walker' | 'farmer' | null>(null)
 
   useEffect(() => {
     const loadUser = async () => {
       const user = await getCurrentUser()
       if (user) {
         setUserEmail(user.email)
+        setUserPrimaryRole(user.role)
+        // Set current role to user's primary role if not set
+        if (!currentRole) {
+          setRole(user.role)
+        }
       }
     }
     loadUser()
@@ -33,8 +39,11 @@ export default function Header({ showBackButton = false, onBack, title }: Header
   }
 
   const handleRoleSwitch = (role: 'walker' | 'farmer') => {
-    setAdmin(false)
-    setRole(role)
+    // Only allow role switching for farmers (farmers can access walker mode)
+    if (userPrimaryRole === 'farmer') {
+      setAdmin(false)
+      setRole(role)
+    }
   }
 
   const handleLogout = async () => {
@@ -44,6 +53,7 @@ export default function Header({ showBackButton = false, onBack, title }: Header
     setAdmin(false)
     setShowHomePage(true)
     setUserEmail('')
+    setUserPrimaryRole(null)
     router.push('/')
   }
 
@@ -116,8 +126,8 @@ export default function Header({ showBackButton = false, onBack, title }: Header
               </span>
             )}
 
-            {/* Role switcher dropdown (only if logged in) */}
-            {!isAdmin && currentRole && (
+            {/* Role switcher dropdown (only for farmers - they can access both roles) */}
+            {!isAdmin && currentRole && userPrimaryRole === 'farmer' && (
               <div className="relative group">
                 <button className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
                   <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -152,6 +162,16 @@ export default function Header({ showBackButton = false, onBack, title }: Header
                   </div>
                 </div>
               </div>
+            )}
+
+            {/* Logout button for walkers (no role switching allowed) */}
+            {!isAdmin && currentRole && userPrimaryRole === 'walker' && (
+              <button
+                onClick={handleLogout}
+                className="px-3 py-1 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
+              >
+                Logout
+              </button>
             )}
 
             {/* Admin logout button */}

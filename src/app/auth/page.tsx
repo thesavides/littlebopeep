@@ -25,18 +25,17 @@ export default function AuthPage() {
       if (mode === 'signup') {
         const { data, error: signUpError } = await signUp(email, password, role)
         if (signUpError) throw signUpError
-        if (data.user) {
+        if (data?.user) {
           setCurrentUserId(data.user.id)
-          setRole(role)
+          setRole(data.user.role) // Set to primary role
           router.push('/')
         }
       } else {
         const { data, error: signInError } = await signIn(email, password)
         if (signInError) throw signInError
-        if (data.user) {
-          const userRole = data.user.user_metadata?.role as 'walker' | 'farmer'
+        if (data?.user) {
           setCurrentUserId(data.user.id)
-          setRole(userRole || 'walker')
+          setRole(data.user.role) // Set to primary role
           router.push('/')
         }
       }

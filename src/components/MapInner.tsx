@@ -2,6 +2,8 @@
 
 import { MapContainer, TileLayer, Marker, Popup, Circle, Polygon, Polyline, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
+import { useAppStore } from '@/store/appStore'
+import MapLayerControl from './MapLayerControl'
 
 // Fix Leaflet marker icons
 const defaultIcon = L.icon({
@@ -109,6 +111,8 @@ export default function MapInner({
   polygons = [],
   className = '',
 }: MapProps) {
+  const { mapPreferences } = useAppStore()
+
   return (
     <MapContainer
       center={center}
@@ -116,11 +120,24 @@ export default function MapInner({
       className={`w-full h-full ${className}`}
       style={{ minHeight: '300px' }}
     >
+      {/* Base map layer */}
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+      
+      {/* Rights of way layers from OpenStreetMap */}
+      {mapPreferences.layersEnabled.footpaths && (
+        <TileLayer
+          url="https://tile.thunderforest.com/transport/{z}/{x}/{y}.png?apikey=YOUR_API_KEY"
+          opacity={0.5}
+        />
+      )}
+      
       <MapClickHandler onClick={onClick} />
+      
+      {/* Layer Control */}
+      <MapLayerControl />
       
       {/* Render polygons (fence boundaries) */}
       {polygons.map((polygon) => (

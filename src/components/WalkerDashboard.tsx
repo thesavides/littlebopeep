@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useAppStore, getDistanceMeters, MAP_CONFIG } from '@/store/appStore'
 import Header from './Header'
 import Map from './Map'
+import LocationButton from './LocationButton'
 
 type ViewState = 'dashboard' | 'reporting' | 'my-reports'
 
@@ -307,6 +308,15 @@ export default function WalkerDashboard() {
                 <p className="text-slate-600 mb-4">
                   Tap on the map to mark the location. Recent reports (last 12 hours) are shown as 🐑 markers.
                 </p>
+                
+                {/* Location Button */}
+                <LocationButton 
+                  onLocationFound={(lat, lng) => {
+                    handleMapClick(lat, lng)
+                  }}
+                  className="mb-4"
+                />
+                
                 <div className="h-80 rounded-xl overflow-hidden shadow mb-4">
                   <Map
                     center={draftReport.location ? [draftReport.location.lat, draftReport.location.lng] : userLocation ? [userLocation.lat, userLocation.lng] : [54.5, -2]}
