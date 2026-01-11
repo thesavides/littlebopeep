@@ -1,8 +1,11 @@
 'use client'
 
-import { MapContainer, TileLayer, Marker, Popup, Circle, Polygon, Polyline, useMapEvents } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, Circle, Polygon, Polyline, useMapEvents, GeoJSON, useMap } from 'react-leaflet'
 import L from 'leaflet'
+import { useState, useEffect } from 'react'
 import { useAppStore } from '@/store/appStore'
+import { useLayerData, type LayerType } from '@/hooks/useLayerData'
+import type { LatLngBounds } from '@/lib/osm-overpass'
 import MapLayerControl from './MapLayerControl'
 
 // Fix Leaflet marker icons
@@ -89,6 +92,130 @@ function MapClickHandler({ onClick }: { onClick?: (lat: number, lng: number) => 
   return null
 }
 
+// Component to track map bounds and load layers
+function LayerRenderer() {
+  const map = useMap()
+  const { mapPreferences } = useAppStore()
+  const [bounds, setBounds] = useState<LatLngBounds | null>(null)
+
+  useEffect(() => {
+    const updateBounds = () => {
+      const mapBounds = map.getBounds()
+      setBounds({
+        south: mapBounds.getSouth(),
+        west: mapBounds.getWest(),
+        north: mapBounds.getNorth(),
+        east: mapBounds.getEast(),
+      })
+    }
+
+    // Update bounds on initial load
+    updateBounds()
+
+    // Update bounds when map moves
+    map.on('moveend', updateBounds)
+
+    return () => {
+      map.off('moveend', updateBounds)
+    }
+  }, [map])
+
+  const { data, loading, errors } = useLayerData(bounds, mapPreferences.layersEnabled)
+
+  // Style functions for different layer types
+  const footpathStyle = (feature?: any) => ({
+    color: '#FF6B6B',
+    weight: 2,
+    opacity: 0.7,
+    dashArray: '5, 5',
+  })
+
+  const bridlewayStyle = (feature?: any) => ({
+    color: '#4ECDC4',
+    weight: 3,
+    opacity: 0.7,
+  })
+
+  const trailStyle = (feature?: any) => ({
+    color: '#95E1D3',
+    weight: 2,
+    opacity: 0.6,
+    dashArray: '3, 6',
+  })
+
+  return (
+    <>
+      {/* Footpaths layer */}
+      {data.footpaths && (
+        <GeoJSON
+          data={data.footpaths}
+          style={footpathStyle}
+          onEachFeature={(feature, layer) => {
+            if (feature.properties) {
+              layer.bindPopup(`
+                <strong>🥾 Footpath</strong><br/>
+                ${feature.properties.name || 'Unnamed path'}<br/>
+                <small>Type: ${feature.properties.highway || 'N/A'}</small>
+              `)
+            }
+          }}
+        />
+      )}
+
+      {/* Bridleways layer */}
+      {data.bridleways && (
+        <GeoJSON
+          data={data.bridleways}
+          style={bridlewayStyle}
+          onEachFeature={(feature, layer) => {
+            if (feature.properties) {
+              layer.bindPopup(`
+                <strong>🐴 Bridleway</strong><br/>
+                ${feature.properties.name || 'Unnamed bridleway'}<br/>
+                <small>Type: ${feature.properties.highway || 'N/A'}</small>
+              `)
+            }
+          }}
+        />
+      )}
+
+      {/* Trails layer */}
+      {data.trails && (
+        <GeoJSON
+          data={data.trails}
+          style={trailStyle}
+          onEachFeature={(feature, layer) => {
+            if (feature.properties) {
+              layer.bindPopup(`
+                <strong>🚶 Trail</strong><br/>
+                ${feature.properties.name || 'Unnamed trail'}<br/>
+                <small>Type: ${feature.properties.highway || 'N/A'}</small>
+              `)
+            }
+          }}
+        />
+      )}
+
+      {/* Loading indicator */}
+      {(loading.footpaths || loading.bridleways || loading.trails) && (
+        <div className="absolute bottom-4 left-4 bg-white px-4 py-2 rounded-lg shadow-lg z-[1000] flex items-center gap-2">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+          <span className="text-sm text-slate-600">Loading layers...</span>
+        </div>
+      )}
+
+      {/* Error display */}
+      {(errors.footpaths || errors.bridleways || errors.trails) && (
+        <div className="absolute bottom-4 left-4 bg-red-50 border border-red-200 px-4 py-2 rounded-lg shadow-lg z-[1000]">
+          <span className="text-sm text-red-600">
+            {errors.footpaths || errors.bridleways || errors.trails}
+          </span>
+        </div>
+      )}
+    </>
+  )
+}
+
 function getMarkerIcon(type?: string) {
   switch (type) {
     case 'fencepost':
@@ -125,17 +252,12 @@ export default function MapInner({
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      
-      {/* Rights of way layers from OpenStreetMap */}
-      {mapPreferences.layersEnabled.footpaths && (
-        <TileLayer
-          url="https://tile.thunderforest.com/transport/{z}/{x}/{y}.png?apikey=YOUR_API_KEY"
-          opacity={0.5}
-        />
-      )}
-      
+
       <MapClickHandler onClick={onClick} />
-      
+
+      {/* Layer Renderer - handles OSM data layers */}
+      <LayerRenderer />
+
       {/* Layer Control */}
       <MapLayerControl />
       
