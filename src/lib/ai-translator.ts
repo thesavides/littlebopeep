@@ -156,8 +156,8 @@ export function verifyTranslation(
   }
 
   // Check if variables are preserved
-  const originalVars = original.value.match(/\{[^}]+\}/g) || []
-  const translatedVars = translated.value.match(/\{[^}]+\}/g) || []
+  const originalVars: string[] = original.value.match(/\{[^}]+\}/g) || []
+  const translatedVars: string[] = translated.value.match(/\{[^}]+\}/g) || []
 
   if (originalVars.length !== translatedVars.length) {
     issues.push(`Variable count mismatch: expected ${originalVars.length}, got ${translatedVars.length}`)
