@@ -67,6 +67,8 @@ export interface User {
   subscriptionStartDate?: Date
   trialEndsAt?: Date
   stripeCustomerId?: string
+  // Language preference
+  preferred_language?: string
 }
 
 export interface SheepReport {
