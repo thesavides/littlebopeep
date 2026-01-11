@@ -1,19 +1,5 @@
 steps:
-  # Install dependencies
-  - name: 'gcr.io/cloud-builders/npm'
-    args: ['install', '--legacy-peer-deps']
-    env:
-      - 'NEXT_PUBLIC_SUPABASE_URL=https://oyflkxdowpekmcxszbqg.supabase.co'
-      - 'NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95ZmlreGRvd3Bla21jeHN6YnFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgwMjgwNTEsImV4cCI6MjA4MzYwNDA1MX0.9Dgwssq8nYrpVZKDImON3bne9J67JIIR1oINEi_vQ3U'
-
-  # Build Next.js
-  - name: 'gcr.io/cloud-builders/npm'
-    args: ['run', 'build']
-    env:
-      - 'NEXT_PUBLIC_SUPABASE_URL=https://oyflkxdowpekmcxszbqg.supabase.co'
-      - 'NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95ZmlreGRvd3Bla21jeHN6YnFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgwMjgwNTEsImV4cCI6MjA4MzYwNDA1MX0.9Dgwssq8nYrpVZKDImON3bne9J67JIIR1oINEi_vQ3U'
-
-  # Deploy to Cloud Run using source deployment (buildpacks)
+  # Deploy to Cloud Run using buildpacks (handles install + build internally)
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - 'run'
@@ -24,7 +10,7 @@ steps:
       - '--platform=managed'
       - '--allow-unauthenticated'
       - '--project=$PROJECT_ID'
-      - '--set-env-vars=NEXT_PUBLIC_SUPABASE_URL=https://oyflkxdowpekmcxszbqg.supabase.co,NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95ZmlreGRvd3Bla21jeHN6YnFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgwMjgwNTEsImV4cCI6MjA4MzYwNDA1MX0.OURgwssq8nYrpVZKDImON3bne9J67JIIR1oINEi_vQ3U'
+      - '--set-env-vars=NEXT_PUBLIC_SUPABASE_URL=https://oyflkxdowpekmcxszbqg.supabase.co,NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95ZmlreGRvd3Bla21jeHN6YnFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgwMjgwNTEsImV4cCI6MjA4MzYwNDA1MX0.9Dgwssq8nYrpVZKDImON3bne9J67JIIR1oINEi_vQ3U'
 
 options:
   logging: CLOUD_LOGGING_ONLY
