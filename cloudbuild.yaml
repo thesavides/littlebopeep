@@ -1,0 +1,25 @@
+steps:
+  # Install dependencies
+  - name: 'gcr.io/cloud-builders/npm'
+    args: ['install', '--legacy-peer-deps']
+
+  # Build the Next.js application
+  - name: 'gcr.io/cloud-builders/npm'
+    args: ['run', 'build']
+
+  # Deploy to Cloud Run
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'little-bo-peep'
+      - '--source=.'
+      - '--region=europe-west2'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--project=little-bo-peep-483820'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: '1200s'
