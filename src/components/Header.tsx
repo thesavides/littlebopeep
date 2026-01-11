@@ -4,6 +4,7 @@ import { useAppStore } from '@/store/appStore'
 import { signOut, getCurrentUser } from '@/lib/supabase-auth'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import LanguageSelector from './LanguageSelector'
 
 interface HeaderProps {
   showBackButton?: boolean
@@ -106,6 +107,9 @@ export default function Header({ showBackButton = false, onBack, title }: Header
 
           {/* Right side - User info and controls */}
           <div className="flex items-center gap-3">
+            {/* Language Selector */}
+            <LanguageSelector />
+
             {/* User email (if logged in) */}
             {userEmail && (
               <span className={`text-sm ${isAdmin ? 'text-slate-300' : 'text-slate-600'}`}>

@@ -75,17 +75,9 @@ CREATE TABLE IF NOT EXISTS translation_metadata (
 );
 
 -- =====================================================
--- Add language preference to users
+-- Note: preferred_language column for users table
+-- will be added later when user authentication is implemented
 -- =====================================================
--- Note: Users table might not exist yet in fresh install
--- This is safe to run - will only add column if table exists
-DO $$
-BEGIN
-  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'users') THEN
-    ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_language TEXT DEFAULT 'en' REFERENCES languages(code);
-    CREATE INDEX IF NOT EXISTS idx_users_language ON users(preferred_language);
-  END IF;
-END $$;
 
 -- =====================================================
 -- Row Level Security (RLS) Policies
