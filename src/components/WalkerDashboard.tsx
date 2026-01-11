@@ -102,7 +102,7 @@ export default function WalkerDashboard() {
     setNearbyReports(nearby)
   }
 
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     // On step 1, check for duplicates before proceeding
     if (currentReportStep === 1 && draftReport.location) {
       const nearby = getNearbyReports(draftReport.location.lat, draftReport.location.lng, 100, 12)
@@ -112,7 +112,7 @@ export default function WalkerDashboard() {
         return
       }
     }
-    
+
     // On step 3, save guest contact info to draft
     if (currentReportStep === 3) {
       const contactInfo = [guestName, guestEmail, guestPhone].filter(Boolean).join(' | ')
@@ -120,16 +120,21 @@ export default function WalkerDashboard() {
         updateDraftReport({ reporterContact: contactInfo })
       }
     }
-    
+
     if (currentReportStep < 4) {
       setCurrentReportStep(currentReportStep + 1)
     } else {
-      submitReport()
-      // Reset guest info
-      setGuestName('')
-      setGuestEmail('')
-      setGuestPhone('')
-      setViewState('dashboard')
+      try {
+        await submitReport()
+        // Reset guest info
+        setGuestName('')
+        setGuestEmail('')
+        setGuestPhone('')
+        setViewState('dashboard')
+      } catch (error) {
+        console.error('Failed to submit report:', error)
+        alert('Failed to submit report. Please try again.')
+      }
     }
   }
 

@@ -488,8 +488,8 @@ export default function FarmerDashboard() {
                       </div>
                       {report.description && <p className="text-sm text-slate-600 mb-3">{report.description}</p>}
                       <div className="flex gap-2">
-                        <button onClick={() => claimReport(report.id)} className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm">Claim</button>
-                        <button onClick={() => resolveReport(report.id)} className="flex-1 py-2 bg-green-600 text-white rounded-lg text-sm">Resolved</button>
+                        <button onClick={() => claimReport(report.id).catch(e => console.error('Failed to claim:', e))} className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm">Claim</button>
+                        <button onClick={() => resolveReport(report.id).catch(e => console.error('Failed to resolve:', e))} className="flex-1 py-2 bg-green-600 text-white rounded-lg text-sm">Resolved</button>
                       </div>
                     </div>
                   ))}
@@ -510,7 +510,7 @@ export default function FarmerDashboard() {
                           <p className="text-sm text-slate-500">{new Date(report.timestamp).toLocaleString()}</p>
                         </div>
                       </div>
-                      <button onClick={() => resolveReport(report.id)} className="w-full py-2 bg-green-600 text-white rounded-lg text-sm">Mark Resolved</button>
+                      <button onClick={() => resolveReport(report.id).catch(e => console.error('Failed to resolve:', e))} className="w-full py-2 bg-green-600 text-white rounded-lg text-sm">Mark Resolved</button>
                     </div>
                   ))}
                 </div>

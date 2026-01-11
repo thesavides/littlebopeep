@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import ReportsLoader from '@/components/ReportsLoader'
 
 export const metadata: Metadata = {
   title: 'Little Bo Peep - Helping sheep get home',
@@ -22,6 +23,7 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-slate-50 min-h-screen">
+        <ReportsLoader />
         {children}
       </body>
     </html>
