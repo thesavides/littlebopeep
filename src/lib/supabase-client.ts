@@ -19,8 +19,8 @@ export interface SheepReportDB {
   claimed_by_farmer_id: string | null
   claimed_at: string | null
   archived: boolean
-  created_at: string
-  updated_at: string
+  created_at?: string
+  updated_at?: string
 }
 
 // Convert DB format to App format
@@ -97,6 +97,8 @@ export async function fetchAllReports() {
 export async function createReport(report: any) {
   const dbReport = appToDbReport(report)
 
+  console.log('Attempting to create report in Supabase:', dbReport)
+
   const { data, error } = await supabase
     .from('sheep_reports')
     .insert([dbReport])
@@ -105,9 +107,12 @@ export async function createReport(report: any) {
 
   if (error) {
     console.error('Error creating report:', error)
+    console.error('Error details:', JSON.stringify(error, null, 2))
+    console.error('Report data attempted:', JSON.stringify(dbReport, null, 2))
     throw error
   }
 
+  console.log('Report created successfully:', data)
   return data ? dbToAppReport(data) : null
 }
 
