@@ -7,7 +7,7 @@ import LanguageSelector from './LanguageSelector'
 
 export default function HomePage() {
   const router = useRouter()
-  const { t } = useTranslation()
+  const { t, language } = useTranslation() // Added language to trigger re-renders
   const { setRole, setAdmin, users } = useAppStore()
 
   const handleWalkerClick = () => {

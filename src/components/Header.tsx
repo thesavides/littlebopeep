@@ -15,7 +15,7 @@ interface HeaderProps {
 
 export default function Header({ showBackButton = false, onBack, title }: HeaderProps) {
   const router = useRouter()
-  const { t } = useTranslation()
+  const { t, language } = useTranslation() // Added language to trigger re-renders
   const { currentRole, isAdmin, setShowHomePage, setRole, setAdmin, setCurrentUserId } = useAppStore()
   const [userEmail, setUserEmail] = useState<string>('')
   const [userPrimaryRole, setUserPrimaryRole] = useState<'walker' | 'farmer' | null>(null)
