@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { useAppStore, getDaysSince, MAP_CONFIG } from '@/store/appStore'
+import { useTranslation } from '@/contexts/TranslationContext'
 import Header from './Header'
 import Map from './Map'
 
@@ -11,7 +12,8 @@ type FilterStatus = 'all' | 'reported' | 'claimed' | 'resolved'
 type FilterArchive = 'active' | 'archived' | 'all'
 
 export default function AdminDashboard() {
-  const { 
+  const { t } = useTranslation()
+  const {
     users,
     reports,
     farms,
@@ -128,7 +130,7 @@ export default function AdminDashboard() {
   }
 
   const handleBatchDelete = () => {
-    if (confirm(`Delete ${selectedReports.length} reports? This cannot be undone.`)) {
+    if (confirm(t('admin.batchDeleteConfirm', { count: selectedReports.length }, `Delete ${selectedReports.length} reports? This cannot be undone.`))) {
       batchDeleteReports(selectedReports)
       setSelectedReports([])
     }
@@ -142,21 +144,27 @@ export default function AdminDashboard() {
     else if (days >= 3) colorClass = 'bg-yellow-100 text-yellow-700'
     return (
       <span className={`px-2 py-1 rounded text-xs font-medium ${colorClass}`}>
-        {days}d unclaimed
+        {t('admin.daysUnclaimed', { days }, `${days}d unclaimed`)}
       </span>
     )
   }
 
   const getSubscriptionBadge = (user: typeof users[0]) => {
     const status = user.subscriptionStatus
-    if (!status) return <span className="px-2 py-1 rounded text-xs bg-slate-100 text-slate-500">No sub</span>
+    if (!status) return <span className="px-2 py-1 rounded text-xs bg-slate-100 text-slate-500">{t('admin.noSub', {}, 'No sub')}</span>
     const colors = {
       trial: 'bg-blue-100 text-blue-700',
       active: 'bg-green-100 text-green-700',
       cancelled: 'bg-red-100 text-red-700',
       expired: 'bg-slate-100 text-slate-500'
     }
-    return <span className={`px-2 py-1 rounded text-xs font-medium ${colors[status]}`}>{status}</span>
+    const statusLabels = {
+      trial: t('admin.trial', {}, 'trial'),
+      active: t('admin.activeSub', {}, 'active'),
+      cancelled: t('admin.cancelledSub', {}, 'cancelled'),
+      expired: t('admin.expired', {}, 'expired')
+    }
+    return <span className={`px-2 py-1 rounded text-xs font-medium ${colors[status]}`}>{statusLabels[status]}</span>
   }
 
   const NavButton = ({ view, label, count }: { view: AdminView; label: string; count?: number }) => (
@@ -180,7 +188,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-100">
-      <Header title="Admin Dashboard" />
+      <Header title={t('admin.dashboardTitle', {}, 'Admin Dashboard')} />
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
@@ -188,14 +196,14 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
             <div className="text-center mb-4">
               <div className="text-4xl mb-2">⚠️</div>
-              <h3 className="text-lg font-bold text-slate-800">Confirm Delete</h3>
+              <h3 className="text-lg font-bold text-slate-800">{t('admin.confirmDelete', {}, 'Confirm Delete')}</h3>
             </div>
             <p className="text-slate-600 text-center mb-6">
-              Are you sure you want to delete this {deleteType}? This cannot be undone.
+              {t('admin.deleteWarning', { type: deleteType }, `Are you sure you want to delete this ${deleteType}? This cannot be undone.`)}
             </p>
             <div className="space-y-3">
-              <button onClick={handleDelete} className="w-full py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700">Yes, Delete</button>
-              <button onClick={() => setShowDeleteConfirm(null)} className="w-full py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200">Cancel</button>
+              <button onClick={handleDelete} className="w-full py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700">{t('admin.yesDelete', {}, 'Yes, Delete')}</button>
+              <button onClick={() => setShowDeleteConfirm(null)} className="w-full py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200">{t('admin.cancel', {}, 'Cancel')}</button>
             </div>
           </div>
         </div>
@@ -205,12 +213,12 @@ export default function AdminDashboard() {
       <div className="bg-white border-b sticky top-16 z-40">
         <div className="max-w-6xl mx-auto px-4 py-3">
           <div className="flex gap-2 overflow-x-auto">
-            <NavButton view="overview" label="Overview" />
-            <NavButton view="walkers" label="Walkers" count={walkers.length} />
-            <NavButton view="farmers" label="Farmers" count={farmers.length} />
-            <NavButton view="reports" label="Reports" count={reports.filter(r => !r.archived).length} />
-            <NavButton view="farms" label="Farms" count={farms.length} />
-            <NavButton view="billing" label="Billing" />
+            <NavButton view="overview" label={t('admin.overview', {}, 'Overview')} />
+            <NavButton view="walkers" label={t('admin.walkers', {}, 'Walkers')} count={walkers.length} />
+            <NavButton view="farmers" label={t('admin.farmers', {}, 'Farmers')} count={farmers.length} />
+            <NavButton view="reports" label={t('admin.reports', {}, 'Reports')} count={reports.filter(r => !r.archived).length} />
+            <NavButton view="farms" label={t('admin.farms', {}, 'Farms')} count={farms.length} />
+            <NavButton view="billing" label={t('admin.billing', {}, 'Billing')} />
           </div>
         </div>
       </div>
@@ -222,49 +230,49 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <div className="bg-white rounded-xl p-4 shadow">
                 <div className="text-3xl font-bold text-slate-800">{users.length}</div>
-                <div className="text-sm text-slate-500">Total Users</div>
-                <div className="text-xs text-green-600 mt-1">{activeUsers} active</div>
+                <div className="text-sm text-slate-500">{t('admin.totalUsers', {}, 'Total Users')}</div>
+                <div className="text-xs text-green-600 mt-1">{activeUsers} {t('admin.active', {}, 'active')}</div>
               </div>
               <div className="bg-white rounded-xl p-4 shadow">
                 <div className="text-3xl font-bold text-green-600">{walkers.length}</div>
-                <div className="text-sm text-slate-500">Walkers</div>
+                <div className="text-sm text-slate-500">{t('admin.walkersLabel', {}, 'Walkers')}</div>
               </div>
               <div className="bg-white rounded-xl p-4 shadow">
                 <div className="text-3xl font-bold text-blue-600">{farmers.length}</div>
-                <div className="text-sm text-slate-500">Farmers</div>
+                <div className="text-sm text-slate-500">{t('admin.farmersLabel', {}, 'Farmers')}</div>
               </div>
               <div className="bg-white rounded-xl p-4 shadow">
                 <div className="text-3xl font-bold text-amber-600">{farms.length}</div>
-                <div className="text-sm text-slate-500">Farms ({totalFields} fields)</div>
+                <div className="text-sm text-slate-500">{t('admin.farmsWithFields', { fields: totalFields }, `Farms (${totalFields} fields)`)}</div>
               </div>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
               <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-200">
                 <div className="text-2xl font-bold text-yellow-700">{reportedCount}</div>
-                <div className="text-sm text-yellow-600">Reported</div>
+                <div className="text-sm text-yellow-600">{t('admin.reported', {}, 'Reported')}</div>
               </div>
               <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
                 <div className="text-2xl font-bold text-blue-700">{claimedCount}</div>
-                <div className="text-sm text-blue-600">Claimed</div>
+                <div className="text-sm text-blue-600">{t('admin.claimed', {}, 'Claimed')}</div>
               </div>
               <div className="bg-green-50 rounded-xl p-4 border border-green-200">
                 <div className="text-2xl font-bold text-green-700">{resolvedCount}</div>
-                <div className="text-sm text-green-600">Resolved</div>
+                <div className="text-sm text-green-600">{t('admin.resolved', {}, 'Resolved')}</div>
               </div>
               <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
                 <div className="text-2xl font-bold text-slate-700">{archivedCount}</div>
-                <div className="text-sm text-slate-600">Archived</div>
+                <div className="text-sm text-slate-600">{t('admin.archived', {}, 'Archived')}</div>
               </div>
               <div className="bg-purple-50 rounded-xl p-4 border border-purple-200">
                 <div className="text-2xl font-bold text-purple-700">{activeSubs}</div>
-                <div className="text-sm text-purple-600">Paid Subs</div>
+                <div className="text-sm text-purple-600">{t('admin.paidSubs', {}, 'Paid Subs')}</div>
               </div>
             </div>
 
             <div className="bg-white rounded-xl shadow mb-6">
               <div className="p-4 border-b">
-                <h2 className="font-semibold text-slate-800">Activity Map</h2>
+                <h2 className="font-semibold text-slate-800">{t('admin.activityMap', {}, 'Activity Map')}</h2>
               </div>
               <div className="h-80">
                 <Map
@@ -273,7 +281,7 @@ export default function AdminDashboard() {
                   markers={reports.filter(r => !r.archived).map((r) => ({
                     id: r.id,
                     position: [r.location.lat, r.location.lng] as [number, number],
-                    popup: `🐑 ${r.sheepCount} sheep - ${r.status}`,
+                    popup: t('admin.sheepPopup', { count: r.sheepCount, status: r.status }, `${r.sheepCount} sheep - ${r.status}`),
                     type: 'sheep' as const
                   }))}
                   polygons={allFieldPolygons}
@@ -287,11 +295,11 @@ export default function AdminDashboard() {
         {currentView === 'walkers' && (
           <div className="bg-white rounded-xl shadow">
             <div className="p-4 border-b">
-              <h2 className="font-semibold text-slate-800">Walkers ({walkers.length})</h2>
+              <h2 className="font-semibold text-slate-800">{t('admin.walkersTitle', { count: walkers.length }, `Walkers (${walkers.length})`)}</h2>
             </div>
             {walkers.length === 0 ? (
               <div className="p-8 text-center text-slate-500">
-                <div className="text-4xl mb-2">🚶</div>No walkers registered yet
+                <div className="text-4xl mb-2">🚶</div>{t('admin.noWalkersYet', {}, 'No walkers registered yet')}
               </div>
             ) : (
               <div className="divide-y">
@@ -303,18 +311,18 @@ export default function AdminDashboard() {
                         <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">🚶</div>
                         <div>
                           <div className="font-medium text-slate-800">{user.name}</div>
-                          <div className="text-sm text-slate-500">{user.email || 'No email'}</div>
-                          <div className="text-xs text-slate-400">{userReports.length} reports</div>
+                          <div className="text-sm text-slate-500">{user.email || t('admin.noEmail', {}, 'No email')}</div>
+                          <div className="text-xs text-slate-400">{t('admin.reportsCount', { count: userReports.length }, `${userReports.length} reports`)}</div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${user.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{user.status}</span>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${user.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{user.status === 'active' ? t('admin.activeStatus', {}, 'active') : t('admin.suspendedStatus', {}, 'suspended')}</span>
                         {user.status === 'active' ? (
-                          <button onClick={() => suspendUser(user.id)} className="px-3 py-1 bg-amber-100 text-amber-700 rounded text-sm hover:bg-amber-200">Suspend</button>
+                          <button onClick={() => suspendUser(user.id)} className="px-3 py-1 bg-amber-100 text-amber-700 rounded text-sm hover:bg-amber-200">{t('admin.suspend', {}, 'Suspend')}</button>
                         ) : (
-                          <button onClick={() => activateUser(user.id)} className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200">Activate</button>
+                          <button onClick={() => activateUser(user.id)} className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200">{t('admin.activate', {}, 'Activate')}</button>
                         )}
-                        <button onClick={() => confirmDelete(user.id, 'user')} className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200">Delete</button>
+                        <button onClick={() => confirmDelete(user.id, 'user')} className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200">{t('admin.delete', {}, 'Delete')}</button>
                       </div>
                     </div>
                   )
@@ -328,11 +336,11 @@ export default function AdminDashboard() {
         {currentView === 'farmers' && (
           <div className="bg-white rounded-xl shadow">
             <div className="p-4 border-b">
-              <h2 className="font-semibold text-slate-800">Farmers ({farmers.length})</h2>
+              <h2 className="font-semibold text-slate-800">{t('admin.farmersTitle', { count: farmers.length }, `Farmers (${farmers.length})`)}</h2>
             </div>
             {farmers.length === 0 ? (
               <div className="p-8 text-center text-slate-500">
-                <div className="text-4xl mb-2">🧑‍🌾</div>No farmers registered yet
+                <div className="text-4xl mb-2">🧑‍🌾</div>{t('admin.noFarmersYet', {}, 'No farmers registered yet')}
               </div>
             ) : (
               <div className="divide-y">
@@ -344,19 +352,19 @@ export default function AdminDashboard() {
                         <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">🧑‍🌾</div>
                         <div>
                           <div className="font-medium text-slate-800">{user.name}</div>
-                          <div className="text-sm text-slate-500">{user.email || 'No email'}</div>
-                          <div className="text-xs text-slate-400">{userFarms.length} farm(s)</div>
+                          <div className="text-sm text-slate-500">{user.email || t('admin.noEmail', {}, 'No email')}</div>
+                          <div className="text-xs text-slate-400">{t('admin.farmsCount', { count: userFarms.length }, `${userFarms.length} farm(s)`)}</div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {getSubscriptionBadge(user)}
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${user.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{user.status}</span>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${user.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{user.status === 'active' ? t('admin.activeStatus', {}, 'active') : t('admin.suspendedStatus', {}, 'suspended')}</span>
                         {user.status === 'active' ? (
-                          <button onClick={() => suspendUser(user.id)} className="px-3 py-1 bg-amber-100 text-amber-700 rounded text-sm hover:bg-amber-200">Suspend</button>
+                          <button onClick={() => suspendUser(user.id)} className="px-3 py-1 bg-amber-100 text-amber-700 rounded text-sm hover:bg-amber-200">{t('admin.suspend', {}, 'Suspend')}</button>
                         ) : (
-                          <button onClick={() => activateUser(user.id)} className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200">Activate</button>
+                          <button onClick={() => activateUser(user.id)} className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200">{t('admin.activate', {}, 'Activate')}</button>
                         )}
-                        <button onClick={() => confirmDelete(user.id, 'user')} className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200">Delete</button>
+                        <button onClick={() => confirmDelete(user.id, 'user')} className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200">{t('admin.delete', {}, 'Delete')}</button>
                       </div>
                     </div>
                   )
@@ -374,29 +382,29 @@ export default function AdminDashboard() {
               <div className="flex flex-wrap gap-4 items-center justify-between">
                 <div className="flex flex-wrap gap-2">
                   <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as FilterStatus)} className="px-3 py-2 border rounded-lg text-sm">
-                    <option value="all">All Status</option>
-                    <option value="reported">Reported</option>
-                    <option value="claimed">Claimed</option>
-                    <option value="resolved">Resolved</option>
+                    <option value="all">{t('admin.allStatus', {}, 'All Status')}</option>
+                    <option value="reported">{t('admin.reportedFilter', {}, 'Reported')}</option>
+                    <option value="claimed">{t('admin.claimedFilter', {}, 'Claimed')}</option>
+                    <option value="resolved">{t('admin.resolvedFilter', {}, 'Resolved')}</option>
                   </select>
                   <select value={filterArchive} onChange={(e) => setFilterArchive(e.target.value as FilterArchive)} className="px-3 py-2 border rounded-lg text-sm">
-                    <option value="active">Active</option>
-                    <option value="archived">Archived</option>
-                    <option value="all">All</option>
+                    <option value="active">{t('admin.activeFilter', {}, 'Active')}</option>
+                    <option value="archived">{t('admin.archivedFilter', {}, 'Archived')}</option>
+                    <option value="all">{t('admin.allFilter', {}, 'All')}</option>
                   </select>
                   <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortBy)} className="px-3 py-2 border rounded-lg text-sm">
-                    <option value="daysUnclaimed">Sort: Days Unclaimed</option>
-                    <option value="date">Sort: Date</option>
+                    <option value="daysUnclaimed">{t('admin.sortDaysUnclaimed', {}, 'Sort: Days Unclaimed')}</option>
+                    <option value="date">{t('admin.sortDate', {}, 'Sort: Date')}</option>
                   </select>
                 </div>
                 <div className="flex gap-2">
                   {selectedReports.length > 0 && (
                     <>
                       <button onClick={handleBatchArchive} className="px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm hover:bg-slate-200">
-                        Archive ({selectedReports.length})
+                        {t('admin.archiveSelected', { count: selectedReports.length }, `Archive (${selectedReports.length})`)}
                       </button>
                       <button onClick={handleBatchDelete} className="px-3 py-2 bg-red-100 text-red-700 rounded-lg text-sm hover:bg-red-200">
-                        Delete ({selectedReports.length})
+                        {t('admin.deleteSelected', { count: selectedReports.length }, `Delete (${selectedReports.length})`)}
                       </button>
                     </>
                   )}
@@ -407,9 +415,9 @@ export default function AdminDashboard() {
             {/* Map Search */}
             <div className="bg-white rounded-xl shadow mb-4">
               <div className="p-4 border-b flex justify-between items-center">
-                <h3 className="font-medium text-slate-800">Map Search</h3>
+                <h3 className="font-medium text-slate-800">{t('admin.mapSearch', {}, 'Map Search')}</h3>
                 {mapBounds && (
-                  <button onClick={() => setMapBounds(null)} className="text-sm text-blue-600 hover:underline">Clear filter</button>
+                  <button onClick={() => setMapBounds(null)} className="text-sm text-blue-600 hover:underline">{t('admin.clearFilter', {}, 'Clear filter')}</button>
                 )}
               </div>
               <div className="h-48">
@@ -419,28 +427,28 @@ export default function AdminDashboard() {
                   markers={filteredReports.map((r) => ({
                     id: r.id,
                     position: [r.location.lat, r.location.lng] as [number, number],
-                    popup: `🐑 ${r.sheepCount} - ${r.status}`,
+                    popup: t('admin.sheepPopup', { count: r.sheepCount, status: r.status }, `${r.sheepCount} - ${r.status}`),
                     type: 'sheep' as const
                   }))}
                 />
               </div>
               <div className="p-2 text-center text-xs text-slate-500">
-                Showing {filteredReports.length} reports {mapBounds ? 'in selected area' : ''}
+                {mapBounds ? t('admin.showingReportsInArea', { count: filteredReports.length }, `Showing ${filteredReports.length} reports in selected area`) : t('admin.showingReports', { count: filteredReports.length }, `Showing ${filteredReports.length} reports`)}
               </div>
             </div>
 
             {/* Reports List */}
             <div className="bg-white rounded-xl shadow">
               <div className="p-4 border-b flex justify-between items-center">
-                <h2 className="font-semibold text-slate-800">Reports ({filteredReports.length})</h2>
+                <h2 className="font-semibold text-slate-800">{t('admin.reportsTitle', { count: filteredReports.length }, `Reports (${filteredReports.length})`)}</h2>
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" checked={selectedReports.length === filteredReports.length && filteredReports.length > 0} onChange={handleSelectAllReports} className="rounded" />
-                  Select All
+                  {t('admin.selectAll', {}, 'Select All')}
                 </label>
               </div>
               {filteredReports.length === 0 ? (
                 <div className="p-8 text-center text-slate-500">
-                  <div className="text-4xl mb-2">🐑</div>No reports match filters
+                  <div className="text-4xl mb-2">🐑</div>{t('admin.noReportsMatch', {}, 'No reports match filters')}
                 </div>
               ) : (
                 <div className="divide-y">
@@ -450,7 +458,7 @@ export default function AdminDashboard() {
                         <input type="checkbox" checked={selectedReports.includes(report.id)} onChange={() => handleSelectReport(report.id)} className="rounded" />
                         <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">🐑</div>
                         <div>
-                          <div className="font-medium text-slate-800">{report.sheepCount} sheep • {report.condition}</div>
+                          <div className="font-medium text-slate-800">{t('admin.sheepWithCondition', { count: report.sheepCount, condition: report.condition }, `${report.sheepCount} sheep • ${report.condition}`)}</div>
                           <div className="text-sm text-slate-500">{new Date(report.timestamp).toLocaleString()}</div>
                           {report.description && <div className="text-xs text-slate-400 truncate max-w-xs">{report.description}</div>}
                         </div>
@@ -461,12 +469,12 @@ export default function AdminDashboard() {
                           report.status === 'resolved' ? 'bg-green-100 text-green-700' :
                           report.status === 'claimed' ? 'bg-blue-100 text-blue-700' :
                           'bg-yellow-100 text-yellow-700'
-                        }`}>{report.status}</span>
-                        {report.archived && <span className="px-2 py-1 rounded text-xs bg-slate-200 text-slate-600">Archived</span>}
+                        }`}>{report.status === 'resolved' ? t('admin.resolvedStatus', {}, 'resolved') : report.status === 'claimed' ? t('admin.claimedStatus', {}, 'claimed') : t('admin.reportedStatus', {}, 'reported')}</span>
+                        {report.archived && <span className="px-2 py-1 rounded text-xs bg-slate-200 text-slate-600">{t('admin.archivedBadge', {}, 'Archived')}</span>}
                         {!report.archived && (
-                          <button onClick={() => archiveReport(report.id)} className="px-3 py-1 bg-slate-100 text-slate-600 rounded text-sm hover:bg-slate-200">Archive</button>
+                          <button onClick={() => archiveReport(report.id)} className="px-3 py-1 bg-slate-100 text-slate-600 rounded text-sm hover:bg-slate-200">{t('admin.archive', {}, 'Archive')}</button>
                         )}
-                        <button onClick={() => confirmDelete(report.id, 'report')} className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200">Delete</button>
+                        <button onClick={() => confirmDelete(report.id, 'report')} className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200">{t('admin.delete', {}, 'Delete')}</button>
                       </div>
                     </div>
                   ))}
@@ -480,11 +488,11 @@ export default function AdminDashboard() {
         {currentView === 'farms' && (
           <div className="bg-white rounded-xl shadow">
             <div className="p-4 border-b">
-              <h2 className="font-semibold text-slate-800">All Farms ({farms.length})</h2>
+              <h2 className="font-semibold text-slate-800">{t('admin.allFarms', { count: farms.length }, `All Farms (${farms.length})`)}</h2>
             </div>
             {farms.length === 0 ? (
               <div className="p-8 text-center text-slate-500">
-                <div className="text-4xl mb-2">🏡</div>No farms registered yet
+                <div className="text-4xl mb-2">🏡</div>{t('admin.noFarmsYet', {}, 'No farms registered yet')}
               </div>
             ) : (
               <div className="divide-y">
@@ -496,15 +504,15 @@ export default function AdminDashboard() {
                         <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">🏡</div>
                         <div>
                           <div className="font-medium text-slate-800">{farm.name}</div>
-                          <div className="text-sm text-slate-500">{farm.fields.length} fields • Buffer: {farm.alertBufferMeters}m</div>
-                          <div className="text-xs text-slate-400">Owner: {owner?.name || 'Unknown'}</div>
+                          <div className="text-sm text-slate-500">{t('admin.farmSummary', { fields: farm.fields.length, buffer: farm.alertBufferMeters }, `${farm.fields.length} fields • Buffer: ${farm.alertBufferMeters}m`)}</div>
+                          <div className="text-xs text-slate-400">{owner?.name ? t('admin.ownerLabel', { name: owner.name }, `Owner: ${owner.name}`) : t('admin.ownerUnknown', {}, 'Owner: Unknown')}</div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={`px-2 py-1 rounded text-xs font-medium ${farm.alertsEnabled ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
-                          {farm.alertsEnabled ? 'Alerts On' : 'Alerts Off'}
+                          {farm.alertsEnabled ? t('admin.alertsOn', {}, 'Alerts On') : t('admin.alertsOff', {}, 'Alerts Off')}
                         </span>
-                        <button onClick={() => confirmDelete(farm.id, 'farm')} className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200">Delete</button>
+                        <button onClick={() => confirmDelete(farm.id, 'farm')} className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200">{t('admin.delete', {}, 'Delete')}</button>
                       </div>
                     </div>
                   )
@@ -520,26 +528,26 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-3 gap-4 mb-6">
               <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
                 <div className="text-2xl font-bold text-blue-700">{trialFarmers}</div>
-                <div className="text-sm text-blue-600">On Trial</div>
+                <div className="text-sm text-blue-600">{t('admin.onTrial', {}, 'On Trial')}</div>
               </div>
               <div className="bg-green-50 rounded-xl p-4 border border-green-200">
                 <div className="text-2xl font-bold text-green-700">{activeSubs}</div>
-                <div className="text-sm text-green-600">Active Subscriptions</div>
+                <div className="text-sm text-green-600">{t('admin.activeSubscriptions', {}, 'Active Subscriptions')}</div>
               </div>
               <div className="bg-red-50 rounded-xl p-4 border border-red-200">
                 <div className="text-2xl font-bold text-red-700">{cancelledSubs}</div>
-                <div className="text-sm text-red-600">Cancelled</div>
+                <div className="text-sm text-red-600">{t('admin.cancelled', {}, 'Cancelled')}</div>
               </div>
             </div>
 
             <div className="bg-white rounded-xl shadow p-4 mb-6">
-              <h3 className="font-semibold text-slate-800 mb-2">Revenue Estimate</h3>
-              <div className="text-3xl font-bold text-green-600">£{(activeSubs * 29.99).toFixed(2)}<span className="text-sm font-normal text-slate-500">/month</span></div>
+              <h3 className="font-semibold text-slate-800 mb-2">{t('admin.revenueEstimate', {}, 'Revenue Estimate')}</h3>
+              <div className="text-3xl font-bold text-green-600">£{(activeSubs * 29.99).toFixed(2)}<span className="text-sm font-normal text-slate-500">{t('admin.perMonth', {}, '/month')}</span></div>
             </div>
 
             <div className="bg-white rounded-xl shadow">
               <div className="p-4 border-b">
-                <h2 className="font-semibold text-slate-800">Farmer Subscriptions</h2>
+                <h2 className="font-semibold text-slate-800">{t('admin.farmerSubscriptions', {}, 'Farmer Subscriptions')}</h2>
               </div>
               <div className="divide-y">
                 {farmers.map((user) => (
@@ -548,16 +556,16 @@ export default function AdminDashboard() {
                       <div className="font-medium text-slate-800">{user.name}</div>
                       <div className="text-sm text-slate-500">{user.email}</div>
                       {user.trialEndsAt && user.subscriptionStatus === 'trial' && (
-                        <div className="text-xs text-blue-600">Trial ends: {new Date(user.trialEndsAt).toLocaleDateString()}</div>
+                        <div className="text-xs text-blue-600">{t('admin.trialEnds', { date: new Date(user.trialEndsAt).toLocaleDateString() }, `Trial ends: ${new Date(user.trialEndsAt).toLocaleDateString()}`)}</div>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
                       {getSubscriptionBadge(user)}
                       {user.subscriptionStatus === 'trial' && (
-                        <button onClick={() => activateSubscription(user.id)} className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200">Activate</button>
+                        <button onClick={() => activateSubscription(user.id)} className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200">{t('admin.activateButton', {}, 'Activate')}</button>
                       )}
                       {user.subscriptionStatus === 'active' && (
-                        <button onClick={() => cancelSubscription(user.id)} className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200">Cancel</button>
+                        <button onClick={() => cancelSubscription(user.id)} className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200">{t('admin.cancelButton', {}, 'Cancel')}</button>
                       )}
                     </div>
                   </div>
@@ -568,7 +576,7 @@ export default function AdminDashboard() {
         )}
 
         <div className="mt-6 bg-slate-200 rounded-xl p-4 text-sm text-slate-600">
-          <p>Little Bo Peep Admin Panel • Version 3.0.0</p>
+          <p>{t('admin.footerText', {}, 'Little Bo Peep Admin Panel • Version 3.0.0')}</p>
         </div>
       </main>
     </div>
