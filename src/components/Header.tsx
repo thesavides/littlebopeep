@@ -5,7 +5,7 @@ import { signOut, getCurrentUser } from '@/lib/supabase-auth'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import LanguageSelector from './LanguageSelector'
-import { useTranslation } from '@/hooks/useTranslation'
+import { useTranslation } from '@/contexts/TranslationContext'
 
 interface HeaderProps {
   showBackButton?: boolean
@@ -19,6 +19,14 @@ export default function Header({ showBackButton = false, onBack, title }: Header
   const { currentRole, isAdmin, setShowHomePage, setRole, setAdmin, setCurrentUserId } = useAppStore()
   const [userEmail, setUserEmail] = useState<string>('')
   const [userPrimaryRole, setUserPrimaryRole] = useState<'walker' | 'farmer' | null>(null)
+
+  // CRITICAL FIX: Force component re-render when language changes
+  const [renderTrigger, setRenderTrigger] = useState(0)
+
+  useEffect(() => {
+    console.log('📋 Header language changed to:', language, '- forcing re-render')
+    setRenderTrigger(prev => prev + 1)
+  }, [language])
 
   useEffect(() => {
     const loadUser = async () => {

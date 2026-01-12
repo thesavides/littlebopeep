@@ -1,13 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { useTranslation } from '@/hooks/useTranslation'
+import { useTranslation } from '@/contexts/TranslationContext'
 
 export default function LanguageSelector() {
   const { language, languages, changeLanguage, getCurrentLanguage } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
 
+  // CRITICAL: Must recalculate on every render when language changes
+  // Using language in the component scope ensures re-render on language change
   const currentLang = getCurrentLanguage()
+
+  console.log('🔄 LanguageSelector rendering with language:', language, 'currentLang:', currentLang)
 
   if (languages.length === 0) {
     return null // Don't show if no languages loaded yet
@@ -59,8 +63,10 @@ export default function LanguageSelector() {
               <button
                 key={lang.code}
                 onClick={() => {
+                  console.log('🔘 Language button clicked:', lang.code, lang.name_native)
                   changeLanguage(lang.code)
                   setIsOpen(false)
+                  console.log('🔘 Dropdown closed')
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors ${
                   lang.code === language ? 'bg-blue-50 dark:bg-blue-900/20' : ''

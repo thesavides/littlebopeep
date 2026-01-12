@@ -64,11 +64,13 @@ export function useTranslation() {
   // Load translations when language changes
   useEffect(() => {
     async function loadTranslations() {
+      console.log('🌐 Loading translations for:', currentLanguage)
       setIsLoading(true)
       setError(null)
 
       try {
         const translationsData = await fetchTranslations(currentLanguage)
+        console.log('🌐 Translations loaded:', Object.keys(translationsData).length, 'keys')
         setTranslations(translationsData)
       } catch (err) {
         console.error(`Error loading translations for ${currentLanguage}:`, err)
@@ -85,6 +87,7 @@ export function useTranslation() {
         }
       } finally {
         setIsLoading(false)
+        console.log('🌐 Translation loading complete for:', currentLanguage)
       }
     }
 
@@ -101,7 +104,12 @@ export function useTranslation() {
    */
   const t = useCallback(
     (key: string, params?: Record<string, string | number>, fallback?: string): string => {
-      return translate(key, translations, params, fallback)
+      const result = translate(key, translations, params, fallback)
+      // Debug: Log first few translations to verify they're changing
+      if (key === 'home.welcomeWalker' || key === 'home.welcomeFarmer') {
+        console.log(`🌐 t('${key}') in ${currentLanguage}:`, result)
+      }
+      return result
     },
     [translations, currentLanguage] // Include currentLanguage to force re-creation when language changes
   )
@@ -112,13 +120,20 @@ export function useTranslation() {
    */
   const changeLanguage = useCallback(
     async (newLanguage: string) => {
-      if (newLanguage === currentLanguage) return
+      console.log('🌐 changeLanguage called:', { from: currentLanguage, to: newLanguage })
+
+      if (newLanguage === currentLanguage) {
+        console.log('🌐 Language unchanged, skipping')
+        return
+      }
 
       // Update state
+      console.log('🌐 Setting current language to:', newLanguage)
       setCurrentLanguage(newLanguage)
 
       // Persist to localStorage
       localStorage.setItem('preferred_language', newLanguage)
+      console.log('🌐 Saved to localStorage:', newLanguage)
 
       // TODO: Update user preference in database if logged in
       // This will be implemented when we integrate with user profile

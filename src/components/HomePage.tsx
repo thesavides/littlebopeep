@@ -2,13 +2,25 @@
 
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
-import { useTranslation } from '@/hooks/useTranslation'
+import { useTranslation } from '@/contexts/TranslationContext'
 import LanguageSelector from './LanguageSelector'
+import { useEffect, useState } from 'react'
 
 export default function HomePage() {
   const router = useRouter()
   const { t, language } = useTranslation() // Added language to trigger re-renders
   const { setRole, setAdmin, users } = useAppStore()
+
+  // CRITICAL FIX: Force component re-render when language changes
+  const [renderTrigger, setRenderTrigger] = useState(0)
+
+  useEffect(() => {
+    console.log('🏠 Language changed to:', language, '- forcing re-render')
+    setRenderTrigger(prev => prev + 1)
+  }, [language])
+
+  // Force re-render by using language in state - this creates a dependency
+  console.log('🏠 HomePage rendering with language:', language, 'trigger:', renderTrigger)
 
   const handleWalkerClick = () => {
     router.push('/auth')
@@ -28,8 +40,11 @@ export default function HomePage() {
     }
   }
 
+  // Force re-render when language changes by using a visible dependency
+  const renderKey = `home-${language}`
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50" key={language}>
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50" data-language={language}>
       {/* Language Selector - Top Right */}
       <div className="absolute top-4 right-4 z-10">
         <LanguageSelector />

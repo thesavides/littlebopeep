@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import ReportsLoader from '@/components/ReportsLoader'
+import { TranslationProvider } from '@/contexts/TranslationContext'
 
 export const metadata: Metadata = {
   title: 'Little Bo Peep - Helping sheep get home',
@@ -23,8 +24,10 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-slate-50 min-h-screen">
-        <ReportsLoader />
-        {children}
+        <TranslationProvider>
+          <ReportsLoader />
+          {children}
+        </TranslationProvider>
       </body>
     </html>
   )
