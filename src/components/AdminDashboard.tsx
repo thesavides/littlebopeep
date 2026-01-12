@@ -1254,12 +1254,19 @@ function FarmDetailsModal({ farm, owner, onClose, onAddField, onEditField, onDel
 function CreateFieldModal({ farmId, farm, onClose, onCreate }: any) {
   const [name, setName] = useState('')
   const [sheepCount, setSheepCount] = useState('')
-  const [fencePosts, setFencePosts] = useState<{lat: number, lng: number}[]>([
-    { lat: 54.5, lng: -2 },
-    { lat: 54.501, lng: -2 },
-    { lat: 54.501, lng: -2.001 },
-    { lat: 54.5, lng: -2.001 }
-  ])
+  const [fencePosts, setFencePosts] = useState<{lat: number, lng: number}[]>([])
+
+  const handleMapClick = (lat: number, lng: number) => {
+    setFencePosts([...fencePosts, { lat, lng }])
+  }
+
+  const handleUndoPost = () => {
+    setFencePosts(fencePosts.slice(0, -1))
+  }
+
+  const handleClearPosts = () => {
+    setFencePosts([])
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -1268,7 +1275,7 @@ function CreateFieldModal({ farmId, farm, onClose, onCreate }: any) {
       return
     }
     if (fencePosts.length < 3) {
-      alert('Field must have at least 3 fence posts')
+      alert('Field must have at least 3 fence posts. Click on the map to place posts.')
       return
     }
 
@@ -1280,9 +1287,11 @@ function CreateFieldModal({ farmId, farm, onClose, onCreate }: any) {
     })
   }
 
+  const canSave = name.trim() && fencePosts.length >= 3
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl p-6 max-w-2xl w-full shadow-xl my-8">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-bold text-slate-800">Add Field to {farm.name}</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
@@ -1313,13 +1322,77 @@ function CreateFieldModal({ farmId, farm, onClose, onCreate }: any) {
             />
           </div>
 
-          <div className="bg-amber-50 rounded-lg p-3 text-sm text-amber-700">
-            ⚠️ Field boundary drawing not yet implemented. Default rectangle will be created.
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Place Fence Posts ({fencePosts.length} placed, need 3+)
+            </label>
+            <p className="text-xs text-slate-500 mb-2">Click on the map to place fence posts. The field boundary will be drawn automatically.</p>
+            <div className="h-96 rounded-lg overflow-hidden shadow border">
+              <Map
+                center={fencePosts[0] ? [fencePosts[0].lat, fencePosts[0].lng] : MAP_CONFIG.DEFAULT_CENTER}
+                zoom={fencePosts.length > 0 ? MAP_CONFIG.STANDARD_ZOOM_5KM : MAP_CONFIG.STANDARD_ZOOM_5KM}
+                onClick={handleMapClick}
+                markers={fencePosts.map((post, idx) => ({
+                  id: `post-${idx}`,
+                  position: [post.lat, post.lng] as [number, number],
+                  popup: `Post ${idx + 1}`,
+                  type: 'fencepost' as const
+                }))}
+                polygons={fencePosts.length >= 3 ? [{
+                  id: 'new',
+                  positions: fencePosts.map(p => [p.lat, p.lng] as [number, number]),
+                  color: '#22c55e'
+                }] : []}
+              />
+            </div>
           </div>
 
+          {fencePosts.length > 0 && (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleUndoPost}
+                className="flex-1 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm hover:bg-slate-200"
+              >
+                Undo Last Post
+              </button>
+              <button
+                type="button"
+                onClick={handleClearPosts}
+                className="flex-1 py-2 bg-red-100 text-red-700 rounded-lg text-sm hover:bg-red-200"
+              >
+                Clear All Posts
+              </button>
+            </div>
+          )}
+
+          {fencePosts.length > 0 && fencePosts.length < 3 && (
+            <div className="bg-amber-50 rounded-lg p-3 text-sm text-amber-700">
+              ⚠️ Place at least {3 - fencePosts.length} more post{3 - fencePosts.length > 1 ? 's' : ''} to create a field
+            </div>
+          )}
+
+          {fencePosts.length >= 3 && (
+            <div className="bg-green-50 rounded-lg p-3 text-sm text-green-700">
+              ✓ Field boundary ready! You can add more posts or save now.
+            </div>
+          )}
+
           <div className="flex gap-3 pt-4">
-            <button type="button" onClick={onClose} className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200">Cancel</button>
-            <button type="submit" className="flex-1 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700">Create Field</button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!canSave}
+              className="flex-1 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 disabled:bg-slate-300 disabled:cursor-not-allowed"
+            >
+              Create Field
+            </button>
           </div>
         </form>
       </div>
