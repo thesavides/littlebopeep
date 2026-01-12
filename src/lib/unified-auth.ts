@@ -261,62 +261,30 @@ export async function inviteUser(
   error?: string
 }> {
   try {
-    const currentUser = await getCurrentUser()
+    // Get current session token
+    const { data: { session } } = await supabase.auth.getSession()
 
-    if (!currentUser || !['admin', 'super_admin'].includes(currentUser.role)) {
-      return { success: false, error: 'Unauthorized' }
+    if (!session) {
+      return { success: false, error: 'Not authenticated' }
     }
 
-    // Only super admins can create admins/super_admins
-    if (role in ['admin', 'super_admin'] && currentUser.role !== 'super_admin') {
-      return { success: false, error: 'Only super admins can create admin users' }
-    }
-
-    // Generate temporary password
-    const tempPassword = generateTemporaryPassword()
-
-    // Create user in Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email,
-      password: tempPassword,
-      email_confirm: false, // Will be confirmed via email
-      user_metadata: {
-        full_name: fullName
-      }
-    })
-
-    if (authError || !authData.user) {
-      return { success: false, error: authError?.message || 'Failed to create user' }
-    }
-
-    // Create user profile
-    const { data: profile, error: profileError } = await supabase
-      .from('user_profiles')
-      .insert([{
-        id: authData.user.id,
+    // Call server-side API route that has access to service role key
+    const response = await fetch('/api/admin/invite-user', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`
+      },
+      body: JSON.stringify({
         email,
-        full_name: fullName,
-        phone,
+        fullName,
         role,
-        status: 'password_reset_required',
-        password_reset_required: true,
-        created_by: currentUser.id
-      }])
-      .select()
-      .single()
-
-    if (profileError) {
-      // Rollback: delete auth user
-      await supabase.auth.admin.deleteUser(authData.user.id)
-      return { success: false, error: 'Failed to create user profile' }
-    }
-
-    // Send invitation email with password reset link
-    await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password?new=true`
+        phone
+      })
     })
 
-    return { success: true, user: profile }
+    const data = await response.json()
+    return data
   } catch (error) {
     console.error('Invite user error:', error)
     return { success: false, error: 'Failed to invite user' }
