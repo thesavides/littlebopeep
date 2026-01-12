@@ -521,20 +521,21 @@ export const useAppStore = create<AppState>()(
       },
 
       // Role hierarchy helpers
-      // Admins and farmers can also act as walkers
+      // Super admins and admins can access all features
+      // Farmers can also act as walkers
       canAccessWalkerFeatures: () => {
         const { currentRole, isAdmin } = get()
-        return isAdmin || currentRole === 'admin' || currentRole === 'walker' || currentRole === 'farmer'
+        return isAdmin || currentRole === 'super_admin' || currentRole === 'admin' || currentRole === 'walker' || currentRole === 'farmer'
       },
 
       canAccessFarmerFeatures: () => {
         const { currentRole, isAdmin } = get()
-        return isAdmin || currentRole === 'admin' || currentRole === 'farmer'
+        return isAdmin || currentRole === 'super_admin' || currentRole === 'admin' || currentRole === 'farmer'
       },
 
       canAccessAdminFeatures: () => {
         const { currentRole, isAdmin } = get()
-        return isAdmin || currentRole === 'admin'
+        return isAdmin || currentRole === 'super_admin' || currentRole === 'admin'
       },
     }),
     {

@@ -9,7 +9,15 @@ import { useEffect, useState } from 'react'
 export default function HomePage() {
   const router = useRouter()
   const { t, language } = useTranslation() // Added language to trigger re-renders
-  const { setRole, setAdmin, users } = useAppStore()
+  const {
+    setRole,
+    setAdmin,
+    users,
+    currentRole,
+    isAdmin,
+    canAccessWalkerFeatures,
+    canAccessFarmerFeatures
+  } = useAppStore()
 
   // CRITICAL FIX: Force component re-render when language changes
   const [renderTrigger, setRenderTrigger] = useState(0)
@@ -23,11 +31,25 @@ export default function HomePage() {
   console.log('🏠 HomePage rendering with language:', language, 'trigger:', renderTrigger)
 
   const handleWalkerClick = () => {
-    router.push('/auth')
+    // Check if user already has walker access (admin, super_admin, farmer, or walker)
+    if (canAccessWalkerFeatures()) {
+      // User is already authenticated with sufficient permissions
+      setRole('walker')
+    } else {
+      // User needs to authenticate
+      router.push('/auth')
+    }
   }
 
   const handleFarmerClick = () => {
-    router.push('/auth')
+    // Check if user already has farmer access (admin, super_admin, or farmer)
+    if (canAccessFarmerFeatures()) {
+      // User is already authenticated with sufficient permissions
+      setRole('farmer')
+    } else {
+      // User needs to authenticate
+      router.push('/auth')
+    }
   }
 
   const handleAdminClick = () => {
