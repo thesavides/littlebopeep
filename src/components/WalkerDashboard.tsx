@@ -5,6 +5,8 @@ import { useAppStore, getDistanceMeters, MAP_CONFIG } from '@/store/appStore'
 import Header from './Header'
 import Map from './Map'
 import LocationButton from './LocationButton'
+import PhotoUpload from './PhotoUpload'
+import PhotoGallery from './PhotoGallery'
 import { useTranslation } from '@/contexts/TranslationContext'
 
 type ViewState = 'dashboard' | 'reporting' | 'my-reports'
@@ -418,6 +420,18 @@ export default function WalkerDashboard() {
                       className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     />
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      {t('walker.photos', {}, 'Photos (optional)')}
+                    </label>
+                    <PhotoUpload
+                      reportId={draftReport.id}
+                      onPhotosUploaded={(urls) => updateDraftReport({ photoUrls: urls })}
+                    />
+                    <p className="text-xs text-slate-500 mt-2">
+                      {t('walker.photoHelp', {}, 'Photos help farmers identify the sheep. Max 3 photos.')}
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
@@ -573,6 +587,11 @@ export default function WalkerDashboard() {
                     </div>
                     {report.description && (
                       <p className="text-sm text-slate-600 mt-2">{report.description}</p>
+                    )}
+                    {report.photoUrls && report.photoUrls.length > 0 && (
+                      <div className="mt-3">
+                        <PhotoGallery photos={report.photoUrls} className="max-w-xs" />
+                      </div>
                     )}
                   </div>
                 ))}

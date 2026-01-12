@@ -68,7 +68,8 @@ export interface SheepReport {
   location: { lat: number; lng: number }
   timestamp: Date
   description: string
-  photoUrl?: string
+  photoUrl?: string // Legacy single photo
+  photoUrls?: string[] // New: multiple photos (max 3)
   sheepCount: number
   condition: 'healthy' | 'injured' | 'unknown'
   reporterContact?: string

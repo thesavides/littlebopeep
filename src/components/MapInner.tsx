@@ -35,11 +35,11 @@ const fencePostIcon = L.divIcon({
   popupAnchor: [0, -28],
 })
 
-// Sheep icon for reports - LARGE and VISIBLE with green border
+// Sheep icon for reports - LARGE and VISIBLE with green border (reported status)
 const sheepIcon = L.divIcon({
   className: 'sheep-marker',
   html: `<div style="
-    font-size: 28px; 
+    font-size: 28px;
     width: 40px;
     height: 40px;
     background: white;
@@ -55,6 +55,63 @@ const sheepIcon = L.divIcon({
   popupAnchor: [0, -20],
 })
 
+// Claimed report icon - Yellow border
+const sheepClaimedIcon = L.divIcon({
+  className: 'sheep-marker-claimed',
+  html: `<div style="
+    font-size: 28px;
+    width: 40px;
+    height: 40px;
+    background: white;
+    border: 3px solid #eab308;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  ">🐑</div>`,
+  iconSize: [40, 40],
+  iconAnchor: [20, 20],
+  popupAnchor: [0, -20],
+})
+
+// Resolved report icon - Gray border
+const sheepResolvedIcon = L.divIcon({
+  className: 'sheep-marker-resolved',
+  html: `<div style="
+    font-size: 28px;
+    width: 40px;
+    height: 40px;
+    background: white;
+    border: 3px solid #64748b;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    opacity: 0.7;
+  ">🐑</div>`,
+  iconSize: [40, 40],
+  iconAnchor: [20, 20],
+  popupAnchor: [0, -20],
+})
+
+// User location icon - Blue pin
+const userLocationIcon = L.divIcon({
+  className: 'user-location-marker',
+  html: `<div style="
+    width: 20px;
+    height: 20px;
+    background: #3b82f6;
+    border: 3px solid white;
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  "></div>`,
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
+  popupAnchor: [0, -10],
+})
+
 L.Marker.prototype.options.icon = defaultIcon
 
 interface MapProps {
@@ -66,7 +123,8 @@ interface MapProps {
     position: [number, number]
     popup?: string
     color?: 'red' | 'green' | 'blue'
-    type?: 'default' | 'fencepost' | 'sheep' | 'existing' | 'selected'
+    type?: 'default' | 'fencepost' | 'sheep' | 'existing' | 'selected' | 'user-location'
+    status?: 'reported' | 'claimed' | 'resolved'
   }>
   circles?: Array<{
     center: [number, number]
@@ -216,14 +274,19 @@ function LayerRenderer() {
   )
 }
 
-function getMarkerIcon(type?: string) {
+function getMarkerIcon(type?: string, status?: string) {
   switch (type) {
     case 'fencepost':
       return fencePostIcon
+    case 'user-location':
+      return userLocationIcon
     case 'sheep':
     case 'existing':
-    case 'selected': // User's selected location should also show sheep
-      return sheepIcon
+    case 'selected':
+      // Return icon based on report status
+      if (status === 'claimed') return sheepClaimedIcon
+      if (status === 'resolved') return sheepResolvedIcon
+      return sheepIcon // Default to reported (green)
     default:
       return defaultIcon
   }
@@ -292,10 +355,10 @@ export default function MapInner({
       ))}
       
       {markers.map((marker) => (
-        <Marker 
-          key={marker.id} 
+        <Marker
+          key={marker.id}
           position={marker.position}
-          icon={getMarkerIcon(marker.type)}
+          icon={getMarkerIcon(marker.type, marker.status)}
         >
           {marker.popup && <Popup>{marker.popup}</Popup>}
         </Marker>

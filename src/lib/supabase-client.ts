@@ -19,6 +19,7 @@ export interface SheepReportDB {
   claimed_by_farmer_id: string | null
   claimed_at: string | null
   archived: boolean
+  photo_urls: string[] | null
   created_at?: string
   updated_at?: string
 }
@@ -38,6 +39,7 @@ export function dbToAppReport(dbReport: SheepReportDB) {
     claimedByFarmerId: dbReport.claimed_by_farmer_id || undefined,
     claimedAt: dbReport.claimed_at ? new Date(dbReport.claimed_at) : undefined,
     archived: dbReport.archived || false,
+    photoUrls: dbReport.photo_urls || [],
   }
 }
 
@@ -56,6 +58,7 @@ export function appToDbReport(appReport: any) {
     claimed_by_farmer_id: appReport.claimedByFarmerId || null,
     claimed_at: appReport.claimedAt ? (appReport.claimedAt instanceof Date ? appReport.claimedAt.toISOString() : appReport.claimedAt) : null,
     archived: appReport.archived || false,
+    photo_urls: appReport.photoUrls || [],
   }
 }
 
