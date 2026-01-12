@@ -425,7 +425,7 @@ export default function WalkerDashboard() {
                       {t('walker.photos', {}, 'Photos (optional)')}
                     </label>
                     <PhotoUpload
-                      reportId={draftReport.id}
+                      reportId={draftReport.id || 'temp'}
                       onPhotosUploaded={(urls) => updateDraftReport({ photoUrls: urls })}
                     />
                     <p className="text-xs text-slate-500 mt-2">
