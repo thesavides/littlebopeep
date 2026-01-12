@@ -4,11 +4,13 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { signIn, signUp } from '@/lib/supabase-auth'
 import { useAppStore } from '@/store/appStore'
+import { useTranslation } from '@/contexts/TranslationContext'
 
 export default function AuthPage() {
   const router = useRouter()
   const { setRole, setCurrentUserId } = useAppStore()
-  
+  const { t } = useTranslation()
+
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -40,7 +42,7 @@ export default function AuthPage() {
         }
       }
     } catch (err: any) {
-      setError(err.message || 'Authentication failed')
+      setError(err.message || t('auth.authenticationFailed', {}, 'Authentication failed'))
     } finally {
       setLoading(false)
     }
@@ -50,9 +52,9 @@ export default function AuthPage() {
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
         <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">
-          Little Bo Peep
+          {t('header.appName', {}, 'Little Bo Peep')}
         </h1>
-        
+
         <div className="flex gap-2 mb-6">
           <button
             onClick={() => setMode('signin')}
@@ -62,7 +64,7 @@ export default function AuthPage() {
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            Sign In
+            {t('auth.signIn', {}, 'Sign In')}
           </button>
           <button
             onClick={() => setMode('signup')}
@@ -72,7 +74,7 @@ export default function AuthPage() {
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            Sign Up
+            {t('auth.signUp', {}, 'Sign Up')}
           </button>
         </div>
 
@@ -80,7 +82,7 @@ export default function AuthPage() {
           {mode === 'signup' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                I am a:
+                {t('auth.iAmA', {}, 'I am a:')}
               </label>
               <div className="flex gap-4">
                 <label className="flex items-center">
@@ -91,7 +93,7 @@ export default function AuthPage() {
                     onChange={(e) => setRoleSelection(e.target.value as 'walker')}
                     className="mr-2"
                   />
-                  <span>Walker</span>
+                  <span>{t('auth.walker', {}, 'Walker')}</span>
                 </label>
                 <label className="flex items-center">
                   <input
@@ -101,7 +103,7 @@ export default function AuthPage() {
                     onChange={(e) => setRoleSelection(e.target.value as 'farmer')}
                     className="mr-2"
                   />
-                  <span>Farmer</span>
+                  <span>{t('auth.farmer', {}, 'Farmer')}</span>
                 </label>
               </div>
             </div>
@@ -109,7 +111,7 @@ export default function AuthPage() {
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email
+              {t('auth.email', {}, 'Email')}
             </label>
             <input
               id="email"
@@ -118,13 +120,13 @@ export default function AuthPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              placeholder="you@example.com"
+              placeholder={t('auth.emailPlaceholder', {}, 'you@example.com')}
             />
           </div>
 
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password
+              {t('auth.password', {}, 'Password')}
             </label>
             <input
               id="password"
@@ -149,7 +151,12 @@ export default function AuthPage() {
             disabled={loading}
             className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Please wait...' : mode === 'signin' ? 'Sign In' : 'Sign Up'}
+            {loading
+              ? t('common.pleaseWait', {}, 'Please wait...')
+              : mode === 'signin'
+                ? t('auth.signIn', {}, 'Sign In')
+                : t('auth.signUp', {}, 'Sign Up')
+            }
           </button>
         </form>
 
@@ -158,7 +165,7 @@ export default function AuthPage() {
             onClick={() => router.push('/')}
             className="text-green-600 hover:text-green-700 font-medium"
           >
-            ← Back to Home
+            ← {t('common.backToHome', {}, 'Back to Home')}
           </button>
         </div>
       </div>
