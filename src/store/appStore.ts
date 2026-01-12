@@ -1,12 +1,5 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import {
-  fetchAllReports,
-  createReport as createReportInDB,
-  updateReport as updateReportInDB,
-  deleteReport as deleteReportFromDB,
-  subscribeToReports
-} from '@/lib/supabase-client'
 
 // Map configuration
 export const MAP_CONFIG = {
@@ -50,6 +43,7 @@ export interface User {
   status: 'active' | 'suspended'
   createdAt: Date
   lastActiveAt: Date
+  preferred_language?: string
   // Farmer-specific billing info
   billingAddress?: {
     line1: string
@@ -67,8 +61,6 @@ export interface User {
   subscriptionStartDate?: Date
   trialEndsAt?: Date
   stripeCustomerId?: string
-  // Language preference
-  preferred_language?: string
 }
 
 export interface SheepReport {
@@ -178,17 +170,16 @@ interface AppState {
   // Report actions
   setCurrentReportStep: (step: number) => void
   updateDraftReport: (data: Partial<SheepReport>) => void
-  submitReport: () => Promise<void>
+  submitReport: () => void
   resetDraft: () => void
-  loadReports: () => Promise<void>
-  setReports: (reports: SheepReport[]) => void
   getNearbyReports: (lat: number, lng: number, radiusMeters: number, hoursAgo: number) => SheepReport[]
-  claimReport: (reportId: string) => Promise<void>
-  resolveReport: (reportId: string) => Promise<void>
-  deleteReport: (id: string) => Promise<void>
-  archiveReport: (id: string) => Promise<void>
-  batchArchiveReports: (ids: string[]) => Promise<void>
-  batchDeleteReports: (ids: string[]) => Promise<void>
+  claimReport: (reportId: string) => void
+  claimReportForFarmer: (reportId: string, farmerId: string) => void
+  resolveReport: (reportId: string) => void
+  deleteReport: (id: string) => void
+  archiveReport: (id: string) => void
+  batchArchiveReports: (ids: string[]) => void
+  batchDeleteReports: (ids: string[]) => void
   
   // Notification actions
   addNotification: (notification: Omit<Notification, 'id' | 'createdAt'>) => void
@@ -199,10 +190,13 @@ interface AppState {
   startTrial: (userId: string) => void
   activateSubscription: (userId: string) => void
   cancelSubscription: (userId: string) => void
-  
+
   // Map preferences actions
   updateMapPreferences: (preferences: Partial<MapPreferences>) => void
-  
+
+  // Supabase sync (stub for now)
+  loadReports: () => void
+
   // Helpers
   getCurrentUser: () => User | undefined
   getFarmsByFarmerId: (farmerId: string) => Farm[]
@@ -327,7 +321,7 @@ export const useAppStore = create<AppState>()(
         draftReport: { ...state.draftReport, ...data } 
       })),
       
-      submitReport: async () => {
+      submitReport: () => {
         const { draftReport, reports, currentUserId } = get()
         const newReport: SheepReport = {
           id: Date.now().toString(),
@@ -340,36 +334,15 @@ export const useAppStore = create<AppState>()(
           reporterId: currentUserId || undefined,
           status: 'reported',
         }
-
-        try {
-          // Save to Supabase
-          await createReportInDB(newReport)
-
-          // Update local state
-          set({
-            reports: [...reports, newReport],
-            draftReport: {},
-            currentReportStep: 1,
-          })
-        } catch (error) {
-          console.error('Failed to submit report:', error)
-          throw error
-        }
+        set({ 
+          reports: [...reports, newReport],
+          draftReport: {},
+          currentReportStep: 1,
+        })
       },
       
       resetDraft: () => set({ draftReport: {}, currentReportStep: 1 }),
-
-      loadReports: async () => {
-        try {
-          const reports = await fetchAllReports()
-          set({ reports })
-        } catch (error) {
-          console.error('Failed to load reports:', error)
-        }
-      },
-
-      setReports: (reports) => set({ reports }),
-
+      
       getNearbyReports: (lat, lng, radiusMeters, hoursAgo) => {
         const { reports } = get()
         const cutoffTime = new Date(Date.now() - hoursAgo * 60 * 60 * 1000)
@@ -382,124 +355,95 @@ export const useAppStore = create<AppState>()(
         })
       },
       
-      claimReport: async (reportId) => {
+      claimReport: (reportId) => {
         const { currentUserId, reports, notifications } = get()
         const report = reports.find(r => r.id === reportId)
 
-        try {
-          // Update in Supabase
-          await updateReportInDB(reportId, {
-            status: 'claimed',
-            claimedByFarmerId: currentUserId || undefined,
-            claimedAt: new Date()
-          })
+        set((state) => ({
+          reports: state.reports.map((r) =>
+            r.id === reportId
+              ? { ...r, status: 'claimed', claimedByFarmerId: currentUserId || undefined, claimedAt: new Date() }
+              : r
+          )
+        }))
 
-          // Update local state
+        // Send thank you notification to walker
+        if (report?.reporterId) {
+          const thankYouNotification: Notification = {
+            id: Date.now().toString(),
+            userId: report.reporterId,
+            type: 'thank_you',
+            message: 'Thank you for your sheep report! A farmer has claimed it and is on their way.',
+            reportId: reportId,
+            read: false,
+            createdAt: new Date()
+          }
           set((state) => ({
-            reports: state.reports.map((r) =>
-              r.id === reportId
-                ? { ...r, status: 'claimed', claimedByFarmerId: currentUserId || undefined, claimedAt: new Date() }
-                : r
+            notifications: [...state.notifications, thankYouNotification],
+            reports: state.reports.map(r =>
+              r.id === reportId ? { ...r, thankedAt: new Date() } : r
             )
           }))
+        }
+      },
 
-          // Send thank you notification to walker
-          if (report?.reporterId) {
-            const thankYouNotification: Notification = {
-              id: Date.now().toString(),
-              userId: report.reporterId,
-              type: 'thank_you',
-              message: 'Thank you for your sheep report! A farmer has claimed it and is on their way.',
-              reportId: reportId,
-              read: false,
-              createdAt: new Date()
-            }
-            set((state) => ({
-              notifications: [...state.notifications, thankYouNotification],
-              reports: state.reports.map(r =>
-                r.id === reportId ? { ...r, thankedAt: new Date() } : r
-              )
-            }))
+      claimReportForFarmer: (reportId, farmerId) => {
+        const { reports } = get()
+        const report = reports.find(r => r.id === reportId)
+
+        set((state) => ({
+          reports: state.reports.map((r) =>
+            r.id === reportId
+              ? { ...r, status: 'claimed', claimedByFarmerId: farmerId, claimedAt: new Date() }
+              : r
+          )
+        }))
+
+        // Send thank you notification to walker
+        if (report?.reporterId) {
+          const thankYouNotification: Notification = {
+            id: Date.now().toString(),
+            userId: report.reporterId,
+            type: 'thank_you',
+            message: 'Thank you for your sheep report! A farmer has claimed it and is on their way.',
+            reportId: reportId,
+            read: false,
+            createdAt: new Date()
           }
-        } catch (error) {
-          console.error('Failed to claim report:', error)
-          throw error
+          set((state) => ({
+            notifications: [...state.notifications, thankYouNotification],
+            reports: state.reports.map(r =>
+              r.id === reportId ? { ...r, thankedAt: new Date() } : r
+            )
+          }))
         }
       },
       
-      resolveReport: async (reportId) => {
-        try {
-          await updateReportInDB(reportId, {
-            status: 'resolved',
-            resolvedAt: new Date()
-          })
-
-          set((state) => ({
-            reports: state.reports.map((r) =>
-              r.id === reportId ? { ...r, status: 'resolved', resolvedAt: new Date() } : r
-            )
-          }))
-        } catch (error) {
-          console.error('Failed to resolve report:', error)
-          throw error
-        }
-      },
-
-      deleteReport: async (id) => {
-        try {
-          await deleteReportFromDB(id)
-
-          set((state) => ({
-            reports: state.reports.filter((r) => r.id !== id)
-          }))
-        } catch (error) {
-          console.error('Failed to delete report:', error)
-          throw error
-        }
-      },
-
-      archiveReport: async (id) => {
-        try {
-          await updateReportInDB(id, { archived: true })
-
-          set((state) => ({
-            reports: state.reports.map((r) =>
-              r.id === id ? { ...r, archived: true } : r
-            )
-          }))
-        } catch (error) {
-          console.error('Failed to archive report:', error)
-          throw error
-        }
-      },
-
-      batchArchiveReports: async (ids) => {
-        try {
-          await Promise.all(ids.map(id => updateReportInDB(id, { archived: true })))
-
-          set((state) => ({
-            reports: state.reports.map((r) =>
-              ids.includes(r.id) ? { ...r, archived: true } : r
-            )
-          }))
-        } catch (error) {
-          console.error('Failed to batch archive reports:', error)
-          throw error
-        }
-      },
-
-      batchDeleteReports: async (ids) => {
-        try {
-          await Promise.all(ids.map(id => deleteReportFromDB(id)))
-
-          set((state) => ({
-            reports: state.reports.filter((r) => !ids.includes(r.id))
-          }))
-        } catch (error) {
-          console.error('Failed to batch delete reports:', error)
-          throw error
-        }
-      },
+      resolveReport: (reportId) => set((state) => ({
+        reports: state.reports.map((r) => 
+          r.id === reportId ? { ...r, status: 'resolved', resolvedAt: new Date() } : r
+        )
+      })),
+      
+      deleteReport: (id) => set((state) => ({
+        reports: state.reports.filter((r) => r.id !== id)
+      })),
+      
+      archiveReport: (id) => set((state) => ({
+        reports: state.reports.map((r) => 
+          r.id === id ? { ...r, archived: true } : r
+        )
+      })),
+      
+      batchArchiveReports: (ids) => set((state) => ({
+        reports: state.reports.map((r) => 
+          ids.includes(r.id) ? { ...r, archived: true } : r
+        )
+      })),
+      
+      batchDeleteReports: (ids) => set((state) => ({
+        reports: state.reports.filter((r) => !ids.includes(r.id))
+      })),
       
       // Notification actions
       addNotification: (notification) => set((state) => ({
@@ -548,7 +492,14 @@ export const useAppStore = create<AppState>()(
       updateMapPreferences: (preferences) => set((state) => ({
         mapPreferences: { ...state.mapPreferences, ...preferences }
       })),
-      
+
+      // Supabase sync (stub for now - using localStorage)
+      loadReports: () => {
+        // Stub function for ReportsLoader component compatibility
+        // Reports are already loaded from localStorage via zustand persist
+        console.log('loadReports called (localStorage mode)')
+      },
+
       // Helpers
       getCurrentUser: () => {
         const { currentUserId, users } = get()
@@ -565,19 +516,6 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'little-bo-peep-storage',
-      partialize: (state) => ({
-        // Exclude reports from localStorage - they're stored in Supabase
-        currentRole: state.currentRole,
-        showHomePage: state.showHomePage,
-        isAdmin: state.isAdmin,
-        currentUserId: state.currentUserId,
-        users: state.users,
-        farms: state.farms,
-        notifications: state.notifications,
-        mapPreferences: state.mapPreferences,
-        currentReportStep: state.currentReportStep,
-        draftReport: state.draftReport,
-      }),
     }
   )
 )
