@@ -5,6 +5,7 @@ import { useAppStore, getDaysSince, MAP_CONFIG } from '@/store/appStore'
 import Header from './Header'
 import Map from './Map'
 import AdminUserManagement from './AdminUserManagement'
+import { inviteUser } from '@/lib/unified-auth'
 
 type AdminView = 'overview' | 'walkers' | 'farmers' | 'reports' | 'farms' | 'billing' | 'admins'
 type SortBy = 'date' | 'daysUnclaimed'
@@ -721,6 +722,8 @@ function CreateFarmerModal({ onClose, onCreate }: { onClose: () => void; onCreat
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const [billingAddress, setBillingAddress] = useState({
     line1: '',
     line2: '',
@@ -729,23 +732,48 @@ function CreateFarmerModal({ onClose, onCreate }: { onClose: () => void; onCreat
     postcode: ''
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError('')
+
     if (!name.trim()) {
-      alert('Please enter farmer name')
+      setError('Please enter farmer name')
       return
     }
-    if (email && !email.includes('@')) {
-      alert('Please enter a valid email')
+    if (!email || !email.includes('@')) {
+      setError('Please enter a valid email address')
       return
     }
 
-    onCreate({
-      name: name.trim(),
-      email: email.trim() || undefined,
-      phone: phone.trim() || undefined,
-      billingAddress: billingAddress.line1 ? billingAddress : undefined
-    })
+    setLoading(true)
+
+    try {
+      // Invite farmer using unified auth system
+      const { success, user, error: inviteError } = await inviteUser(
+        email.trim(),
+        name.trim(),
+        'farmer',
+        phone.trim() || undefined
+      )
+
+      if (!success) {
+        setError(inviteError || 'Failed to invite farmer')
+        setLoading(false)
+        return
+      }
+
+      // Success - farmer will receive invitation email
+      alert(`Farmer "${name}" invited successfully! They will receive an email with setup instructions.`)
+      onCreate({
+        name: name.trim(),
+        email: email.trim(),
+        phone: phone.trim() || undefined,
+        billingAddress: billingAddress.line1 ? billingAddress : undefined
+      })
+    } catch (err: any) {
+      setError(err.message || 'Failed to invite farmer')
+      setLoading(false)
+    }
   }
 
   return (
@@ -756,9 +784,23 @@ function CreateFarmerModal({ onClose, onCreate }: { onClose: () => void; onCreat
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
         </div>
 
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
+
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-xs text-blue-800">
+            <strong>Note:</strong> The farmer will receive an email invitation with a password reset link. They must set their password before they can log in.
+          </p>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Full Name <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               value={name}
@@ -766,17 +808,22 @@ function CreateFarmerModal({ onClose, onCreate }: { onClose: () => void; onCreat
               className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
               placeholder="John Smith"
               required
+              disabled={loading}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Email <span className="text-red-500">*</span>
+            </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
               placeholder="john@farm.com"
+              required
+              disabled={loading}
             />
           </div>
 
@@ -788,6 +835,7 @@ function CreateFarmerModal({ onClose, onCreate }: { onClose: () => void; onCreat
               onChange={(e) => setPhone(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
               placeholder="07700 900123"
+              disabled={loading}
             />
           </div>
 
@@ -834,11 +882,20 @@ function CreateFarmerModal({ onClose, onCreate }: { onClose: () => void; onCreat
           </div>
 
           <div className="flex gap-3 pt-4">
-            <button type="button" onClick={onClose} className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Cancel
             </button>
-            <button type="submit" className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700">
-              Create Farmer
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Sending Invitation...' : 'Invite Farmer'}
             </button>
           </div>
         </form>
