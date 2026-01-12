@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import LanguageSelector from './LanguageSelector'
 import { useTranslation } from '@/contexts/TranslationContext'
+import ChangePasswordModal from './ChangePasswordModal'
 
 interface HeaderProps {
   showBackButton?: boolean
@@ -19,6 +20,7 @@ export default function Header({ showBackButton = false, onBack, title }: Header
   const { currentRole, isAdmin, setShowHomePage, setRole, setAdmin, setCurrentUserId } = useAppStore()
   const [userEmail, setUserEmail] = useState<string>('')
   const [userPrimaryRole, setUserPrimaryRole] = useState<'walker' | 'farmer' | null>(null)
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false)
 
   // CRITICAL FIX: Force component re-render when language changes
   const [renderTrigger, setRenderTrigger] = useState(0)
@@ -168,6 +170,12 @@ export default function Header({ showBackButton = false, onBack, title }: Header
                     </button>
                     <div className="border-t border-slate-200 my-1"></div>
                     <button
+                      onClick={() => setShowChangePasswordModal(true)}
+                      className="w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 hover:bg-slate-50"
+                    >
+                      <span>🔑</span> {t('header.changePassword', {}, 'Change Password')}
+                    </button>
+                    <button
                       onClick={handleLogout}
                       className="w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 hover:bg-red-50 text-red-600"
                     >
@@ -178,14 +186,31 @@ export default function Header({ showBackButton = false, onBack, title }: Header
               </div>
             )}
 
-            {/* Logout button for walkers (no role switching allowed) */}
+            {/* Settings menu for walkers */}
             {!isAdmin && currentRole && userPrimaryRole === 'walker' && (
-              <button
-                onClick={handleLogout}
-                className="px-3 py-1 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
-              >
-                {t('header.logout', {}, 'Logout')}
-              </button>
+              <div className="relative group">
+                <button className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
+                  <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
+                <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-slate-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[9999]">
+                  <div className="p-2">
+                    <button
+                      onClick={() => setShowChangePasswordModal(true)}
+                      className="w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 hover:bg-slate-50"
+                    >
+                      <span>🔑</span> {t('header.changePassword', {}, 'Change Password')}
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 hover:bg-red-50 text-red-600"
+                    >
+                      <span>🚪</span> {t('header.logout', {}, 'Logout')}
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* Admin logout button */}
@@ -200,6 +225,19 @@ export default function Header({ showBackButton = false, onBack, title }: Header
           </div>
         </div>
       </div>
+
+      {/* Change Password Modal */}
+      {showChangePasswordModal && (
+        <ChangePasswordModal
+          userType="user"
+          userId={userEmail}
+          onClose={() => setShowChangePasswordModal(false)}
+          onPasswordChanged={() => {
+            alert('Password changed successfully! Please log in again with your new password.')
+            handleLogout()
+          }}
+        />
+      )}
     </header>
   )
 }

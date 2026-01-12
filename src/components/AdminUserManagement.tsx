@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { getAdminSession, createAdminUser, getAllAdmins, deactivateAdmin, AdminCredential } from '@/lib/admin-auth'
+import ChangePasswordModal from './ChangePasswordModal'
 
 export default function AdminUserManagement() {
   const [admins, setAdmins] = useState<AdminCredential[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
@@ -127,11 +129,17 @@ export default function AdminUserManagement() {
         </div>
 
         {/* Current Admin Info */}
-        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
           <p className="text-sm text-blue-800">
             <strong>Logged in as:</strong> {currentAdmin.username}
             {currentAdmin.is_super_admin && ' (Super Admin)'}
           </p>
+          <button
+            onClick={() => setShowChangePasswordModal(true)}
+            className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
+          >
+            Change Password
+          </button>
         </div>
       </div>
 
@@ -325,6 +333,19 @@ export default function AdminUserManagement() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Change Password Modal */}
+      {showChangePasswordModal && (
+        <ChangePasswordModal
+          userType="admin"
+          adminId={currentAdmin.id}
+          onClose={() => setShowChangePasswordModal(false)}
+          onPasswordChanged={() => {
+            setSuccess('Password changed successfully')
+            setTimeout(() => setSuccess(''), 3000)
+          }}
+        />
       )}
     </div>
   )
