@@ -13,7 +13,7 @@ export default function Page() {
     return <HomePage />
   }
 
-  if (isAdmin || currentRole === 'admin') {
+  if (isAdmin || currentRole === 'admin' || currentRole === 'super_admin') {
     return <AdminDashboard />
   }
 
