@@ -201,6 +201,12 @@ function LayerRenderer() {
     dashArray: '3, 6',
   })
 
+  const contourStyle = (feature?: any) => ({
+    color: '#8B4513',
+    weight: 1,
+    opacity: 0.5,
+  })
+
   return (
     <>
       {/* Footpaths layer */}
@@ -254,8 +260,25 @@ function LayerRenderer() {
         />
       )}
 
+      {/* Contours layer - Note: Currently not implemented in data fetching */}
+      {data.contours && (
+        <GeoJSON
+          data={data.contours}
+          style={contourStyle}
+          onEachFeature={(feature, layer) => {
+            if (feature.properties) {
+              layer.bindPopup(`
+                <strong>📏 Contour</strong><br/>
+                Elevation: ${feature.properties.ele || 'Unknown'}m<br/>
+                <small>Every ${feature.properties.step || '10'}m</small>
+              `)
+            }
+          }}
+        />
+      )}
+
       {/* Loading indicator */}
-      {(loading.footpaths || loading.bridleways || loading.trails) && (
+      {(loading.footpaths || loading.bridleways || loading.trails || loading.contours) && (
         <div className="absolute bottom-4 left-4 bg-white px-4 py-2 rounded-lg shadow-lg z-[1000] flex items-center gap-2">
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
           <span className="text-sm text-slate-600">Loading layers...</span>
@@ -263,10 +286,10 @@ function LayerRenderer() {
       )}
 
       {/* Error display */}
-      {(errors.footpaths || errors.bridleways || errors.trails) && (
+      {(errors.footpaths || errors.bridleways || errors.trails || errors.contours) && (
         <div className="absolute bottom-4 left-4 bg-red-50 border border-red-200 px-4 py-2 rounded-lg shadow-lg z-[1000]">
           <span className="text-sm text-red-600">
-            {errors.footpaths || errors.bridleways || errors.trails}
+            {errors.footpaths || errors.bridleways || errors.trails || errors.contours}
           </span>
         </div>
       )}
