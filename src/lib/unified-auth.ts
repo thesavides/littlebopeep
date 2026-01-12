@@ -80,6 +80,7 @@ export async function signIn(email: string, password: string): Promise<{
 
 /**
  * Sign up a new walker or farmer
+ * Uses server-side API to bypass RLS restrictions
  */
 export async function signUp(
   email: string,
@@ -92,39 +93,37 @@ export async function signUp(
   error?: string
 }> {
   try {
-    // Create user in Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName
-        }
-      }
+    // Call server-side signup API (uses service role key to bypass RLS)
+    const response = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email,
+        password,
+        fullName,
+        role
+      })
     })
 
-    if (authError || !authData.user) {
-      return { success: false, error: authError?.message || 'Sign up failed' }
+    const data = await response.json()
+
+    if (!response.ok || !data.success) {
+      return { success: false, error: data.error || 'Sign up failed' }
     }
 
-    // Create user profile
-    const { data: profile, error: profileError } = await supabase
-      .from('user_profiles')
-      .insert([{
-        id: authData.user.id,
-        email,
-        full_name: fullName,
-        role,
-        status: 'active'
-      }])
-      .select()
-      .single()
+    // Sign in the newly created user
+    const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    })
 
-    if (profileError) {
-      return { success: false, error: 'Failed to create user profile' }
+    if (signInError || !authData.user) {
+      return { success: false, error: 'Account created but sign in failed. Please try logging in.' }
     }
 
-    return { success: true, user: profile }
+    return { success: true, user: data.user }
   } catch (error) {
     console.error('Sign up error:', error)
     return { success: false, error: 'Sign up failed' }
