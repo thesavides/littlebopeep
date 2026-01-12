@@ -32,20 +32,16 @@ VALUES (
 );
 ```
 
-## Step 4: Clean Up Test Data (Optional)
+## Step 4: Clean Up Old Admin System (Optional)
 
-To start fresh, run this SQL:
+After confirming the new system works, you can remove the old admin_credentials table:
 
 ```sql
--- Delete all test sheep reports
-DELETE FROM sheep_reports;
-
--- Delete all test farms and fields
-DELETE FROM farms;
-
--- Note: Keep the super admin user you just created
--- DO NOT run: DELETE FROM user_profiles;
+-- ONLY run this after verifying the new auth system works!
+DROP TABLE IF EXISTS admin_credentials CASCADE;
 ```
+
+**Note**: The `farms` and `sheep_reports` tables don't exist in your database - they're only in the frontend app state. No database cleanup is needed for those.
 
 ## Step 5: Test Super Admin Login
 
