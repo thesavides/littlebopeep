@@ -29,7 +29,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50" key={language}>
       {/* Language Selector - Top Right */}
       <div className="absolute top-4 right-4 z-10">
         <LanguageSelector />
