@@ -100,6 +100,21 @@ export const englishTranslations: TranslationEntry[] = [
     value: 'Admin Access',
     namespace: 'navigation',
   },
+  {
+    key: 'header.admin',
+    value: 'Admin',
+    namespace: 'navigation',
+  },
+  {
+    key: 'header.walkerMode',
+    value: 'Walker Mode',
+    namespace: 'navigation',
+  },
+  {
+    key: 'header.farmerMode',
+    value: 'Farmer Mode',
+    namespace: 'navigation',
+  },
 
   // ==================== AUTHENTICATION ====================
   {
@@ -176,7 +191,103 @@ export const englishTranslations: TranslationEntry[] = [
   },
   {
     key: 'home.tagline',
-    value: 'Connecting countryside walkers with farmers to reunite lost sheep',
+    value: 'Helping sheep get home',
+    namespace: 'home',
+  },
+  {
+    key: 'home.description',
+    value: 'A simple way for countryside walkers to report lost sheep and help farmers recover their flock.',
+    namespace: 'home',
+  },
+  {
+    key: 'home.registeredUsers',
+    value: '{count} registered users',
+    namespace: 'home',
+    context: '{count} is a number placeholder',
+  },
+  {
+    key: 'home.walkerDescription',
+    value: 'Spotted some sheep that look lost? Report their location and help a farmer find them.',
+    namespace: 'home',
+  },
+  {
+    key: 'home.farmerDescription',
+    value: 'Set up your farm fields and receive alerts when sheep are spotted nearby.',
+    namespace: 'home',
+  },
+  {
+    key: 'home.reportSheepCta',
+    value: 'Report a sheep →',
+    namespace: 'home',
+  },
+  {
+    key: 'home.manageFarmCta',
+    value: 'Manage my farm →',
+    namespace: 'home',
+  },
+  {
+    key: 'home.adminPasswordPrompt',
+    value: 'Enter admin password:',
+    namespace: 'home',
+  },
+  {
+    key: 'home.incorrectPassword',
+    value: 'Incorrect password',
+    namespace: 'home',
+  },
+  {
+    key: 'home.howItWorks',
+    value: 'How it works',
+    namespace: 'home',
+  },
+  {
+    key: 'home.step1Title',
+    value: 'Spot',
+    namespace: 'home',
+  },
+  {
+    key: 'home.step1Description',
+    value: 'Walker spots sheep that appear lost or out of place',
+    namespace: 'home',
+  },
+  {
+    key: 'home.step2Title',
+    value: 'Report',
+    namespace: 'home',
+  },
+  {
+    key: 'home.step2Description',
+    value: 'Submit location and details through the app',
+    namespace: 'home',
+  },
+  {
+    key: 'home.step3Title',
+    value: 'Reunite',
+    namespace: 'home',
+  },
+  {
+    key: 'home.step3Description',
+    value: 'Farmer receives alert and recovers their sheep',
+    namespace: 'home',
+  },
+  {
+    key: 'home.stat1',
+    value: 'Sheep in UK',
+    namespace: 'home',
+  },
+  {
+    key: 'home.stat2',
+    value: 'Annual losses',
+    namespace: 'home',
+  },
+  {
+    key: 'home.stat3Value',
+    value: 'Free',
+    namespace: 'home',
+  },
+  {
+    key: 'home.stat3Label',
+    value: '30-day trial',
     namespace: 'home',
   },
 

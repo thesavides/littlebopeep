@@ -5,6 +5,7 @@ import { signOut, getCurrentUser } from '@/lib/supabase-auth'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import LanguageSelector from './LanguageSelector'
+import { useTranslation } from '@/hooks/useTranslation'
 
 interface HeaderProps {
   showBackButton?: boolean
@@ -14,6 +15,7 @@ interface HeaderProps {
 
 export default function Header({ showBackButton = false, onBack, title }: HeaderProps) {
   const router = useRouter()
+  const { t } = useTranslation()
   const { currentRole, isAdmin, setShowHomePage, setRole, setAdmin, setCurrentUserId } = useAppStore()
   const [userEmail, setUserEmail] = useState<string>('')
   const [userPrimaryRole, setUserPrimaryRole] = useState<'walker' | 'farmer' | null>(null)
@@ -59,9 +61,9 @@ export default function Header({ showBackButton = false, onBack, title }: Header
   }
 
   const getRoleLabel = () => {
-    if (isAdmin) return 'Admin'
-    if (currentRole === 'walker') return 'Walker'
-    if (currentRole === 'farmer') return 'Farmer'
+    if (isAdmin) return t('header.admin', {}, 'Admin')
+    if (currentRole === 'walker') return t('auth.walker', {}, 'Walker')
+    if (currentRole === 'farmer') return t('auth.farmer', {}, 'Farmer')
     return ''
   }
 
@@ -79,20 +81,20 @@ export default function Header({ showBackButton = false, onBack, title }: Header
           {/* Left side - Logo and back button */}
           <div className="flex items-center gap-3">
             {showBackButton && onBack && (
-              <button 
-                onClick={onBack} 
+              <button
+                onClick={onBack}
                 className={`${isAdmin ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-slate-800'}`}
               >
                 ←
               </button>
             )}
-            <button 
+            <button
               onClick={handleLogoClick}
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
             >
               <span className="text-2xl">🐑</span>
               <span className={`font-bold ${isAdmin ? 'text-white' : 'text-green-800'}`}>
-                Little Bo Peep
+                {t('header.appName', {}, 'Little Bo Peep')}
               </span>
             </button>
             {title && (
@@ -120,9 +122,9 @@ export default function Header({ showBackButton = false, onBack, title }: Header
             {/* Current role badge */}
             {currentRole && (
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                isAdmin 
-                  ? 'bg-slate-700 text-slate-200' 
-                  : currentRole === 'walker' 
+                isAdmin
+                  ? 'bg-slate-700 text-slate-200'
+                  : currentRole === 'walker'
                     ? 'bg-green-100 text-green-700'
                     : 'bg-blue-100 text-blue-700'
               }`}>
@@ -146,7 +148,7 @@ export default function Header({ showBackButton = false, onBack, title }: Header
                         currentRole === 'walker' ? 'bg-green-50 text-green-700' : 'hover:bg-slate-50'
                       }`}
                     >
-                      <span>🚶</span> Walker Mode
+                      <span>🚶</span> {t('header.walkerMode', {}, 'Walker Mode')}
                     </button>
                     <button
                       onClick={() => handleRoleSwitch('farmer')}
@@ -154,14 +156,14 @@ export default function Header({ showBackButton = false, onBack, title }: Header
                         currentRole === 'farmer' ? 'bg-blue-50 text-blue-700' : 'hover:bg-slate-50'
                       }`}
                     >
-                      <span>🧑‍🌾</span> Farmer Mode
+                      <span>🧑‍🌾</span> {t('header.farmerMode', {}, 'Farmer Mode')}
                     </button>
                     <div className="border-t border-slate-200 my-1"></div>
                     <button
                       onClick={handleLogout}
                       className="w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 hover:bg-red-50 text-red-600"
                     >
-                      <span>🚪</span> Logout
+                      <span>🚪</span> {t('header.logout', {}, 'Logout')}
                     </button>
                   </div>
                 </div>
@@ -174,7 +176,7 @@ export default function Header({ showBackButton = false, onBack, title }: Header
                 onClick={handleLogout}
                 className="px-3 py-1 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
               >
-                Logout
+                {t('header.logout', {}, 'Logout')}
               </button>
             )}
 
@@ -184,7 +186,7 @@ export default function Header({ showBackButton = false, onBack, title }: Header
                 onClick={handleLogout}
                 className="px-3 py-1 bg-slate-700 text-slate-200 rounded-lg text-sm hover:bg-slate-600"
               >
-                Logout
+                {t('header.logout', {}, 'Logout')}
               </button>
             )}
           </div>
