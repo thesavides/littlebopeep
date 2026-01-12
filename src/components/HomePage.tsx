@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { useTranslation } from '@/hooks/useTranslation'
+import LanguageSelector from './LanguageSelector'
 
 export default function HomePage() {
   const router = useRouter()
@@ -29,6 +30,11 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
+      {/* Language Selector - Top Right */}
+      <div className="absolute top-4 right-4 z-10">
+        <LanguageSelector />
+      </div>
+
       <div className="max-w-6xl mx-auto px-4 py-12">
         {/* Header */}
         <div className="text-center mb-12">

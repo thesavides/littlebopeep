@@ -253,17 +253,30 @@ export default function WalkerDashboard() {
               <Map
                 center={userLocation ? [userLocation.lat, userLocation.lng] : [54.5, -2]}
                 zoom={userLocation ? MAP_CONFIG.STANDARD_ZOOM_5KM : MAP_CONFIG.STANDARD_ZOOM_5KM}
-                markers={getRecentAlerts().map((r) => ({
-                  id: r.id,
-                  position: [r.location.lat, r.location.lng] as [number, number],
-                  popup: `🐑 ${r.sheepCount} sheep - ${r.status}`,
-                  type: 'sheep' as const
-                }))}
+                markers={[
+                  // User's current location
+                  ...(userLocation ? [{
+                    id: 'user-location',
+                    position: [userLocation.lat, userLocation.lng] as [number, number],
+                    popup: '📍 Your location',
+                    type: 'default' as const
+                  }] : []),
+                  // Recent sheep reports
+                  ...getRecentAlerts().map((r) => ({
+                    id: r.id,
+                    position: [r.location.lat, r.location.lng] as [number, number],
+                    popup: `🐑 ${r.sheepCount} sheep - ${r.status}`,
+                    type: 'sheep' as const
+                  }))
+                ]}
               />
             </div>
 
             {/* Legend */}
             <div className="flex items-center gap-4 mb-6 text-sm text-slate-600">
+              <div className="flex items-center gap-1">
+                <span>📍</span> Your location
+              </div>
               <div className="flex items-center gap-1">
                 <span>🐑</span> Reported sheep (last 12h)
               </div>
