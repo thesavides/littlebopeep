@@ -31,13 +31,7 @@ export default function HomePage() {
   }
 
   const handleAdminClick = () => {
-    const password = prompt(t('home.adminPasswordPrompt', {}, 'Enter admin password:'))
-    if (password === 'admin123') {
-      setAdmin(true)
-      setRole(null)
-    } else {
-      alert(t('home.incorrectPassword', {}, 'Incorrect password'))
-    }
+    router.push('/admin-login')
   }
 
   // Force re-render when language changes by using a visible dependency

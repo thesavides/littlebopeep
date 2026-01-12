@@ -4,8 +4,9 @@ import { useState, useMemo } from 'react'
 import { useAppStore, getDaysSince, MAP_CONFIG } from '@/store/appStore'
 import Header from './Header'
 import Map from './Map'
+import AdminUserManagement from './AdminUserManagement'
 
-type AdminView = 'overview' | 'walkers' | 'farmers' | 'reports' | 'farms' | 'billing'
+type AdminView = 'overview' | 'walkers' | 'farmers' | 'reports' | 'farms' | 'billing' | 'admins'
 type SortBy = 'date' | 'daysUnclaimed'
 type FilterStatus = 'all' | 'reported' | 'claimed' | 'resolved'
 type FilterArchive = 'active' | 'archived' | 'all'
@@ -324,6 +325,7 @@ export default function AdminDashboard() {
             <NavButton view="reports" label="Reports" count={reports.filter(r => !r.archived).length} />
             <NavButton view="farms" label="Farms" count={farms.length} />
             <NavButton view="billing" label="Billing" />
+            <NavButton view="admins" label="Admin Users" />
           </div>
         </div>
       </div>
@@ -699,6 +701,10 @@ export default function AdminDashboard() {
               </div>
             </div>
           </>
+        )}
+
+        {currentView === 'admins' && (
+          <AdminUserManagement />
         )}
 
         <div className="mt-6 bg-slate-200 rounded-xl p-4 text-sm text-slate-600">

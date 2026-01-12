@@ -132,7 +132,54 @@ INSERT INTO translations (key, language_code, value, namespace, context) VALUES
   ('admin.deleteTypeFarm', 'en', 'farm', 'admin', 'Delete type'),
 
   -- Footer
-  ('admin.footerText', 'en', 'Little Bo Peep Admin Panel • Version 3.0.0', 'admin', 'Footer text')
+  ('admin.footerText', 'en', 'Little Bo Peep Admin Panel • Version 3.0.0', 'admin', 'Footer text'),
+
+  -- Admin Login Page
+  ('admin.loginTitle', 'en', 'Admin Access', 'admin', 'Title on admin login page'),
+  ('admin.loginSubtitle', 'en', 'Little Bo Peep Administration', 'admin', 'Subtitle on admin login page'),
+  ('admin.username', 'en', 'Username', 'admin', 'Username field label'),
+  ('admin.password', 'en', 'Password', 'admin', 'Password field label'),
+  ('admin.signIn', 'en', 'Sign In', 'admin', 'Login button text'),
+  ('admin.authenticating', 'en', 'Authenticating...', 'admin', 'Login button text while loading'),
+  ('admin.defaultCredentials', 'en', 'Default Credentials (Demo):', 'admin', 'Header for demo credentials'),
+  ('admin.changePassword', 'en', 'Change password after first login', 'admin', 'Warning to change default password'),
+  ('admin.securityNotice', 'en', 'All admin actions are logged and monitored', 'admin', 'Security notice at bottom of login'),
+  ('admin.backToHome', 'en', 'Back to Home', 'admin', 'Link to return to homepage'),
+  ('admin.invalidCredentials', 'en', 'Invalid credentials', 'admin', 'Error when login fails'),
+  ('admin.authFailed', 'en', 'Authentication failed. Please try again.', 'admin', 'Generic auth error'),
+
+  -- Admin User Management
+  ('admin.userManagement', 'en', 'Admin User Management', 'admin', 'Admin users page title'),
+  ('admin.manageAccounts', 'en', 'Manage admin accounts and permissions', 'admin', 'Admin users page description'),
+  ('admin.createAdmin', 'en', 'Create Admin', 'admin', 'Button to create new admin'),
+  ('admin.loggedInAs', 'en', 'Logged in as:', 'admin', 'Label showing current admin'),
+  ('admin.superAdmin', 'en', 'Super Admin', 'admin', 'Badge for super admin role'),
+  ('admin.adminRole', 'en', 'Admin', 'admin', 'Badge for regular admin role'),
+  ('admin.inactive', 'en', 'Inactive', 'admin', 'Status badge for inactive admin'),
+  ('admin.fullName', 'en', 'Full Name', 'admin', 'Table column and form field'),
+  ('admin.email', 'en', 'Email', 'admin', 'Table column and form field'),
+  ('admin.type', 'en', 'Type', 'admin', 'Table column for admin type'),
+  ('admin.status', 'en', 'Status', 'admin', 'Table column for status'),
+  ('admin.lastLogin', 'en', 'Last Login', 'admin', 'Table column for last login time'),
+  ('admin.actions', 'en', 'Actions', 'admin', 'Table column for action buttons'),
+  ('admin.deactivate', 'en', 'Deactivate', 'admin', 'Button to deactivate admin'),
+  ('admin.createNewAdmin', 'en', 'Create New Admin', 'admin', 'Modal title'),
+  ('admin.grantSuperAdmin', 'en', 'Grant Super Admin privileges (can create other admins)', 'admin', 'Checkbox label for super admin'),
+  ('admin.minimumChars', 'en', 'Minimum 8 characters', 'admin', 'Password requirement text'),
+  ('admin.required', 'en', 'required', 'admin', 'Field requirement indicator'),
+  ('admin.adminCreated', 'en', 'Admin user "{{username}}" created successfully', 'admin', 'Success message after creating admin'),
+  ('admin.adminDeactivated', 'en', 'Admin "{{username}}" deactivated', 'admin', 'Success message after deactivating'),
+  ('admin.loadFailed', 'en', 'Failed to load admin users', 'admin', 'Error loading admin list'),
+  ('admin.mustBeLoggedIn', 'en', 'You must be logged in as an admin', 'admin', 'Error when not authenticated'),
+  ('admin.mustBeSuperAdmin', 'en', 'Only super admins can create new admin users', 'admin', 'Error when not super admin'),
+  ('admin.createFailed', 'en', 'Failed to create admin user', 'admin', 'Generic create error'),
+  ('admin.deactivateFailed', 'en', 'Failed to deactivate admin', 'admin', 'Generic deactivate error'),
+  ('admin.deactivateConfirm', 'en', 'Are you sure you want to deactivate admin "{{username}}"?', 'admin', 'Confirmation dialog'),
+  ('admin.noAdminsFound', 'en', 'No admin users found', 'admin', 'Empty state message'),
+  ('admin.loadingAdmins', 'en', 'Loading admin users...', 'admin', 'Loading state message'),
+  ('admin.mustBeLoggedInView', 'en', 'You must be logged in as an admin to view this page', 'admin', 'Access denied message'),
+  ('admin.never', 'en', 'Never', 'admin', 'Text for never logged in'),
+  ('admin.adminUsers', 'en', 'Admin Users', 'admin', 'Navigation tab for admin users page')
 
 ON CONFLICT (key, language_code) DO UPDATE SET
   value = EXCLUDED.value,

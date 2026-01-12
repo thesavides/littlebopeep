@@ -202,6 +202,11 @@ interface AppState {
   getCurrentUser: () => User | undefined
   getFarmsByFarmerId: (farmerId: string) => Farm[]
   getReportsByUserId: (userId: string) => SheepReport[]
+
+  // Role hierarchy helpers
+  canAccessWalkerFeatures: () => boolean
+  canAccessFarmerFeatures: () => boolean
+  canAccessAdminFeatures: () => boolean
 }
 
 export const useAppStore = create<AppState>()(
@@ -506,13 +511,30 @@ export const useAppStore = create<AppState>()(
         const { currentUserId, users } = get()
         return users.find(u => u.id === currentUserId)
       },
-      
+
       getFarmsByFarmerId: (farmerId) => {
         return get().farms.filter(f => f.farmerId === farmerId)
       },
-      
+
       getReportsByUserId: (userId) => {
         return get().reports.filter(r => r.reporterId === userId)
+      },
+
+      // Role hierarchy helpers
+      // Admins and farmers can also act as walkers
+      canAccessWalkerFeatures: () => {
+        const { currentRole, isAdmin } = get()
+        return isAdmin || currentRole === 'admin' || currentRole === 'walker' || currentRole === 'farmer'
+      },
+
+      canAccessFarmerFeatures: () => {
+        const { currentRole, isAdmin } = get()
+        return isAdmin || currentRole === 'admin' || currentRole === 'farmer'
+      },
+
+      canAccessAdminFeatures: () => {
+        const { currentRole, isAdmin } = get()
+        return isAdmin || currentRole === 'admin'
       },
     }),
     {
