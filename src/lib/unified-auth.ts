@@ -79,6 +79,59 @@ export async function signIn(email: string, password: string): Promise<{
 }
 
 /**
+ * Sign up a new walker or farmer
+ */
+export async function signUp(
+  email: string,
+  password: string,
+  fullName: string,
+  role: 'walker' | 'farmer'
+): Promise<{
+  success: boolean
+  user?: UserProfile
+  error?: string
+}> {
+  try {
+    // Create user in Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName
+        }
+      }
+    })
+
+    if (authError || !authData.user) {
+      return { success: false, error: authError?.message || 'Sign up failed' }
+    }
+
+    // Create user profile
+    const { data: profile, error: profileError } = await supabase
+      .from('user_profiles')
+      .insert([{
+        id: authData.user.id,
+        email,
+        full_name: fullName,
+        role,
+        status: 'active'
+      }])
+      .select()
+      .single()
+
+    if (profileError) {
+      return { success: false, error: 'Failed to create user profile' }
+    }
+
+    return { success: true, user: profile }
+  } catch (error) {
+    console.error('Sign up error:', error)
+    return { success: false, error: 'Sign up failed' }
+  }
+}
+
+/**
  * Sign out current user
  */
 export async function signOut(): Promise<void> {

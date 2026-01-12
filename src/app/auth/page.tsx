@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { signIn } from '@/lib/unified-auth'
+import { signIn, signUp } from '@/lib/unified-auth'
 import { useAppStore } from '@/store/appStore'
 import { useTranslation } from '@/contexts/TranslationContext'
 import PasswordInput from '@/components/PasswordInput'
@@ -15,6 +15,7 @@ export default function AuthPage() {
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [fullName, setFullName] = useState('')
   const [role, setRoleSelection] = useState<'walker' | 'farmer'>('walker')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -26,9 +27,33 @@ export default function AuthPage() {
 
     try {
       if (mode === 'signup') {
-        // Signup is now handled by admin invitations only
-        setError(t('auth.signupDisabled', {}, 'Please contact an administrator to create an account'))
-        setLoading(false)
+        // Validate full name is provided
+        if (!fullName.trim()) {
+          setError(t('auth.nameRequired', {}, 'Please enter your full name'))
+          setLoading(false)
+          return
+        }
+
+        // Sign up walker or farmer
+        const { success, user, error: signUpError } = await signUp(
+          email,
+          password,
+          fullName.trim(),
+          role
+        )
+
+        if (!success || !user) {
+          setError(signUpError || t('auth.signupFailed', {}, 'Sign up failed'))
+          setLoading(false)
+          return
+        }
+
+        // Set user state
+        setCurrentUserId(user.id)
+        setRole(user.role as any)
+
+        // Redirect to homepage
+        router.push('/')
         return
       }
 
@@ -92,33 +117,50 @@ export default function AuthPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === 'signup' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {t('auth.iAmA', {}, 'I am a:')}
-              </label>
-              <div className="flex gap-4">
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    value="walker"
-                    checked={role === 'walker'}
-                    onChange={(e) => setRoleSelection(e.target.value as 'walker')}
-                    className="mr-2"
-                  />
-                  <span>{t('auth.walker', {}, 'Walker')}</span>
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('auth.iAmA', {}, 'I am a:')}
                 </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    value="farmer"
-                    checked={role === 'farmer'}
-                    onChange={(e) => setRoleSelection(e.target.value as 'farmer')}
-                    className="mr-2"
-                  />
-                  <span>{t('auth.farmer', {}, 'Farmer')}</span>
-                </label>
+                <div className="flex gap-4">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      value="walker"
+                      checked={role === 'walker'}
+                      onChange={(e) => setRoleSelection(e.target.value as 'walker')}
+                      className="mr-2"
+                    />
+                    <span>{t('auth.walker', {}, 'Walker')}</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      value="farmer"
+                      checked={role === 'farmer'}
+                      onChange={(e) => setRoleSelection(e.target.value as 'farmer')}
+                      className="mr-2"
+                    />
+                    <span>{t('auth.farmer', {}, 'Farmer')}</span>
+                  </label>
+                </div>
               </div>
-            </div>
+
+              <div>
+                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('auth.fullName', {}, 'Full Name')}
+                </label>
+                <input
+                  id="fullName"
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder={t('auth.fullNamePlaceholder', {}, 'John Smith')}
+                />
+              </div>
+            </>
           )}
 
           <div>
@@ -185,14 +227,6 @@ export default function AuthPage() {
             ← {t('common.backToHome', {}, 'Back to Home')}
           </button>
         </div>
-
-        {mode === 'signup' && (
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800 text-center">
-              {t('auth.signupInfo', {}, 'To create an account, please contact an administrator who will send you an invitation email.')}
-            </p>
-          </div>
-        )}
       </div>
     </div>
   )
