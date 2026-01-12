@@ -159,8 +159,10 @@ export async function requestPasswordReset(email: string): Promise<{
   error?: string
 }> {
   try {
+    // Always use production URL for password reset emails
+    const productionUrl = 'https://little-bo-peep-327019541186.europe-west2.run.app'
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/auth/reset-password`
+      redirectTo: `${productionUrl}/auth/callback?next=/auth/reset-password`
     })
 
     if (error) {
@@ -350,9 +352,10 @@ export async function adminResetUserPassword(userId: string, email: string): Pro
   error?: string
 }> {
   try {
-    // Send password reset email
+    // Always use production URL for password reset emails
+    const productionUrl = 'https://little-bo-peep-327019541186.europe-west2.run.app'
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/auth/reset-password`
+      redirectTo: `${productionUrl}/auth/callback?next=/auth/reset-password`
     })
 
     if (resetError) {
