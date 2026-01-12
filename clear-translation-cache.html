@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clear Translation Cache - Little Bo Peep</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: linear-gradient(to bottom right, #f0fdf4, #dbeafe);
+    }
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #1e293b;
+      margin-top: 0;
+    }
+    button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 10px 10px 10px 0;
+    }
+    button:hover {
+      background: #2563eb;
+    }
+    .success {
+      background: #10b981;
+    }
+    .success:hover {
+      background: #059669;
+    }
+    #status {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 8px;
+      display: none;
+    }
+    .status-success {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #10b981;
+    }
+    .status-info {
+      background: #dbeafe;
+      color: #1e40af;
+      border: 1px solid #3b82f6;
+    }
+    .cache-info {
+      background: #f8fafc;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+      border-left: 4px solid #3b82f6;
+    }
+    code {
+      background: #1e293b;
+      color: #10b981;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Courier New', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🧹 Clear Translation Cache</h1>
+    <p>Little Bo Peep caches translations for 24 hours. If you've just updated translations in Supabase, clear the cache to see the new translations immediately.</p>
+
+    <div class="cache-info">
+      <h3>Current Cache Status:</h3>
+      <div id="cacheStatus">Checking...</div>
+    </div>
+
+    <h3>Actions:</h3>
+    <button onclick="clearCache()">Clear Translation Cache</button>
+    <button onclick="clearAllStorage()">Clear All Storage</button>
+    <button class="success" onclick="goToApp()">Go to App</button>
+
+    <div id="status"></div>
+
+    <h3 style="margin-top: 30px;">What This Does:</h3>
+    <ul>
+      <li><strong>Clear Translation Cache:</strong> Removes cached translations (keeps login state)</li>
+      <li><strong>Clear All Storage:</strong> Removes everything (you'll need to log in again)</li>
+    </ul>
+
+    <h3>Manual Method:</h3>
+    <p>You can also open the browser console (F12) on your app and run:</p>
+    <code>
+      localStorage.clear(); location.reload();
+    </code>
+  </div>
+
+  <script>
+    function showStatus(message, type = 'info') {
+      const status = document.getElementById('status');
+      status.textContent = message;
+      status.className = `status-${type}`;
+      status.style.display = 'block';
+    }
+
+    function checkCache() {
+      const cacheKeys = Object.keys(localStorage).filter(key => key.startsWith('translations_'));
+      const statusDiv = document.getElementById('cacheStatus');
+
+      if (cacheKeys.length === 0) {
+        statusDiv.innerHTML = '✅ <strong>No cached translations found</strong> - translations will load fresh from database';
+      } else {
+        statusDiv.innerHTML = `⚠️ <strong>Found ${cacheKeys.length} cached translation(s):</strong><br>`;
+        cacheKeys.forEach(key => {
+          const data = JSON.parse(localStorage.getItem(key));
+          const age = Math.round((Date.now() - data.timestamp) / 1000 / 60);
+          const lang = key.split('_').pop();
+          statusDiv.innerHTML += `<br>• ${lang.toUpperCase()}: Cached ${age} minutes ago`;
+        });
+      }
+    }
+
+    function clearCache() {
+      const translationKeys = Object.keys(localStorage).filter(key => key.startsWith('translations_'));
+
+      if (translationKeys.length === 0) {
+        showStatus('No translation cache to clear!', 'info');
+        return;
+      }
+
+      translationKeys.forEach(key => localStorage.removeItem(key));
+
+      showStatus(`✅ Cleared ${translationKeys.length} cached translation(s)! Refresh the app to load new translations.`, 'success');
+      checkCache();
+    }
+
+    function clearAllStorage() {
+      if (confirm('This will clear ALL data including login state. Continue?')) {
+        localStorage.clear();
+        showStatus('✅ Cleared all storage! You will need to log in again.', 'success');
+        checkCache();
+      }
+    }
+
+    function goToApp() {
+      window.location.href = 'https://little-bo-peep-327019541186.europe-west2.run.app';
+    }
+
+    // Check cache on load
+    checkCache();
+  </script>
+</body>
+</html>

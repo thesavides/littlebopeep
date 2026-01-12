@@ -77,8 +77,9 @@ ${JSON.stringify(entries, null, 2)}`
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 8192,
+        model: 'claude-3-opus-20240229',
+        max_tokens: 4096,
+        temperature: 0.3,
         messages: [
           {
             role: 'user',
@@ -89,7 +90,10 @@ ${JSON.stringify(entries, null, 2)}`
     })
 
     if (!response.ok) {
-      throw new Error(`Claude API error: ${response.statusText}`)
+      const errorBody = await response.text()
+      console.error('API Response Status:', response.status)
+      console.error('API Response Body:', errorBody)
+      throw new Error(`Claude API error: ${response.statusText} - ${errorBody}`)
     }
 
     const result = await response.json()

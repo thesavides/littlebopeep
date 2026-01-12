@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Translation Debug</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <h1>Little Bo Peep - Translation Debug</h1>
+
+  <div id="status">Loading...</div>
+
+  <h2>Languages</h2>
+  <div id="languages"></div>
+
+  <h2>English Translations</h2>
+  <select id="langSelect">
+    <option value="en">English</option>
+    <option value="cy">Welsh</option>
+    <option value="ga">Irish</option>
+    <option value="gd">Scottish Gaelic</option>
+  </select>
+  <button onclick="changeLanguage()">Load Translations</button>
+
+  <div id="translations"></div>
+
+  <h2>Test Translation Keys</h2>
+  <div id="test-keys"></div>
+
+  <script>
+    const supabaseUrl = 'https://oyfikxdowpekmcxszbqg.supabase.co'
+    const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95ZmlreGRvd3Bla21jeHN6YnFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgwMjgwNTEsImV4cCI6MjA4MzYwNDA1MX0.9Dgwssq8nYrpVZKDImON3bne9J67JIIR1oINEi_vQ3U'
+
+    const { createClient } = supabase
+    const client = createClient(supabaseUrl, supabaseAnonKey)
+
+    let currentTranslations = {}
+
+    async function loadLanguages() {
+      const { data, error } = await client
+        .from('languages')
+        .select('*')
+        .order('display_order')
+
+      if (error) {
+        document.getElementById('status').innerHTML = '❌ Error: ' + error.message
+        return
+      }
+
+      const html = data.map(lang =>
+        `<div>${lang.flag_emoji} ${lang.name_native} (${lang.code}) - enabled: ${lang.enabled}</div>`
+      ).join('')
+
+      document.getElementById('languages').innerHTML = html
+    }
+
+    async function changeLanguage() {
+      const langCode = document.getElementById('langSelect').value
+      const { data, error } = await client
+        .from('translations')
+        .select('key, value')
+        .eq('language_code', langCode)
+
+      if (error) {
+        document.getElementById('status').innerHTML = '❌ Error: ' + error.message
+        console.error('Translation fetch error:', error)
+        return
+      }
+
+      // Convert to dictionary
+      currentTranslations = {}
+      data.forEach(t => {
+        currentTranslations[t.key] = t.value
+      })
+
+      document.getElementById('status').innerHTML = `✅ Loaded ${data.length} translations for ${langCode}`
+
+      const html = data.slice(0, 20).map(t =>
+        `<div><strong>${t.key}:</strong> ${t.value}</div>`
+      ).join('')
+
+      document.getElementById('translations').innerHTML = html
+
+      // Test specific keys
+      testKeys()
+    }
+
+    function testKeys() {
+      const testKeysArray = [
+        'header.appName',
+        'home.welcomeWalker',
+        'home.welcomeFarmer',
+        'home.tagline',
+        'home.description',
+        'home.howItWorks'
+      ]
+
+      const html = testKeysArray.map(key => {
+        const value = currentTranslations[key]
+        const status = value ? '✅' : '❌'
+        return `<div>${status} <strong>${key}:</strong> ${value || 'NOT FOUND'}</div>`
+      }).join('')
+
+      document.getElementById('test-keys').innerHTML = html
+    }
+
+    // Load on startup
+    loadLanguages()
+    changeLanguage()
+  </script>
+</body>
+</html>
