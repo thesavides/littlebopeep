@@ -1,8 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { resetPassword } from '@/lib/unified-auth'
+
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic'
 
 export default function ResetPasswordPage() {
   const router = useRouter()

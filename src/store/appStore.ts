@@ -31,7 +31,7 @@ export function getDaysSince(date: Date): number {
   return Math.floor(diffTime / (1000 * 60 * 60 * 24))
 }
 
-export type UserRole = 'walker' | 'farmer' | 'admin' | null
+export type UserRole = 'walker' | 'farmer' | 'admin' | 'super_admin' | null
 export type SubscriptionStatus = 'trial' | 'active' | 'cancelled' | 'expired'
 
 export interface User {

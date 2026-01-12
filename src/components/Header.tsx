@@ -19,7 +19,7 @@ export default function Header({ showBackButton = false, onBack, title }: Header
   const { t, language } = useTranslation() // Added language to trigger re-renders
   const { currentRole, isAdmin, setShowHomePage, setRole, setAdmin, setCurrentUserId } = useAppStore()
   const [userEmail, setUserEmail] = useState<string>('')
-  const [userPrimaryRole, setUserPrimaryRole] = useState<'walker' | 'farmer' | null>(null)
+  const [userPrimaryRole, setUserPrimaryRole] = useState<'walker' | 'farmer' | 'admin' | 'super_admin' | null>(null)
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false)
 
   // CRITICAL FIX: Force component re-render when language changes

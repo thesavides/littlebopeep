@@ -37,13 +37,9 @@ export default function AdminUserManagement() {
   const loadUsers = async () => {
     try {
       setLoading(true)
-      const { success, users: userList, error: loadError } = await getAllUsers()
-      if (success && userList) {
-        // Filter to show only admins and super_admins
-        setUsers(userList.filter(u => u.role === 'admin' || u.role === 'super_admin'))
-      } else {
-        setError(loadError || 'Failed to load users')
-      }
+      const userList = await getAllUsers()
+      // Filter to show only admins and super_admins
+      setUsers(userList.filter(u => u.role === 'admin' || u.role === 'super_admin'))
     } catch (err: any) {
       setError('Failed to load admin users')
       console.error('Load users error:', err)
