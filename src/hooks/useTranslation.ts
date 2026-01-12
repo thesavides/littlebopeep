@@ -103,7 +103,7 @@ export function useTranslation() {
     (key: string, params?: Record<string, string | number>, fallback?: string): string => {
       return translate(key, translations, params, fallback)
     },
-    [translations]
+    [translations, currentLanguage] // Include currentLanguage to force re-creation when language changes
   )
 
   /**
@@ -139,8 +139,9 @@ export function useTranslation() {
   const refreshTranslations = useCallback(async () => {
     setIsLoading(true)
     try {
-      // Clear cache and reload
-      localStorage.removeItem(`translations_v1_${currentLanguage}`)
+      // Clear cache and reload - use the clearTranslationCache function from i18n
+      const { clearTranslationCache } = await import('@/lib/i18n')
+      clearTranslationCache(currentLanguage)
       const translationsData = await fetchTranslations(currentLanguage)
       setTranslations(translationsData)
     } catch (err) {

@@ -75,7 +75,7 @@ export default function Header({ showBackButton = false, onBack, title }: Header
   }
 
   return (
-    <header className={`shadow-sm sticky top-0 z-50 ${isAdmin ? 'bg-slate-800' : 'bg-white'}`}>
+    <header className={`shadow-sm sticky top-0 z-50 ${isAdmin ? 'bg-slate-800' : 'bg-white'}`} key={language}>
       <div className="max-w-6xl mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Left side - Logo and back button */}
