@@ -51,14 +51,8 @@ export default function AuthPage() {
         return
       }
 
-      // Redirect based on role
-      if (user.role === 'super_admin' || user.role === 'admin') {
-        router.push('/admin-dashboard')
-      } else if (user.role === 'farmer') {
-        router.push('/farmer-dashboard')
-      } else {
-        router.push('/walker-dashboard')
-      }
+      // Redirect to homepage - it handles role-based dashboard routing
+      router.push('/')
     } catch (err: any) {
       setError(err.message || t('auth.authenticationFailed', {}, 'Authentication failed'))
     } finally {
