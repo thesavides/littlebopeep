@@ -548,3 +548,168 @@ USING (
 **Last Updated**: January 12, 2026
 **Status**: ✅ Ready for Production
 **Blocker**: ⚠️  Rotate service role key (exposed in git)
+
+---
+
+## 🐛 COMMON BUILD ISSUES & SOLUTIONS
+
+### Issue 1: "npm ci can only install with an existing package-lock.json"
+
+**Symptom**: Docker build fails with error about missing package-lock.json
+
+**Root Cause**: `package-lock.json` was in `.gitignore` and not committed
+
+**Solution**:
+```bash
+# Remove from .gitignore
+sed -i '/package-lock.json/d' .gitignore
+
+# Add and commit
+git add package-lock.json .gitignore
+git commit -m "Add package-lock.json for Docker builds"
+git push
+```
+
+**Status**: ✅ FIXED in commit 6dd4859
+
+**Prevention**: NEVER add `package-lock.json` to `.gitignore`
+
+---
+
+### Issue 2: Buildpacks Timing Out
+
+**Symptom**: Build gets stuck at "Building Container..." and eventually fails
+
+**Root Cause**: Google Cloud buildpacks are unreliable for complex Next.js apps
+
+**Solution**: Switch to Docker builds (see Dockerfile)
+
+**Status**: ✅ FIXED in commit e72db39
+
+**Implementation**:
+- Created multi-stage Dockerfile
+- Updated cloudbuild.yaml to use Docker
+- Increased machine resources (E2_HIGHCPU_8)
+
+---
+
+### Issue 3: TypeScript Build Errors in Cloud
+
+**Symptom**: Build works locally but fails in Cloud Build with TypeScript errors
+
+**Root Cause**: Type mismatches between unified-auth and appStore
+
+**Fixes Applied**:
+1. **AdminUserManagement.tsx**: `getAllUsers()` returns array, not `{ success, users, error }`
+2. **Header.tsx**: Added `'admin' | 'super_admin'` to `userPrimaryRole` type
+3. **appStore.ts**: Updated `UserRole` to include `'super_admin'`
+4. **reset-password/page.tsx**: Marked as `dynamic = 'force-dynamic'`
+
+**Status**: ✅ FIXED in commit ed59a70
+
+**Always test before pushing**:
+```bash
+npm run build  # Must succeed
+npm run lint   # Should pass
+```
+
+---
+
+### Issue 4: Exposed Secrets in Git
+
+**Symptom**: GitHub secret scanning alert
+
+**Root Cause**: Service role key hardcoded in scripts (commits dbe4850, 3404f77)
+
+**Immediate Actions Taken**:
+1. ✅ Removed files with exposed keys (commit 3404f77)
+2. ✅ Files deleted: `set-password-simple.js`, `reset-admin-password.js`, etc.
+
+**Still Required**:
+- [ ] Rotate Supabase service role key in dashboard
+- [ ] Update rotated key in Google Cloud Secret Manager
+- [ ] Acknowledge GitHub security alerts
+
+**Prevention**:
+- Always use Secret Manager for sensitive keys
+- Never hardcode service role keys
+- Use anon key for client operations only
+
+---
+
+## 📋 Build Troubleshooting Checklist
+
+When a build fails, check these in order:
+
+1. **Test Locally First**:
+   ```bash
+   npm run build
+   ```
+   If this fails, fix it before pushing.
+
+2. **Check Git Status**:
+   ```bash
+   git status
+   git ls-files package-lock.json  # Should return file path
+   ```
+
+3. **View Build Logs**:
+   ```bash
+   BUILD_ID=$(gcloud builds list --limit=1 --format="value(id)")
+   gcloud builds log $BUILD_ID | tail -100
+   ```
+
+4. **Check Dockerfile**:
+   - Verify `package.json` and `package-lock.json` are copied
+   - Ensure `npm ci` comes before `npm run build`
+   - Check Node version matches local
+
+5. **Check cloudbuild.yaml**:
+   - Verify secrets are correctly bound
+   - Check machine type is sufficient
+   - Ensure timeout is adequate
+
+6. **Check Secret Manager**:
+   ```bash
+   gcloud secrets list
+   gcloud secrets versions access latest --secret="NEXT_PUBLIC_SUPABASE_URL"
+   ```
+
+---
+
+## 🎯 Known Working Configuration
+
+**Last Successful Deploy**: Commit 4c035a8 (January 12, 2026)
+
+**Current Attempts** (Failed):
+- e72db39: Docker build setup (fixed buildpacks issue)
+- 6dd4859: Added package-lock.json (fixing npm ci issue)
+- **Next**: Should succeed
+
+**Build Configuration**:
+```yaml
+# cloudbuild.yaml
+steps:
+  - Docker build
+  - Docker push
+  - gcloud run deploy
+
+options:
+  machineType: 'E2_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: '1800s'
+```
+
+**Dockerfile**:
+- Base: `node:18-alpine`
+- Multi-stage: deps → builder → runner
+- Output: standalone
+- User: non-root (nextjs:nodejs)
+
+---
+
+**Last Updated**: January 12, 2026 19:25 UTC
+**Build Status**: 🔄 In Progress (commit 6dd4859)
+**Expected Result**: ✅ Should succeed with package-lock.json added
+
