@@ -160,7 +160,7 @@ export async function requestPasswordReset(email: string): Promise<{
 }> {
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`
+      redirectTo: `${window.location.origin}/auth/callback?next=/auth/reset-password`
     })
 
     if (error) {
@@ -352,7 +352,7 @@ export async function adminResetUserPassword(userId: string, email: string): Pro
   try {
     // Send password reset email
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`
+      redirectTo: `${window.location.origin}/auth/callback?next=/auth/reset-password`
     })
 
     if (resetError) {

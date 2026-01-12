@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
     // Send password reset email
     const origin = request.headers.get('origin') || 'https://little-bo-peep-327019541186.europe-west2.run.app'
     const { error: resetError } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/auth/reset-password?new=true`
+      redirectTo: `${origin}/auth/callback?next=/auth/reset-password?new=true`
     })
 
     if (resetError) {
