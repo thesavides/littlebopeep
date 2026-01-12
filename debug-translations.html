@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Debug Translation Switching</title>
+  <style>
+    body { font-family: monospace; padding: 20px; max-width: 800px; margin: 0 auto; }
+    button { padding: 10px; margin: 5px; font-size: 14px; }
+    .result { background: #f0f0f0; padding: 15px; margin: 10px 0; border-radius: 5px; }
+    .error { color: red; }
+    .success { color: green; }
+  </style>
+</head>
+<body>
+  <h1>🔍 Translation Switching Debug Tool</h1>
+
+  <h2>Test on Production:</h2>
+  <p>Open this in browser console on: <a href="https://little-bo-peep-327019541186.europe-west2.run.app" target="_blank">https://little-bo-peep-327019541186.europe-west2.run.app</a></p>
+
+  <h3>Step 1: Check what's in localStorage</h3>
+  <pre>
+// Copy and paste in console:
+console.log('Preferred language:', localStorage.getItem('preferred_language'));
+console.log('All translation caches:');
+Object.keys(localStorage).filter(k => k.includes('translations')).forEach(key => {
+  const data = JSON.parse(localStorage.getItem(key));
+  console.log(key, ':', Object.keys(data.data).length, 'translations');
+});
+  </pre>
+
+  <h3>Step 2: Test translation loading</h3>
+  <pre>
+// Import Supabase
+const { createClient } = supabase;
+const client = createClient(
+  'https://oyfikxdowpekmcxszbqg.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95ZmlreGRvd3Bla21jeHN6YnFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgwMjgwNTEsImV4cCI6MjA4MzYwNDA1MX0.9Dgwssq8nYrpVZKDImON3bne9J67JIIR1oINEi_vQ3U'
+);
+
+// Test fetching Irish translations
+const testIrish = await client.from('translations').select('key, value').eq('language_code', 'ga').limit(5);
+console.log('Irish translations sample:', testIrish.data);
+  </pre>
+
+  <h3>Step 3: Force reload translations</h3>
+  <pre>
+// Clear caches and reload
+Object.keys(localStorage).filter(k => k.includes('translations')).forEach(k => localStorage.removeItem(k));
+location.reload();
+  </pre>
+
+  <h3>Step 4: Check React DevTools</h3>
+  <p>After selecting a language:</p>
+  <ol>
+    <li>Open React DevTools (Components tab)</li>
+    <li>Find "HomePage" component</li>
+    <li>Look at the hooks section</li>
+    <li>Check if "language" state updates when you switch</li>
+    <li>Check if "translations" object changes</li>
+  </ol>
+
+  <h3>What to look for:</h3>
+  <ul>
+    <li><strong>If localStorage has v2 caches:</strong> Good - new version deployed</li>
+    <li><strong>If language state changes:</strong> Good - hook is updating</li>
+    <li><strong>If translations object changes:</strong> Good - data is loading</li>
+    <li><strong>If component doesn't re-render:</strong> BAD - React isn't detecting the change</li>
+  </ul>
+
+  <h2>Quick Fix Instructions:</h2>
+  <p>If it's still not working, the issue might be that the component needs to explicitly read the <code>language</code> variable to create a dependency.</p>
+
+  <p>Try adding this console.log temporarily:</p>
+  <pre>
+// In HomePage.tsx, after the useTranslation line:
+const { t, language } = useTranslation()
+console.log('Current language:', language) // This forces React to track it
+  </pre>
+</body>
+</html>
