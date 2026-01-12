@@ -1,7 +1,7 @@
 'use client'
 
 import { useAppStore } from '@/store/appStore'
-import { signOut, getCurrentUser } from '@/lib/supabase-auth'
+import { signOut, getCurrentUser } from '@/lib/unified-auth'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import LanguageSelector from './LanguageSelector'
@@ -229,8 +229,6 @@ export default function Header({ showBackButton = false, onBack, title }: Header
       {/* Change Password Modal */}
       {showChangePasswordModal && (
         <ChangePasswordModal
-          userType="user"
-          userId={userEmail}
           onClose={() => setShowChangePasswordModal(false)}
           onPasswordChanged={() => {
             alert('Password changed successfully! Please log in again with your new password.')

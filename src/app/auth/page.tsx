@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { signIn, signUp } from '@/lib/supabase-auth'
+import { signIn } from '@/lib/unified-auth'
 import { useAppStore } from '@/store/appStore'
 import { useTranslation } from '@/contexts/TranslationContext'
+import PasswordInput from '@/components/PasswordInput'
 
 export default function AuthPage() {
   const router = useRouter()
@@ -25,22 +26,32 @@ export default function AuthPage() {
 
     try {
       if (mode === 'signup') {
-        const { data, error: signUpError } = await signUp(email, password, role)
-        if (signUpError) throw signUpError
-        if (data?.user) {
-          setCurrentUserId(data.user.id)
-          setRole(data.user.role) // Set to primary role
-          router.push('/')
-        }
-      } else {
-        const { data, error: signInError } = await signIn(email, password)
-        if (signInError) throw signInError
-        if (data?.user) {
-          setCurrentUserId(data.user.id)
-          setRole(data.user.role) // Set to primary role
-          router.push('/')
-        }
+        // Signup is now handled by admin invitations only
+        setError(t('auth.signupDisabled', {}, 'Please contact an administrator to create an account'))
+        setLoading(false)
+        return
       }
+
+      // Sign in with unified auth
+      const { success, user, error: signInError } = await signIn(email, password)
+
+      if (!success || !user) {
+        setError(signInError || t('auth.authenticationFailed', {}, 'Authentication failed'))
+        setLoading(false)
+        return
+      }
+
+      // Set user state
+      setCurrentUserId(user.id)
+      setRole(user.role as any) // Set to primary role
+
+      // Check if password reset is required
+      if (user.password_reset_required) {
+        router.push('/auth/reset-password?new=true')
+        return
+      }
+
+      router.push('/')
     } catch (err: any) {
       setError(err.message || t('auth.authenticationFailed', {}, 'Authentication failed'))
     } finally {
@@ -124,21 +135,15 @@ export default function AuthPage() {
             />
           </div>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              {t('auth.password', {}, 'Password')}
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              placeholder="••••••••"
-            />
-          </div>
+          <PasswordInput
+            id="password"
+            label={t('auth.password', {}, 'Password')}
+            value={password}
+            onChange={setPassword}
+            required
+            minLength={6}
+            placeholder="••••••••"
+          />
 
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
@@ -160,6 +165,17 @@ export default function AuthPage() {
           </button>
         </form>
 
+        {mode === 'signin' && (
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => router.push('/auth/forgot-password')}
+              className="text-sm text-gray-600 hover:text-gray-800 underline"
+            >
+              {t('auth.forgotPassword', {}, 'Forgot Password?')}
+            </button>
+          </div>
+        )}
+
         <div className="mt-6 text-center text-sm text-gray-600">
           <button
             onClick={() => router.push('/')}
@@ -168,6 +184,14 @@ export default function AuthPage() {
             ← {t('common.backToHome', {}, 'Back to Home')}
           </button>
         </div>
+
+        {mode === 'signup' && (
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800 text-center">
+              {t('auth.signupInfo', {}, 'To create an account, please contact an administrator who will send you an invitation email.')}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )

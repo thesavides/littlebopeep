@@ -1,23 +1,18 @@
 'use client'
 
 import { useState } from 'react'
+import { changePassword } from '@/lib/unified-auth'
+import PasswordInput from './PasswordInput'
 
 interface ChangePasswordModalProps {
-  userType: 'admin' | 'user'
   onClose: () => void
   onPasswordChanged: () => void
-  userId?: string
-  adminId?: string
 }
 
 export default function ChangePasswordModal({
-  userType,
   onClose,
-  onPasswordChanged,
-  userId,
-  adminId
+  onPasswordChanged
 }: ChangePasswordModalProps) {
-  const [oldPassword, setOldPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
@@ -40,54 +35,16 @@ export default function ChangePasswordModal({
 
     setLoading(true)
 
-    try {
-      if (userType === 'admin') {
-        // Admin password change
-        const { changeAdminPassword } = await import('@/lib/admin-auth')
-        const result = await changeAdminPassword(adminId!, oldPassword, newPassword)
+    const { success, error: changeError } = await changePassword(newPassword)
 
-        if (!result.success) {
-          setError(result.error || 'Failed to change password')
-          setLoading(false)
-          return
-        }
-      } else {
-        // Regular user password change via Supabase Auth
-        const { supabase } = await import('@/lib/supabase-client')
-
-        // First verify old password by attempting sign in
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: userId!, // Assuming userId is email for regular users
-          password: oldPassword
-        })
-
-        if (signInError) {
-          setError('Current password is incorrect')
-          setLoading(false)
-          return
-        }
-
-        // Update password
-        const { error: updateError } = await supabase.auth.updateUser({
-          password: newPassword
-        })
-
-        if (updateError) {
-          setError(updateError.message)
-          setLoading(false)
-          return
-        }
-      }
-
-      alert('Password changed successfully')
-      onPasswordChanged()
-      onClose()
-    } catch (err: any) {
-      console.error('Password change error:', err)
-      setError('Failed to change password. Please try again.')
-    } finally {
+    if (!success) {
+      setError(changeError || 'Failed to change password')
       setLoading(false)
+      return
     }
+
+    setLoading(false)
+    onPasswordChanged()
   }
 
   return (
@@ -112,53 +69,28 @@ export default function ChangePasswordModal({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Current Password
-            </label>
-            <input
-              type="password"
-              value={oldPassword}
-              onChange={(e) => setOldPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter current password"
-            />
-          </div>
+          <PasswordInput
+            id="newPassword"
+            label="New Password"
+            value={newPassword}
+            onChange={setNewPassword}
+            required
+            minLength={8}
+            autoComplete="new-password"
+            placeholder="Minimum 8 characters"
+            helperText="Minimum 8 characters"
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              New Password
-            </label>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-              minLength={8}
-              autoComplete="new-password"
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Minimum 8 characters"
-            />
-            <p className="text-xs text-slate-500 mt-1">Minimum 8 characters</p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Confirm New Password
-            </label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              minLength={8}
-              autoComplete="new-password"
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Re-enter new password"
-            />
-          </div>
+          <PasswordInput
+            id="confirmPassword"
+            label="Confirm New Password"
+            value={confirmPassword}
+            onChange={setConfirmPassword}
+            required
+            minLength={8}
+            autoComplete="new-password"
+            placeholder="Re-enter new password"
+          />
 
           <div className="flex gap-3 mt-6">
             <button
