@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useAppStore, getDaysSince, MAP_CONFIG } from '@/store/appStore'
 import Header from './Header'
 import Map from './Map'
 import AdminUserManagement from './AdminUserManagement'
-import { inviteUser } from '@/lib/unified-auth'
+import { inviteUser, getAllUsers } from '@/lib/unified-auth'
 
 type AdminView = 'overview' | 'walkers' | 'farmers' | 'reports' | 'farms' | 'billing' | 'admins'
 type SortBy = 'date' | 'daysUnclaimed'
@@ -42,6 +42,8 @@ export default function AdminDashboard() {
   const [currentView, setCurrentView] = useState<AdminView>('overview')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
   const [deleteType, setDeleteType] = useState<'user' | 'report' | 'farm' | 'field'>('user')
+  const [realUsers, setRealUsers] = useState<any[]>([]) // Users from Supabase
+  const [loadingUsers, setLoadingUsers] = useState(true)
 
   // Modal states for CRUD operations
   const [showCreateFarmerModal, setShowCreateFarmerModal] = useState(false)
@@ -60,10 +62,24 @@ export default function AdminDashboard() {
   const [selectedReports, setSelectedReports] = useState<string[]>([])
   const [mapBounds, setMapBounds] = useState<{north: number, south: number, east: number, west: number} | null>(null)
 
+  // Load real users from Supabase on mount
+  useEffect(() => {
+    async function loadUsers() {
+      setLoadingUsers(true)
+      const supabaseUsers = await getAllUsers()
+      setRealUsers(supabaseUsers)
+      setLoadingUsers(false)
+    }
+    loadUsers()
+  }, [])
+
+  // Use real users from Supabase, fallback to mock users for backwards compatibility
+  const allUsers = realUsers.length > 0 ? realUsers : users
+
   // Stats
-  const walkers = users.filter(u => u.role === 'walker')
-  const farmers = users.filter(u => u.role === 'farmer')
-  const activeUsers = users.filter(u => u.status === 'active').length
+  const walkers = allUsers.filter((u: any) => u.role === 'walker')
+  const farmers = allUsers.filter((u: any) => u.role === 'farmer')
+  const activeUsers = allUsers.filter((u: any) => u.status === 'active').length
   
   const reportedCount = reports.filter((r) => r.status === 'reported' && !r.archived).length
   const claimedCount = reports.filter((r) => r.status === 'claimed' && !r.archived).length
@@ -411,21 +427,23 @@ export default function AdminDashboard() {
               </div>
             ) : (
               <div className="divide-y">
-                {walkers.map((user) => {
+                {walkers.map((user: any) => {
                   const userReports = reports.filter(r => r.reporterId === user.id)
+                  const displayName = user.full_name || user.name || 'Unknown'
+                  const displayStatus = user.status === 'suspended' ? 'suspended' : 'active'
                   return (
                     <div key={user.id} className="p-4 flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">🚶</div>
                         <div>
-                          <div className="font-medium text-slate-800">{user.name}</div>
+                          <div className="font-medium text-slate-800">{displayName}</div>
                           <div className="text-sm text-slate-500">{user.email || 'No email'}</div>
-                          <div className="text-xs text-slate-400">{userReports.length} reports</div>
+                          <div className="text-xs text-slate-400">{userReports.length} reports • {new Date(user.created_at || user.createdAt).toLocaleDateString()}</div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${user.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{user.status}</span>
-                        {user.status === 'active' ? (
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${displayStatus === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{displayStatus}</span>
+                        {displayStatus === 'active' ? (
                           <button onClick={() => suspendUser(user.id)} className="px-3 py-1 bg-amber-100 text-amber-700 rounded text-sm hover:bg-amber-200">Suspend</button>
                         ) : (
                           <button onClick={() => activateUser(user.id)} className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200">Activate</button>
@@ -458,23 +476,25 @@ export default function AdminDashboard() {
               </div>
             ) : (
               <div className="divide-y">
-                {farmers.map((user) => {
+                {farmers.map((user: any) => {
                   const userFarms = farms.filter(f => f.farmerId === user.id)
+                  const displayName = user.full_name || user.name || 'Unknown'
+                  const displayStatus = user.status === 'suspended' ? 'suspended' : 'active'
                   return (
                     <div key={user.id} className="p-4 flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">🧑‍🌾</div>
                         <div>
-                          <div className="font-medium text-slate-800">{user.name}</div>
+                          <div className="font-medium text-slate-800">{displayName}</div>
                           <div className="text-sm text-slate-500">{user.email || 'No email'}</div>
-                          <div className="text-xs text-slate-400">{userFarms.length} farm(s)</div>
+                          <div className="text-xs text-slate-400">{userFarms.length} farm(s) • {new Date(user.created_at || user.createdAt).toLocaleDateString()}</div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {getSubscriptionBadge(user)}
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${user.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{user.status}</span>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${displayStatus === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{displayStatus}</span>
                         <button onClick={() => setShowEditFarmerModal(user.id)} className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200">Edit</button>
-                        {user.status === 'active' ? (
+                        {displayStatus === 'active' ? (
                           <button onClick={() => suspendUser(user.id)} className="px-3 py-1 bg-amber-100 text-amber-700 rounded text-sm hover:bg-amber-200">Suspend</button>
                         ) : (
                           <button onClick={() => activateUser(user.id)} className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200">Activate</button>
