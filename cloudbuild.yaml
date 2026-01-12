@@ -10,6 +10,7 @@ steps:
       - '--platform=managed'
       - '--allow-unauthenticated'
       - '--project=$PROJECT_ID'
+      - '--clear-env-vars'
       - '--update-secrets=NEXT_PUBLIC_SUPABASE_URL=NEXT_PUBLIC_SUPABASE_URL:latest,NEXT_PUBLIC_SUPABASE_ANON_KEY=NEXT_PUBLIC_SUPABASE_ANON_KEY:latest'
 
 options:
