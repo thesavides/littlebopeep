@@ -404,14 +404,18 @@ export async function adminResetUserPassword(userId: string, email: string): Pro
   error?: string
 }> {
   try {
-    // Always use production URL for password reset emails
-    const productionUrl = 'https://little-bo-peep-327019541186.europe-west2.run.app'
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${productionUrl}/auth/callback?next=/auth/reset-password`
+    // Call server-side API to send password reset email
+    // This ensures the production URL is always used, regardless of where the admin is accessing from
+    const response = await fetch('/api/admin/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
     })
 
-    if (resetError) {
-      return { success: false, error: resetError.message }
+    const result = await response.json()
+
+    if (!result.success) {
+      return { success: false, error: result.error || 'Failed to send reset email' }
     }
 
     // Mark account as requiring password reset
