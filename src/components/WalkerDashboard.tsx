@@ -313,7 +313,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                   ...getRecentAlerts().map((r) => ({
                     id: r.id,
                     position: [r.location.lat, r.location.lng] as [number, number],
-                    popup: `🐑 ${r.sheepCount} sheep - ${r.status}`,
+                    popup: `${r.categoryEmoji || '🐑'} ${r.sheepCount} ${r.categoryName || 'sheep'} - ${r.status}`,
                     type: 'sheep' as const
                   }))
                 ]}
@@ -404,10 +404,10 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
             {currentReportStep === 1 && (
               <div>
                 <h2 className="text-lg font-semibold text-slate-800 mb-2">
-                  {t('walker.whereSpotSheep', {}, 'Where did you spot the sheep?')}
+                  Where did you spot the {activeCategory ? activeCategory.name.toLowerCase() : 'sheep'}?
                 </h2>
                 <p className="text-slate-600 mb-4">
-                  {t('walker.tapMapInstruction', {}, 'Tap on the map to mark the location. Recent reports (last 12 hours) are shown as 🐑 markers.')}
+                  Tap on the map to mark the location. Recent reports (last 12 hours) are shown as {activeCategory ? activeCategory.emoji : '🐑'} markers.
                 </p>
                 
                 {/* Location Button */}
@@ -428,7 +428,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                       ...getRecentAlerts().map(r => ({
                         id: r.id,
                         position: [r.location.lat, r.location.lng] as [number, number],
-                        popup: `🐑 ${r.sheepCount} sheep reported ${new Date(r.timestamp).toLocaleTimeString()}`,
+                        popup: `${r.categoryEmoji || '🐑'} ${r.sheepCount} ${r.categoryName || 'sheep'} reported ${new Date(r.timestamp).toLocaleTimeString()}`,
                         type: 'sheep' as const
                       })),
                       // Show selected location
@@ -460,7 +460,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
             {currentReportStep === 2 && (
               <div>
                 <h2 className="text-lg font-semibold text-slate-800 mb-4">
-                  {t('walker.tellAboutSheep', {}, 'Tell us about the sheep')}
+                  Tell us about the {activeCategory ? activeCategory.name.toLowerCase() : 'sheep'}
                 </h2>
                 <div className="space-y-4">
                   <div>
