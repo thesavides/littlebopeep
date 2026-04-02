@@ -309,12 +309,14 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                     popup: '📍 Your location',
                     type: 'walker-location' as const
                   }] : []),
-                  // Recent sheep reports
+                  // Recent reports
                   ...getRecentAlerts().map((r) => ({
                     id: r.id,
                     position: [r.location.lat, r.location.lng] as [number, number],
                     popup: `${r.categoryEmoji || '🐑'} ${r.sheepCount} ${r.categoryName || 'sheep'} - ${r.status}`,
-                    type: 'sheep' as const
+                    type: 'sheep' as const,
+                    status: r.status as 'reported' | 'claimed' | 'resolved',
+                    emoji: r.categoryEmoji || '🐑',
                   }))
                 ]}
               />
@@ -436,7 +438,9 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                         id: r.id,
                         position: [r.location.lat, r.location.lng] as [number, number],
                         popup: `${r.categoryEmoji || '🐑'} ${r.sheepCount} ${r.categoryName || 'sheep'} reported ${new Date(r.timestamp).toLocaleTimeString()}`,
-                        type: 'sheep' as const
+                        type: 'sheep' as const,
+                        status: r.status as 'reported' | 'claimed' | 'resolved',
+                        emoji: r.categoryEmoji || '🐑',
                       })),
                       // Show selected location with category emoji
                       ...(draftReport.location ? [{

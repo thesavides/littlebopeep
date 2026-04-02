@@ -529,8 +529,10 @@ export default function AdminDashboard() {
                     ...reports.filter(r => !r.archived).map((r) => ({
                       id: r.id,
                       position: [r.location.lat, r.location.lng] as [number, number],
-                      popup: `🐑 ${r.sheepCount} sheep - ${r.status}`,
-                      type: 'sheep' as const
+                      popup: `${r.categoryEmoji || '🐑'} ${r.sheepCount} ${r.categoryName || 'sheep'} - ${r.status}`,
+                      type: 'sheep' as const,
+                      status: r.status as 'reported' | 'claimed' | 'resolved',
+                      emoji: r.categoryEmoji || '🐑',
                     }))
                   ]}
                   polygons={allFieldPolygons}
@@ -761,8 +763,10 @@ export default function AdminDashboard() {
                   markers={filteredReports.map((r) => ({
                     id: r.id,
                     position: [r.location.lat, r.location.lng] as [number, number],
-                    popup: `🐑 ${r.sheepCount} - ${r.status}`,
-                    type: 'sheep' as const
+                    popup: `${r.categoryEmoji || '🐑'} ${r.sheepCount} ${r.categoryName || ''} - ${r.status}`,
+                    type: 'sheep' as const,
+                    status: r.status as 'reported' | 'claimed' | 'resolved',
+                    emoji: r.categoryEmoji || '🐑',
                   }))}
                 />
               </div>

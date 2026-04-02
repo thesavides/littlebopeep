@@ -369,11 +369,25 @@ function getMarkerIcon(type?: string, status?: string, emoji?: string) {
         popupAnchor: [0, -22],
       })
     case 'sheep':
-    case 'existing':
-      // Return icon based on report status
+    case 'existing': {
+      // Use category emoji with status-coloured border
+      const borderColor = status === 'claimed' ? '#eab308' : status === 'resolved' ? '#64748b' : '#22c55e'
+      const opacity = status === 'resolved' ? 'opacity: 0.7;' : ''
+      const markerEmoji = emoji || '🐑'
+      // Only use dynamic icon if a non-sheep emoji is provided (avoids recreating for default case)
+      if (markerEmoji !== '🐑') {
+        return L.divIcon({
+          className: 'category-report-marker',
+          html: `<div style="font-size: 28px; width: 40px; height: 40px; background: white; border: 3px solid ${borderColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.3); ${opacity}">${markerEmoji}</div>`,
+          iconSize: [40, 40],
+          iconAnchor: [20, 20],
+          popupAnchor: [0, -20],
+        })
+      }
       if (status === 'claimed') return sheepClaimedIcon
       if (status === 'resolved') return sheepResolvedIcon
-      return sheepIcon // Default to reported (green)
+      return sheepIcon
+    }
     default:
       return defaultIcon
   }
