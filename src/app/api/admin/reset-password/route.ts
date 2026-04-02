@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+export const runtime = 'edge'
+
 export async function POST(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -26,8 +28,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Always use production URL for password reset emails
-    const productionUrl = 'https://little-bo-peep-327019541186.europe-west2.run.app'
+    // Use the request origin or configured app URL
+    const productionUrl = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'https://littlebopeep.pages.dev'
 
     const { error } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
       redirectTo: `${productionUrl}/auth/callback?next=/auth/reset-password`

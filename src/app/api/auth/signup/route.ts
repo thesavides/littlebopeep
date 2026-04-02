@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+export const runtime = 'edge'
+
 /**
  * Server-side signup endpoint for walkers and farmers
  * Uses service role key to bypass RLS restrictions
@@ -44,10 +46,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Create user in Supabase Auth
+    // email_confirm: true auto-confirms without sending email
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: true, // Auto-confirm email for walkers/farmers
+      email_confirm: true, // Auto-confirm email (no confirmation email sent)
       user_metadata: {
         full_name: fullName
       }

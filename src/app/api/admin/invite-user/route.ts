@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+export const runtime = 'edge'
+
 // This runs on the server, so we can use service role key
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -121,7 +123,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Send password reset email
-    const origin = request.headers.get('origin') || 'https://little-bo-peep-327019541186.europe-west2.run.app'
+    const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'https://littlebopeep.pages.dev'
     const { error: resetError } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
       redirectTo: `${origin}/auth/callback?next=/auth/reset-password?new=true`
     })
