@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-export const runtime = 'edge'
-
 /**
  * Server-side signup endpoint for walkers and farmers
  * Uses service role key to bypass RLS restrictions
