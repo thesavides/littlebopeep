@@ -5,10 +5,22 @@ import { supabase } from './supabase-client'
  * Handles compression, validation, and Supabase Storage upload
  */
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+const MAX_FILE_SIZE = 20 * 1024 * 1024 // 20MB (HEIC files can be large before conversion)
 const MAX_PHOTOS = 3
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']
 const BUCKET_NAME = 'sheep-report-photos'
+
+/**
+ * Convert HEIC/HEIF to JPEG using heic2any (client-side, no server needed)
+ */
+async function convertHeicToJpeg(file: File): Promise<File> {
+  const heic2any = (await import('heic2any')).default
+  const blob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.85 }) as Blob
+  // heic2any can return an array when converting multi-page; take first
+  const resultBlob = Array.isArray(blob) ? blob[0] : blob
+  const newName = file.name.replace(/\.(heic|heif)$/i, '.jpg')
+  return new File([resultBlob], newName, { type: 'image/jpeg' })
+}
 
 export interface PhotoUploadResult {
   success: boolean
@@ -24,11 +36,10 @@ export function validatePhoto(file: File): { valid: boolean; error?: string } {
     return { valid: false, error: 'No file provided' }
   }
 
-  if (!ALLOWED_TYPES.includes(file.type)) {
-    return {
-      valid: false,
-      error: `Invalid file type. Allowed: ${ALLOWED_TYPES.join(', ')}`
-    }
+  // Accept all image/* types — browsers may report HEIC as empty string on some devices
+  const isImage = file.type.startsWith('image/') || ALLOWED_TYPES.includes(file.type) || file.type === ''
+  if (!isImage) {
+    return { valid: false, error: 'Please select an image file' }
   }
 
   if (file.size > MAX_FILE_SIZE) {
@@ -122,8 +133,12 @@ export async function uploadPhoto(
       return { success: false, error: validation.error }
     }
 
+    // Convert HEIC/HEIF to JPEG before compressing (non-Safari browsers can't decode HEIC on canvas)
+    const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || /\.(heic|heif)$/i.test(file.name)
+    const processableFile = isHeic ? await convertHeicToJpeg(file) : file
+
     // Compress image
-    const compressedBlob = await compressPhoto(file)
+    const compressedBlob = await compressPhoto(processableFile)
 
     // Generate unique filename
     const timestamp = Date.now()

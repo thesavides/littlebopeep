@@ -110,7 +110,7 @@ export default function PhotoUpload({ reportId, onPhotosUploaded, maxPhotos = ge
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp"
+            accept="image/*,.heic,.heif"
             multiple
             onChange={handleFileSelect}
             className="hidden"
@@ -128,7 +128,7 @@ export default function PhotoUpload({ reportId, onPhotosUploaded, maxPhotos = ge
                 {t('walker.addPhotos', {}, 'Add Photos')} ({uploadedUrls.length + selectedFiles.length}/{maxPhotos})
               </span>
               <span className="text-xs text-slate-400">
-                {t('walker.photoFormats', {}, 'JPEG, PNG, WebP • Max 5MB')}
+                {t('walker.photoFormats', {}, 'Any photo format • Max 20MB')}
               </span>
             </div>
           </button>
