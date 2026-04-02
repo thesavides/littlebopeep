@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { resetPassword } from '@/lib/unified-auth'
+import { supabase } from '@/lib/supabase-client'
 
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic'
@@ -17,8 +18,29 @@ function ResetPasswordForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [sessionReady, setSessionReady] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+
+  // Exchange the PKCE code for a session client-side
+  useEffect(() => {
+    const code = searchParams?.get('code')
+    if (code) {
+      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+        if (error) {
+          setError('Invalid or expired reset link. Please request a new one.')
+        } else {
+          setSessionReady(true)
+        }
+      })
+    } else {
+      // No code — check if already have a session (e.g. hash-based flow)
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setSessionReady(!!session)
+        if (!session) setError('Invalid or expired reset link. Please request a new one.')
+      })
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,6 +53,11 @@ function ResetPasswordForm() {
 
     if (password !== confirmPassword) {
       setError('Passwords do not match')
+      return
+    }
+
+    if (!sessionReady) {
+      setError('Session not ready. Please use the link from your email again.')
       return
     }
 
@@ -165,10 +192,10 @@ function ResetPasswordForm() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !sessionReady}
             className="w-full py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? 'Resetting...' : `${isNewUser ? 'Set' : 'Reset'} Password`}
+            {loading ? 'Resetting...' : !sessionReady ? 'Verifying link...' : `${isNewUser ? 'Set' : 'Reset'} Password`}
           </button>
         </form>
 

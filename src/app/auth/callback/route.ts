@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
 
 export const runtime = 'edge'
 
@@ -12,31 +11,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/auth', requestUrl.origin))
   }
 
-  const response = NextResponse.redirect(new URL(next, requestUrl.origin))
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll: () => request.cookies.getAll(),
-        setAll: (cookiesToSet) => {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options)
-          })
-        },
-      },
-    }
-  )
-
-  const { error } = await supabase.auth.exchangeCodeForSession(code)
-
-  if (error) {
-    console.error('Error exchanging code for session:', error)
-    return NextResponse.redirect(
-      new URL(`/auth?error=${encodeURIComponent(error.message)}`, requestUrl.origin)
-    )
-  }
-
-  return response
+  // Pass the code to the client-side page to exchange for a session.
+  // @supabase/ssr is not compatible with Cloudflare Workers edge runtime,
+  // so we handle the exchange client-side via supabase-js instead.
+  const redirectUrl = new URL(next, requestUrl.origin)
+  redirectUrl.searchParams.set('code', code)
+  return NextResponse.redirect(redirectUrl)
 }
