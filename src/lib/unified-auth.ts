@@ -211,10 +211,9 @@ export async function requestPasswordReset(email: string): Promise<{
   error?: string
 }> {
   try {
-    // Always use production URL for password reset emails
-    const productionUrl = 'https://little-bo-peep-327019541186.europe-west2.run.app'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '')
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${productionUrl}/auth/callback?next=/auth/reset-password`
+      redirectTo: `${appUrl}/auth/callback?next=/auth/reset-password`
     })
 
     if (error) {
