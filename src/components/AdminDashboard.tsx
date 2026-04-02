@@ -6,7 +6,7 @@ import Header from './Header'
 import Map from './Map'
 import AdminUserManagement from './AdminUserManagement'
 import WalkerDashboard from './WalkerDashboard'
-import { inviteUser, getAllUsers, adminResetUserPassword, updateUserProfile, deleteUser as deleteUserFromSupabase } from '@/lib/unified-auth'
+import { inviteUser, getAllUsers, adminResetUserPassword, updateUserProfile, deleteUser as deleteUserFromSupabase, suspendUser as suspendUserInSupabase, activateUser as activateUserInSupabase } from '@/lib/unified-auth'
 
 type AdminView = 'overview' | 'walkers' | 'farmers' | 'reports' | 'farms' | 'billing' | 'admins' | 'categories'
 type SortBy = 'date' | 'daysUnclaimed'
@@ -120,6 +120,28 @@ export default function AdminDashboard() {
       alert(error || 'Failed to update user')
     }
     return success
+  }
+
+  const handleSuspend = async (userId: string) => {
+    const { success, error } = await suspendUserInSupabase(userId)
+    if (success) {
+      const refreshed = await getAllUsers()
+      setRealUsers(refreshed)
+      setViewingUser((prev: any) => prev?.id === userId ? { ...prev, status: 'suspended' } : prev)
+    } else {
+      alert(error || 'Failed to suspend user')
+    }
+  }
+
+  const handleActivate = async (userId: string) => {
+    const { success, error } = await activateUserInSupabase(userId)
+    if (success) {
+      const refreshed = await getAllUsers()
+      setRealUsers(refreshed)
+      setViewingUser((prev: any) => prev?.id === userId ? { ...prev, status: 'active' } : prev)
+    } else {
+      alert(error || 'Failed to activate user')
+    }
   }
 
   // Use real users from Supabase, fallback to mock users for backwards compatibility
@@ -405,8 +427,8 @@ export default function AdminDashboard() {
           onClose={() => setViewingUser(null)}
           onUpdate={handleUpdateUser}
           onReset={handleResetUserPassword}
-          onSuspend={(id) => { suspendUser(id); setViewingUser((u: any) => u ? { ...u, status: 'suspended' } : u) }}
-          onActivate={(id) => { activateUser(id); setViewingUser((u: any) => u ? { ...u, status: 'active' } : u) }}
+          onSuspend={handleSuspend}
+          onActivate={handleActivate}
           onNavigate={(view) => { setViewingUser(null); setCurrentView(view) }}
         />
       )}
@@ -580,9 +602,9 @@ export default function AdminDashboard() {
                           <div className="flex items-center gap-2">
                             <button onClick={() => setViewingUser(user)} className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-medium hover:bg-slate-200">View</button>
                             {isActive ? (
-                              <button onClick={() => suspendUser(user.id)} className="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-medium hover:bg-amber-200">Suspend</button>
+                              <button onClick={() => handleSuspend(user.id)} className="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-medium hover:bg-amber-200">Suspend</button>
                             ) : (
-                              <button onClick={() => activateUser(user.id)} className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium hover:bg-green-200">Activate</button>
+                              <button onClick={() => handleActivate(user.id)} className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium hover:bg-green-200">Activate</button>
                             )}
                             {user.email && (
                               <button onClick={() => handleResetUserPassword(user.id, user.email)} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium hover:bg-blue-200">Reset</button>
@@ -667,9 +689,9 @@ export default function AdminDashboard() {
                           <div className="flex items-center gap-2">
                             <button onClick={() => setViewingUser(user)} className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-medium hover:bg-slate-200">View</button>
                             {isActive ? (
-                              <button onClick={() => suspendUser(user.id)} className="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-medium hover:bg-amber-200">Suspend</button>
+                              <button onClick={() => handleSuspend(user.id)} className="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-medium hover:bg-amber-200">Suspend</button>
                             ) : (
-                              <button onClick={() => activateUser(user.id)} className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium hover:bg-green-200">Activate</button>
+                              <button onClick={() => handleActivate(user.id)} className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium hover:bg-green-200">Activate</button>
                             )}
                             {user.email && (
                               <button onClick={() => handleResetUserPassword(user.id, user.email)} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium hover:bg-blue-200">Reset</button>
