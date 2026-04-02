@@ -51,8 +51,7 @@ export function dbToAppReport(dbReport: SheepReportDB) {
 
 // Convert App format to DB format
 export function appToDbReport(appReport: any) {
-  return {
-    id: appReport.id,
+  const result: any = {
     location: appReport.location,
     timestamp: appReport.timestamp instanceof Date ? appReport.timestamp.toISOString() : appReport.timestamp,
     sheep_count: appReport.sheepCount,
@@ -69,6 +68,11 @@ export function appToDbReport(appReport: any) {
     category_name: appReport.categoryName || 'Sheep',
     category_emoji: appReport.categoryEmoji || '🐑',
   }
+  // Only include id if provided — omitting lets Supabase generate a UUID
+  if (appReport.id !== undefined) {
+    result.id = appReport.id
+  }
+  return result
 }
 
 // Fetch all recent reports (not archived, within time range)

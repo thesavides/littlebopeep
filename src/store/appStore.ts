@@ -554,10 +554,29 @@ export const useAppStore = create<AppState>()(
       })),
 
       loadReports: async () => {
+        const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
         try {
           const supabaseReports = await fetchAllReports()
-          if (supabaseReports.length > 0) {
-            set({ reports: supabaseReports })
+          const supabaseIds = new Set(supabaseReports.map((r: any) => r.id))
+
+          // Sync any local-only reports (pre-Supabase reports with timestamp IDs)
+          const { reports: localReports } = get()
+          const orphaned = localReports.filter((r) => !supabaseIds.has(r.id))
+          for (const report of orphaned) {
+            try {
+              // Strip old non-UUID id so Supabase generates a proper UUID
+              const { id: _oldId, ...reportWithoutId } = report as any
+              const idToUse = UUID_REGEX.test(report.id) ? report.id : undefined
+              await createReportInSupabase(idToUse ? report : reportWithoutId)
+            } catch {
+              // leave in local store if sync fails
+            }
+          }
+
+          // Re-fetch to get all (including just-synced orphans)
+          const finalReports = orphaned.length > 0 ? await fetchAllReports() : supabaseReports
+          if (finalReports.length > 0) {
+            set({ reports: finalReports })
           }
         } catch (err) {
           console.error('Failed to load reports from Supabase:', err)
