@@ -451,7 +451,7 @@ export default function AdminDashboard() {
 
         {/* ===== WALKERS ===== */}
         {currentView === 'walkers' && (
-          <div className="bg-white rounded-xl shadow">
+          <div className="bg-white rounded-xl shadow overflow-x-auto">
             <div className="p-4 border-b">
               <h2 className="font-semibold text-slate-800">Walkers ({walkers.length})</h2>
             </div>
@@ -460,37 +460,71 @@ export default function AdminDashboard() {
                 <div className="text-4xl mb-2">🚶</div>No walkers registered yet
               </div>
             ) : (
-              <div className="divide-y">
-                {walkers.map((user: any) => {
-                  const userReports = reports.filter(r => r.reporterId === user.id)
-                  const displayName = user.full_name || user.name || 'Unknown'
-                  const displayStatus = user.status === 'suspended' ? 'suspended' : 'active'
-                  return (
-                    <div key={user.id} className="p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">🚶</div>
-                        <div>
-                          <div className="font-medium text-slate-800">{displayName}</div>
-                          <div className="text-sm text-slate-500">{user.email || 'No email'}</div>
-                          <div className="text-xs text-slate-400">{userReports.length} reports • {new Date(user.created_at || user.createdAt).toLocaleDateString()}</div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${displayStatus === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{displayStatus}</span>
-                        {displayStatus === 'active' ? (
-                          <button onClick={() => suspendUser(user.id)} className="px-3 py-1 bg-amber-100 text-amber-700 rounded text-sm hover:bg-amber-200">Suspend</button>
-                        ) : (
-                          <button onClick={() => activateUser(user.id)} className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200">Activate</button>
-                        )}
-                        {user.email && (
-                          <button onClick={() => handleResetUserPassword(user.id, user.email)} className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200">Reset Password</button>
-                        )}
-                        <button onClick={() => confirmDelete(user.id, 'user')} className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200">Delete</button>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+              <table className="w-full min-w-[700px]">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Email</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Full Name</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Phone</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Last Login</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Reports</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {walkers.map((user: any) => {
+                    const userReports = reports.filter(r => r.reporterId === user.id)
+                    const displayName = user.full_name || user.name || '-'
+                    const isActive = user.status !== 'suspended'
+                    return (
+                      <tr key={user.id} className={!isActive ? 'bg-slate-50 opacity-60' : ''}>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-slate-900">{user.email || '-'}</div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <div className="text-sm text-slate-600">{displayName}</div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <div className="text-sm text-slate-600">{user.phone || '-'}</div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          {user.status === 'active' ? (
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                          ) : user.status === 'suspended' ? (
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Suspended</span>
+                          ) : user.status === 'password_reset_required' ? (
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">Reset Required</span>
+                          ) : (
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <div className="text-sm text-slate-600">
+                            {user.last_login_at ? new Date(user.last_login_at).toLocaleDateString() : 'Never'}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <div className="text-sm text-slate-600">{userReports.length}</div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            {isActive ? (
+                              <button onClick={() => suspendUser(user.id)} className="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-medium hover:bg-amber-200">Suspend</button>
+                            ) : (
+                              <button onClick={() => activateUser(user.id)} className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium hover:bg-green-200">Activate</button>
+                            )}
+                            {user.email && (
+                              <button onClick={() => handleResetUserPassword(user.id, user.email)} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium hover:bg-blue-200">Reset</button>
+                            )}
+                            <button onClick={() => confirmDelete(user.id, 'user')} className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium hover:bg-red-200">Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             )}
           </div>
         )}
