@@ -6,7 +6,7 @@ import { useTranslation } from '@/contexts/TranslationContext'
 import Header from './Header'
 import Map from './Map'
 
-type ViewState = 'dashboard' | 'register' | 'create-farm' | 'add-field' | 'view-farm' | 'subscription'
+type ViewState = 'dashboard' | 'register' | 'create-farm' | 'add-field' | 'view-farm' | 'subscription' | 'notifications'
 type RegistrationStep = 1 | 2 | 3 | 4 | 5
 
 export default function FarmerDashboard() {
@@ -27,7 +27,9 @@ export default function FarmerDashboard() {
     getCurrentUser,
     updateUser,
     startTrial,
-    cancelSubscription
+    cancelSubscription,
+    reportCategories,
+    updateFarmCategorySubscription,
   } = useAppStore()
   
   const currentUser = getCurrentUser()
@@ -63,6 +65,16 @@ export default function FarmerDashboard() {
   const [fieldName, setFieldName] = useState('')
   const [fencePosts, setFencePosts] = useState<Array<{ lat: number; lng: number }>>([])
   
+  const [farmerLocation, setFarmerLocation] = useState<[number, number] | null>(null)
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setFarmerLocation([pos.coords.latitude, pos.coords.longitude]),
+        () => {}
+      )
+    }
+  }, [])
+
   const myFarms = currentUserId ? getFarmsByFarmerId(currentUserId) : []
   const selectedFarm = myFarms.find(f => f.id === selectedFarmId)
   
@@ -194,6 +206,7 @@ export default function FarmerDashboard() {
       case 'create-farm': return t('farmer.createFarm', {}, 'Create Farm')
       case 'add-field': return t('farmer.addField', {}, 'Add Field')
       case 'subscription': return t('farmer.subscription', {}, 'Subscription')
+      case 'notifications': return t('farmer.notificationPreferences', {}, 'Notification Preferences')
       case 'view-farm': return selectedFarm?.name || t('farmer.farm', {}, 'Farm')
       default: return ''
     }
@@ -416,7 +429,10 @@ export default function FarmerDashboard() {
                     <h3 className="font-semibold text-blue-800">{t('farmer.freeTrialActive', {}, 'Free Trial Active')}</h3>
                     <p className="text-sm text-blue-600">{t('farmer.ends', { date: new Date(currentUser.trialEndsAt).toLocaleDateString() }, `Ends ${new Date(currentUser.trialEndsAt).toLocaleDateString()}`)}</p>
                   </div>
-                  <button onClick={() => setViewState('subscription')} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm">{t('farmer.manage', {}, 'Manage')}</button>
+                  <div className="flex gap-2">
+                    <button onClick={() => setViewState('subscription')} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm">{t('farmer.manage', {}, 'Manage')}</button>
+                    <button onClick={() => setViewState('notifications')} className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm hover:bg-slate-200">🔔 Notifications</button>
+                  </div>
                 </div>
               </div>
             )}
@@ -460,14 +476,22 @@ export default function FarmerDashboard() {
             {myFarms.length > 0 && (
               <div className="h-64 rounded-xl overflow-hidden shadow mb-6">
                 <Map
-                  center={myFarms[0]?.fields[0]?.fencePosts[0] ? [myFarms[0].fields[0].fencePosts[0].lat, myFarms[0].fields[0].fencePosts[0].lng] : MAP_CONFIG.DEFAULT_CENTER}
+                  center={farmerLocation ?? (myFarms[0]?.fields[0]?.fencePosts[0] ? [myFarms[0].fields[0].fencePosts[0].lat, myFarms[0].fields[0].fencePosts[0].lng] : MAP_CONFIG.DEFAULT_CENTER)}
                   zoom={MAP_CONFIG.STANDARD_ZOOM_5KM}
-                  markers={relevantReports.map((r) => ({
-                    id: r.id,
-                    position: [r.location.lat, r.location.lng] as [number, number],
-                    popup: `🐑 ${r.sheepCount} - ${r.status}`,
-                    type: 'sheep' as const
-                  }))}
+                  markers={[
+                    ...(farmerLocation ? [{
+                      id: 'farmer-location',
+                      position: farmerLocation,
+                      popup: '📍 Your location',
+                      type: 'farmer-location' as const,
+                    }] : []),
+                    ...relevantReports.map((r) => ({
+                      id: r.id,
+                      position: [r.location.lat, r.location.lng] as [number, number],
+                      popup: `🐑 ${r.sheepCount} - ${r.status}`,
+                      type: 'sheep' as const
+                    }))
+                  ]}
                   polygons={allFieldPolygons}
                 />
               </div>
@@ -727,6 +751,61 @@ export default function FarmerDashboard() {
             </div>
 
             <button onClick={() => setViewState('dashboard')} className="w-full py-3 bg-slate-100 text-slate-700 rounded-xl">{t('farmer.backToDashboard', {}, 'Back to Dashboard')}</button>
+          </div>
+        )}
+
+        {viewState === 'notifications' && (
+          <div className="space-y-4">
+            <p className="text-sm text-slate-500">Choose which report types you want to be alerted about for your farms.</p>
+            {myFarms.length === 0 ? (
+              <div className="p-8 text-center text-slate-500 bg-white rounded-xl shadow">
+                <div className="text-4xl mb-2">🏡</div>
+                <p>Add a farm first to manage notification preferences.</p>
+              </div>
+            ) : myFarms.map((farm) => {
+              const activeCategories = reportCategories.filter((c) => c.isActive)
+              return (
+                <div key={farm.id} className="bg-white rounded-xl shadow p-4">
+                  <h3 className="font-semibold text-slate-800 mb-3">🏡 {farm.name}</h3>
+                  {activeCategories.length === 0 ? (
+                    <p className="text-sm text-slate-500">No custom report categories configured yet.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {activeCategories.map((cat) => {
+                        const isCompulsory = cat.subscriptionMode === 'compulsory'
+                        const effective = isCompulsory
+                          ? true
+                          : cat.subscriptionMode === 'default_on'
+                            ? (farm.categorySubscriptions?.[cat.id] ?? true)
+                            : (farm.categorySubscriptions?.[cat.id] ?? false)
+                        return (
+                          <div key={cat.id} className={`flex items-center justify-between p-3 rounded-lg ${isCompulsory ? 'bg-red-50 border border-red-100' : 'bg-slate-50 border border-slate-200'}`}>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xl">{cat.emoji}</span>
+                              <div>
+                                <div className="text-sm font-medium text-slate-700">{cat.name}</div>
+                                <div className="text-xs text-slate-500">
+                                  {isCompulsory ? '🔒 Required — cannot be disabled' : effective ? 'Receiving alerts' : 'Not receiving alerts'}
+                                </div>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => !isCompulsory && updateFarmCategorySubscription(farm.id, cat.id, !effective)}
+                              disabled={isCompulsory}
+                              className={`relative w-11 h-6 rounded-full transition-colors ${
+                                effective ? 'bg-green-500' : 'bg-slate-300'
+                              } ${isCompulsory ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                            >
+                              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${effective ? 'translate-x-5' : 'translate-x-0'}`} />
+                            </button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
       </main>

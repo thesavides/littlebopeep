@@ -31,8 +31,19 @@ export function getDaysSince(date: Date): number {
   return Math.floor(diffTime / (1000 * 60 * 60 * 24))
 }
 
+export function getEffectiveSubscription(
+  category: { id: string; subscriptionMode?: CategorySubscriptionMode },
+  farm: { categorySubscriptions?: Record<string, boolean> }
+): boolean {
+  if (category.subscriptionMode === 'compulsory') return true
+  const override = farm.categorySubscriptions?.[category.id]
+  if (override !== undefined) return override
+  return category.subscriptionMode === 'default_on'
+}
+
 export type UserRole = 'walker' | 'farmer' | 'admin' | 'super_admin' | null
 export type SubscriptionStatus = 'trial' | 'active' | 'cancelled' | 'expired'
+export type CategorySubscriptionMode = 'compulsory' | 'default_on' | 'default_off'
 
 export interface User {
   id: string
@@ -104,6 +115,7 @@ export interface Farm {
   alertBufferMeters: number // Alert zone distance OUTSIDE field boundaries
   alertsEnabled: boolean
   createdAt: Date
+  categorySubscriptions?: Record<string, boolean>  // explicit per-farm overrides (only for default_on/default_off)
 }
 
 // Notification for walkers
@@ -138,6 +150,7 @@ export interface ReportCategory {
   countLabel: string       // e.g. 'Number of animals' or 'Number of sections'
   isActive: boolean
   sortOrder: number
+  subscriptionMode: CategorySubscriptionMode  // 'compulsory' | 'default_on' | 'default_off'
   createdAt: Date
 }
 
@@ -219,6 +232,7 @@ interface AppState {
   addReportCategory: (category: Omit<ReportCategory, 'id' | 'createdAt'>) => void
   updateReportCategory: (id: string, data: Partial<Omit<ReportCategory, 'id' | 'createdAt'>>) => void
   deleteReportCategory: (id: string) => void
+  updateFarmCategorySubscription: (farmId: string, categoryId: string, subscribed: boolean) => void
 
   // Helpers
   getCurrentUser: () => User | undefined
@@ -581,6 +595,14 @@ export const useAppStore = create<AppState>()(
 
       deleteReportCategory: (id) => set((state) => ({
         reportCategories: state.reportCategories.filter((c) => c.id !== id)
+      })),
+
+      updateFarmCategorySubscription: (farmId, categoryId, subscribed) => set((state) => ({
+        farms: state.farms.map((f) =>
+          f.id === farmId
+            ? { ...f, categorySubscriptions: { ...(f.categorySubscriptions || {}), [categoryId]: subscribed } }
+            : f
+        )
       })),
     }),
     {
