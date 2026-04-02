@@ -12,7 +12,7 @@ interface MapProps {
     position: [number, number]
     popup?: string
     color?: 'red' | 'green' | 'blue'
-    type?: 'default' | 'fencepost' | 'sheep' | 'existing' | 'selected' | 'user-location'
+    type?: 'default' | 'fencepost' | 'sheep' | 'existing' | 'selected' | 'user-location' | 'walker-location' | 'farmer-location'
     status?: 'reported' | 'claimed' | 'resolved'
   }>
   circles?: Array<{
