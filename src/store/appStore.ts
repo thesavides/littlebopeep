@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { createReport as createReportInSupabase, fetchAllReports } from '@/lib/supabase-client'
 
 // Map configuration
 export const MAP_CONFIG = {
@@ -200,7 +201,7 @@ interface AppState {
   // Report actions
   setCurrentReportStep: (step: number) => void
   updateDraftReport: (data: Partial<SheepReport>) => void
-  submitReport: () => void
+  submitReport: () => Promise<void>
   resetDraft: () => void
   getNearbyReports: (lat: number, lng: number, radiusMeters: number, hoursAgo: number) => SheepReport[]
   claimReport: (reportId: string) => void
@@ -225,7 +226,7 @@ interface AppState {
   updateMapPreferences: (preferences: Partial<MapPreferences>) => void
 
   // Supabase sync (stub for now)
-  loadReports: () => void
+  loadReports: () => Promise<void>
 
   // Report category actions
   reportCategories: ReportCategory[]
@@ -364,9 +365,9 @@ export const useAppStore = create<AppState>()(
         draftReport: { ...state.draftReport, ...data } 
       })),
       
-      submitReport: () => {
+      submitReport: async () => {
         const { draftReport, reports, currentUserId } = get()
-        const newReport: SheepReport = {
+        const localReport: SheepReport = {
           id: Date.now().toString(),
           location: draftReport.location || { lat: 51.5, lng: -0.1 },
           timestamp: new Date(),
@@ -380,11 +381,24 @@ export const useAppStore = create<AppState>()(
           reporterId: currentUserId || undefined,
           status: 'reported',
         }
-        set({ 
-          reports: [...reports, newReport],
+        // Save to local store immediately (optimistic)
+        set({
+          reports: [...reports, localReport],
           draftReport: {},
           currentReportStep: 1,
         })
+        // Persist to Supabase and replace local record with the canonical one
+        try {
+          const saved = await createReportInSupabase(localReport)
+          if (saved) {
+            set((state) => ({
+              reports: state.reports.map((r) => r.id === localReport.id ? saved : r)
+            }))
+          }
+        } catch (err) {
+          console.error('Failed to save report to Supabase:', err)
+          // Report stays in local store — offline sync will handle it later
+        }
       },
       
       resetDraft: () => set({ draftReport: {}, currentReportStep: 1 }),
@@ -539,11 +553,15 @@ export const useAppStore = create<AppState>()(
         mapPreferences: { ...state.mapPreferences, ...preferences }
       })),
 
-      // Supabase sync (stub for now - using localStorage)
-      loadReports: () => {
-        // Stub function for ReportsLoader component compatibility
-        // Reports are already loaded from localStorage via zustand persist
-        console.log('loadReports called (localStorage mode)')
+      loadReports: async () => {
+        try {
+          const supabaseReports = await fetchAllReports()
+          if (supabaseReports.length > 0) {
+            set({ reports: supabaseReports })
+          }
+        } catch (err) {
+          console.error('Failed to load reports from Supabase:', err)
+        }
       },
 
       // Helpers

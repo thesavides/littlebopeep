@@ -32,6 +32,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
     getUnreadNotifications,
     markNotificationRead,
     reportCategories,
+    loadReports,
   } = useAppStore()
   
   const [viewState, setViewState] = useState<ViewState>('dashboard')
@@ -52,6 +53,11 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
   
   // Get unread notifications (thank you messages)
   const unreadNotifications = currentUserId ? getUnreadNotifications(currentUserId) : []
+
+  // Load reports from Supabase on mount
+  useEffect(() => {
+    loadReports()
+  }, [])
 
   // Show notification banner if there are unread notifications
   useEffect(() => {

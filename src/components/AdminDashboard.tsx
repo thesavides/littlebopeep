@@ -43,6 +43,7 @@ export default function AdminDashboard() {
     updateReportCategory,
     deleteReportCategory,
     updateFarmCategorySubscription,
+    loadReports,
   } = useAppStore()
 
   const [currentView, setCurrentView] = useState<AdminView>('overview')
@@ -87,7 +88,7 @@ export default function AdminDashboard() {
   const [selectedReports, setSelectedReports] = useState<string[]>([])
   const [mapBounds, setMapBounds] = useState<{north: number, south: number, east: number, west: number} | null>(null)
 
-  // Load real users from Supabase on mount
+  // Load real users and reports from Supabase on mount
   useEffect(() => {
     async function loadUsers() {
       setLoadingUsers(true)
@@ -96,6 +97,7 @@ export default function AdminDashboard() {
       setLoadingUsers(false)
     }
     loadUsers()
+    loadReports()
   }, [])
 
   const handleResetUserPassword = async (userId: string, email: string) => {

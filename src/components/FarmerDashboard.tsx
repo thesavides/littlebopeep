@@ -30,6 +30,7 @@ export default function FarmerDashboard() {
     cancelSubscription,
     reportCategories,
     updateFarmCategorySubscription,
+    loadReports,
   } = useAppStore()
   
   const currentUser = getCurrentUser()
@@ -66,6 +67,10 @@ export default function FarmerDashboard() {
   const [fencePosts, setFencePosts] = useState<Array<{ lat: number; lng: number }>>([])
   
   const [farmerLocation, setFarmerLocation] = useState<[number, number] | null>(null)
+  useEffect(() => {
+    loadReports()
+  }, [])
+
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
