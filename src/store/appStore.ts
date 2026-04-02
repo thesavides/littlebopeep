@@ -71,7 +71,7 @@ export interface SheepReport {
   photoUrl?: string // Legacy single photo
   photoUrls?: string[] // New: multiple photos (max 3)
   sheepCount: number
-  condition: 'healthy' | 'injured' | 'unknown'
+  condition: 'healthy' | 'injured' | 'dead' | 'unknown'
   reporterContact?: string
   reporterId?: string
   status: 'reported' | 'claimed' | 'resolved'

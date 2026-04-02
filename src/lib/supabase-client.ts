@@ -11,7 +11,7 @@ export interface SheepReportDB {
   location: { lat: number; lng: number }
   timestamp: string
   sheep_count: number
-  condition: 'healthy' | 'injured' | 'unknown'
+  condition: 'healthy' | 'injured' | 'dead' | 'unknown'
   description: string | null
   reporter_contact: string | null
   reporter_id: string | null

@@ -405,6 +405,7 @@ export default function WalkerDashboard() {
                     >
                       <option value="healthy">{t('walker.conditionHealthy', {}, 'Healthy - looks fine')}</option>
                       <option value="injured">{t('walker.conditionInjured', {}, 'Injured - needs attention')}</option>
+                      <option value="dead">{t('walker.conditionDead', {}, 'Dead - needs collection')}</option>
                       <option value="unknown">{t('walker.conditionUnknown', {}, 'Not sure')}</option>
                     </select>
                   </div>

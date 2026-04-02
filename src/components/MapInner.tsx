@@ -315,6 +315,15 @@ function getMarkerIcon(type?: string, status?: string) {
   }
 }
 
+// Inner component that flies the map to a new center when it changes
+function FlyToLocation({ center, zoom }: { center: [number, number]; zoom: number }) {
+  const map = useMap()
+  useEffect(() => {
+    map.flyTo(center, zoom, { animate: true, duration: 1.2 })
+  }, [center[0], center[1], zoom])
+  return null
+}
+
 export default function MapInner({
   center = [54.5, -2],
   zoom = 13, // Default to ~5km view
@@ -333,6 +342,9 @@ export default function MapInner({
       className={`w-full h-full ${className}`}
       style={{ minHeight: '300px' }}
     >
+      {/* Fly to updated center when it changes (e.g. user location acquired) */}
+      <FlyToLocation center={center} zoom={zoom} />
+
       {/* Base map layer */}
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
