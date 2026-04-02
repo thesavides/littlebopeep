@@ -424,6 +424,13 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                     zoom={draftReport.location ? MAP_CONFIG.STANDARD_ZOOM_5KM : userLocation ? MAP_CONFIG.STANDARD_ZOOM_5KM : MAP_CONFIG.STANDARD_ZOOM_5KM}
                     onClick={handleMapClick}
                     markers={[
+                      // User's current location
+                      ...(userLocation && !draftReport.location ? [{
+                        id: 'user-location',
+                        position: [userLocation.lat, userLocation.lng] as [number, number],
+                        popup: '📍 Your location',
+                        type: 'walker-location' as const,
+                      }] : []),
                       // Show existing recent reports
                       ...getRecentAlerts().map(r => ({
                         id: r.id,
@@ -431,12 +438,13 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                         popup: `${r.categoryEmoji || '🐑'} ${r.sheepCount} ${r.categoryName || 'sheep'} reported ${new Date(r.timestamp).toLocaleTimeString()}`,
                         type: 'sheep' as const
                       })),
-                      // Show selected location
+                      // Show selected location with category emoji
                       ...(draftReport.location ? [{
                         id: 'selected',
                         position: [draftReport.location.lat, draftReport.location.lng] as [number, number],
                         popup: 'Your report location',
-                        type: 'selected' as const
+                        type: 'selected' as const,
+                        emoji: activeCategory?.emoji || '🐑',
                       }] : [])
                     ]}
                   />

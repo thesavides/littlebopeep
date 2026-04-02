@@ -14,6 +14,7 @@ interface MapProps {
     color?: 'red' | 'green' | 'blue'
     type?: 'default' | 'fencepost' | 'sheep' | 'existing' | 'selected' | 'user-location' | 'walker-location' | 'farmer-location'
     status?: 'reported' | 'claimed' | 'resolved'
+    emoji?: string
   }>
   circles?: Array<{
     center: [number, number]

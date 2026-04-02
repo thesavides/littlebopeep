@@ -165,6 +165,7 @@ interface MapProps {
     color?: 'red' | 'green' | 'blue'
     type?: 'default' | 'fencepost' | 'sheep' | 'existing' | 'selected' | 'user-location' | 'walker-location' | 'farmer-location'
     status?: 'reported' | 'claimed' | 'resolved'
+    emoji?: string
   }>
   circles?: Array<{
     center: [number, number]
@@ -337,7 +338,7 @@ function LayerRenderer() {
   )
 }
 
-function getMarkerIcon(type?: string, status?: string) {
+function getMarkerIcon(type?: string, status?: string, emoji?: string) {
   switch (type) {
     case 'fencepost':
       return fencePostIcon
@@ -347,9 +348,28 @@ function getMarkerIcon(type?: string, status?: string) {
       return walkerLocationIcon
     case 'farmer-location':
       return farmerLocationIcon
+    case 'selected':
+      // Use category emoji for the selected drop-pin
+      return L.divIcon({
+        className: 'category-selected-marker',
+        html: `<div style="
+          font-size: 26px;
+          width: 44px;
+          height: 44px;
+          background: white;
+          border: 3px solid #22c55e;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+        ">${emoji || '📍'}</div>`,
+        iconSize: [44, 44],
+        iconAnchor: [22, 22],
+        popupAnchor: [0, -22],
+      })
     case 'sheep':
     case 'existing':
-    case 'selected':
       // Return icon based on report status
       if (status === 'claimed') return sheepClaimedIcon
       if (status === 'resolved') return sheepResolvedIcon
@@ -437,7 +457,7 @@ export default function MapInner({
         <Marker
           key={marker.id}
           position={marker.position}
-          icon={getMarkerIcon(marker.type, marker.status)}
+          icon={getMarkerIcon(marker.type, marker.status, marker.emoji)}
         >
           {marker.popup && <Popup>{marker.popup}</Popup>}
         </Marker>
