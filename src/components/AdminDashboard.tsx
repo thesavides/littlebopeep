@@ -387,6 +387,7 @@ export default function AdminDashboard() {
           onReset={handleResetUserPassword}
           onSuspend={(id) => { suspendUser(id); setViewingUser((u: any) => u ? { ...u, status: 'suspended' } : u) }}
           onActivate={(id) => { activateUser(id); setViewingUser((u: any) => u ? { ...u, status: 'active' } : u) }}
+          onNavigate={(view) => { setViewingUser(null); setCurrentView(view) }}
         />
       )}
 
@@ -1932,7 +1933,7 @@ function CategoryFormModal({ category, onClose, onSave }: {
 }
 
 // ─── User Detail / Edit Modal ───────────────────────────────────────────────
-function UserDetailModal({ user, reports, farms, onClose, onUpdate, onReset, onSuspend, onActivate }: {
+function UserDetailModal({ user, reports, farms, onClose, onUpdate, onReset, onSuspend, onActivate, onNavigate }: {
   user: any
   reports: any[]
   farms: any[]
@@ -1941,6 +1942,7 @@ function UserDetailModal({ user, reports, farms, onClose, onUpdate, onReset, onS
   onReset: (id: string, email: string) => void
   onSuspend: (id: string) => void
   onActivate: (id: string) => void
+  onNavigate: (view: 'reports' | 'farms') => void
 }) {
   const [editing, setEditing] = useState(false)
   const [fullName, setFullName] = useState(user.full_name || '')
@@ -2070,32 +2072,74 @@ function UserDetailModal({ user, reports, farms, onClose, onUpdate, onReset, onS
           )}
 
           {/* Recent reports (walkers) */}
-          {user.role === 'walker' && userReports.length > 0 && !editing && (
+          {user.role === 'walker' && !editing && (
             <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Recent Reports</p>
-              <div className="space-y-1 max-h-40 overflow-y-auto">
-                {userReports.slice(0, 10).map((r: any) => (
-                  <div key={r.id} className="flex items-center justify-between text-sm bg-slate-50 rounded-lg px-3 py-2">
-                    <span className="text-slate-700">{r.categoryEmoji || '🐑'} {r.sheepCount || 1} × {r.categoryName || 'Sheep'} — {r.condition}</span>
-                    <span className="text-slate-400 text-xs">{new Date(r.timestamp).toLocaleDateString()}</span>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                  Reports ({userReports.length})
+                </p>
+                <button
+                  onClick={() => onNavigate('reports')}
+                  className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  View all in Reports tab →
+                </button>
               </div>
+              {userReports.length === 0 ? (
+                <p className="text-sm text-slate-400 italic">No reports submitted yet</p>
+              ) : (
+                <div className="space-y-1 max-h-48 overflow-y-auto">
+                  {userReports.slice(0, 10).map((r: any) => (
+                    <button
+                      key={r.id}
+                      onClick={() => onNavigate('reports')}
+                      className="w-full flex items-center justify-between text-sm bg-slate-50 hover:bg-blue-50 rounded-lg px-3 py-2 transition-colors text-left group"
+                    >
+                      <span className="text-slate-700 group-hover:text-blue-700">
+                        {r.categoryEmoji || '🐑'} {r.sheepCount || 1} × {r.categoryName || 'Sheep'} — <span className="capitalize">{r.condition}</span>
+                      </span>
+                      <span className="text-slate-400 text-xs group-hover:text-blue-500 flex items-center gap-1">
+                        {new Date(r.timestamp).toLocaleDateString()} <span>→</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
           {/* Farms (farmers) */}
-          {user.role === 'farmer' && userFarms.length > 0 && !editing && (
+          {user.role === 'farmer' && !editing && (
             <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Farms</p>
-              <div className="space-y-1">
-                {userFarms.map((f: any) => (
-                  <div key={f.id} className="flex items-center justify-between text-sm bg-slate-50 rounded-lg px-3 py-2">
-                    <span className="text-slate-700">🏡 {f.name}</span>
-                    <span className="text-slate-400 text-xs">{f.fields?.length || 0} field(s)</span>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                  Farms ({userFarms.length})
+                </p>
+                <button
+                  onClick={() => onNavigate('farms')}
+                  className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  View all in Farms tab →
+                </button>
               </div>
+              {userFarms.length === 0 ? (
+                <p className="text-sm text-slate-400 italic">No farms registered yet</p>
+              ) : (
+                <div className="space-y-1">
+                  {userFarms.map((f: any) => (
+                    <button
+                      key={f.id}
+                      onClick={() => onNavigate('farms')}
+                      className="w-full flex items-center justify-between text-sm bg-slate-50 hover:bg-blue-50 rounded-lg px-3 py-2 transition-colors text-left group"
+                    >
+                      <span className="text-slate-700 group-hover:text-blue-700">🏡 {f.name}</span>
+                      <span className="text-slate-400 text-xs group-hover:text-blue-500 flex items-center gap-1">
+                        {f.fields?.length || 0} field(s) <span>→</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
