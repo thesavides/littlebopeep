@@ -1863,8 +1863,9 @@ function CategoryFormModal({ category, onClose, onSave }: {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-auto">
-      <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl my-4">
+    <div className="fixed inset-0 bg-black/50 z-50 overflow-y-auto">
+      <div className="flex min-h-full items-center justify-center p-4">
+      <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl my-8">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-slate-800">{category ? 'Edit Category' : 'New Category'}</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">×</button>
@@ -1884,7 +1885,7 @@ function CategoryFormModal({ category, onClose, onSave }: {
               <span className="text-xs text-slate-500">Or pick one:</span>
             </div>
             <div className="flex flex-wrap gap-1">
-              {['🐑','🐄','🐖','🐎','🐓','🦆','🐇','🦊','🦡','🌾','🌿','🍀','🌲','🌳','🌵','🪨','🪵','🪺','🏡','🚜','🌄','🌅','🌦️','🌧️','🌫️','🛤️','🛣️','🏞️','⛰️','🗻','🌁','🌉','🏚️','🏗️','⛏️','🪚','🔨','⚒️','🪜','🧱','🪟','🚪','🏠','🏘️','🏕️','⛺','🔒','🔓','🪝','🧲','💧','🌊','🌬️','🍂','🍁','🌸','🌼','🌻','🥕','🌽','🫘','🫛'].map(e => (
+              {['🐑','🐄','🐖','🐎','🐏','🐐','🐓','🦆','🦅','🦉','🐇','🦊','🦡','🐿️','🌾','🌿','🍀','🌱','🌲','🌳','🌴','🪨','🪵','🪹','🏡','🏠','🏚️','🚜','🚛','🛻','⛏️','🔨','🪚','🪛','⚙️','🪜','🧱','🪟','🚪','🔒','🔓','🪝','🧲','🪤','🌄','🌅','🌦️','🌧️','⛅','🌫️','🛤️','🛣️','🏞️','⛰️','🌁','🌊','💧','🍂','🍁','🌸','🌼','🌻','🥕','🌽','🍄','🌰','⚠️','🔴','🟡'].map(e => (
                 <button
                   key={e}
                   type="button"
@@ -2028,6 +2029,7 @@ function CategoryFormModal({ category, onClose, onSave }: {
             Cancel
           </button>
         </div>
+      </div>
       </div>
     </div>
   )
