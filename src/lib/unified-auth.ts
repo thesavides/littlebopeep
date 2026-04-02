@@ -441,26 +441,30 @@ export async function adminResetUserPassword(userId: string, email: string): Pro
 
 /**
  * Delete user (super_admin only)
+ * Uses server-side API route which has the service role key
  */
 export async function deleteUser(userId: string): Promise<{
   success: boolean
   error?: string
 }> {
   try {
-    const currentUser = await getCurrentUser()
+    const { data: { session } } = await supabase.auth.getSession()
 
-    if (!currentUser || currentUser.role !== 'super_admin') {
-      return { success: false, error: 'Unauthorized' }
+    if (!session) {
+      return { success: false, error: 'Not authenticated' }
     }
 
-    // Delete from Auth (will cascade to user_profiles)
-    const { error } = await supabase.auth.admin.deleteUser(userId)
+    const response = await fetch('/api/admin/delete-user', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`
+      },
+      body: JSON.stringify({ userId })
+    })
 
-    if (error) {
-      return { success: false, error: error.message }
-    }
-
-    return { success: true }
+    const data = await response.json()
+    return data
   } catch (error) {
     console.error('Delete user error:', error)
     return { success: false, error: 'Failed to delete user' }

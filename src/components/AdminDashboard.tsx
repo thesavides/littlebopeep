@@ -6,7 +6,7 @@ import Header from './Header'
 import Map from './Map'
 import AdminUserManagement from './AdminUserManagement'
 import WalkerDashboard from './WalkerDashboard'
-import { inviteUser, getAllUsers, adminResetUserPassword, updateUserProfile } from '@/lib/unified-auth'
+import { inviteUser, getAllUsers, adminResetUserPassword, updateUserProfile, deleteUser as deleteUserFromSupabase } from '@/lib/unified-auth'
 
 type AdminView = 'overview' | 'walkers' | 'farmers' | 'reports' | 'farms' | 'billing' | 'admins' | 'categories'
 type SortBy = 'date' | 'daysUnclaimed'
@@ -183,11 +183,23 @@ export default function AdminDashboard() {
     return result
   }, [reports, filterStatus, filterArchive, sortBy, mapBounds])
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!showDeleteConfirm) return
-    if (deleteType === 'user') deleteUser(showDeleteConfirm)
-    else if (deleteType === 'report') deleteReport(showDeleteConfirm)
-    else if (deleteType === 'farm') deleteFarm(showDeleteConfirm)
+    if (deleteType === 'user') {
+      const { success, error } = await deleteUserFromSupabase(showDeleteConfirm)
+      if (!success) {
+        alert(error || 'Failed to delete user')
+        setShowDeleteConfirm(null)
+        return
+      }
+      // Refresh real users list from Supabase
+      const refreshed = await getAllUsers()
+      setRealUsers(refreshed)
+    } else if (deleteType === 'report') {
+      deleteReport(showDeleteConfirm)
+    } else if (deleteType === 'farm') {
+      deleteFarm(showDeleteConfirm)
+    }
     setShowDeleteConfirm(null)
   }
 
