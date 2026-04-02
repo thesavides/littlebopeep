@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     const productionUrl = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'https://littlebopeep.pages.dev'
 
     const { error } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
-      redirectTo: `${productionUrl}/auth/callback?next=/auth/reset-password`
+      redirectTo: `${productionUrl}/auth/reset-password`
     })
 
     if (error) {

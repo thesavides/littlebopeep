@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
     // Send password reset email
     const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'https://littlebopeep.pages.dev'
     const { error: resetError } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/auth/callback?next=/auth/reset-password?new=true`
+      redirectTo: `${origin}/auth/reset-password?new=true`
     })
 
     if (resetError) {

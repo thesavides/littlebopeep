@@ -24,17 +24,22 @@ function ResetPasswordForm() {
 
   // Exchange the PKCE code for a session client-side
   useEffect(() => {
-    const code = searchParams?.get('code')
-    if (code) {
-      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-        if (error) {
-          setError('Invalid or expired reset link. Please request a new one.')
-        } else {
-          setSessionReady(true)
-        }
-      })
+    // Supabase redirects here with token in URL hash: #access_token=xxx&type=recovery
+    // The supabase-js client automatically detects and sets the session from the hash
+    const hash = window.location.hash
+    if (hash && hash.includes('access_token')) {
+      // Give supabase-js a moment to parse the hash and set the session
+      setTimeout(() => {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session) {
+            setSessionReady(true)
+          } else {
+            setError('Invalid or expired reset link. Please request a new one.')
+          }
+        })
+      }, 500)
     } else {
-      // No code — check if already have a session (e.g. hash-based flow)
+      // Check for existing session (e.g. already authenticated)
       supabase.auth.getSession().then(({ data: { session } }) => {
         setSessionReady(!!session)
         if (!session) setError('Invalid or expired reset link. Please request a new one.')
