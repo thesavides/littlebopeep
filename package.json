@@ -5,11 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:cf": "npx @cloudflare/next-on-pages",
-    "deploy": "npx @cloudflare/next-on-pages && wrangler pages deploy .vercel/output/static --project-name=littlebopeep",
+    "build:cf": "opennextjs-cloudflare build",
+    "deploy": "opennextjs-cloudflare build && wrangler deploy",
     "start": "next start",
     "lint": "next lint",
-    "pages:dev": "wrangler pages dev"
+    "cf:dev": "wrangler dev"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.43.4",
@@ -24,7 +24,7 @@
     "zustand": "4.5.2"
   },
   "devDependencies": {
-    "@cloudflare/next-on-pages": "^1.13.16",
+    "@opennextjs/cloudflare": "^1.18.0",
     "@types/leaflet": "1.9.12",
     "@types/node": "20.12.12",
     "@types/react": "18.3.3",
