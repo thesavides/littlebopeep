@@ -5,6 +5,7 @@ import { useAppStore, getDaysSince, MAP_CONFIG } from '@/store/appStore'
 import Header from './Header'
 import Map from './Map'
 import AdminUserManagement from './AdminUserManagement'
+import WalkerDashboard from './WalkerDashboard'
 import { inviteUser, getAllUsers } from '@/lib/unified-auth'
 
 type AdminView = 'overview' | 'walkers' | 'farmers' | 'reports' | 'farms' | 'billing' | 'admins'
@@ -40,6 +41,7 @@ export default function AdminDashboard() {
   } = useAppStore()
 
   const [currentView, setCurrentView] = useState<AdminView>('overview')
+  const [showReportMode, setShowReportMode] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
   const [deleteType, setDeleteType] = useState<'user' | 'report' | 'farm' | 'field'>('user')
   const [realUsers, setRealUsers] = useState<any[]>([]) // Users from Supabase
@@ -332,10 +334,17 @@ export default function AdminDashboard() {
         }}
       />}
 
+      {/* Walker Report Mode Overlay */}
+      {showReportMode && (
+        <div className="fixed inset-0 z-[100] bg-slate-50 overflow-auto">
+          <WalkerDashboard onExitToAdmin={() => setShowReportMode(false)} />
+        </div>
+      )}
+
       {/* Navigation */}
       <div className="bg-white border-b sticky top-16 z-40">
         <div className="max-w-6xl mx-auto px-4 py-3">
-          <div className="flex gap-2 overflow-x-auto">
+          <div className="flex items-center gap-2 overflow-x-auto">
             <NavButton view="overview" label="Overview" />
             <NavButton view="walkers" label="Walkers" count={walkers.length} />
             <NavButton view="farmers" label="Farmers" count={farmers.length} />
@@ -343,6 +352,14 @@ export default function AdminDashboard() {
             <NavButton view="farms" label="Farms" count={farms.length} />
             <NavButton view="billing" label="Billing" />
             <NavButton view="admins" label="Admin Users" />
+            <div className="ml-auto flex-shrink-0">
+              <button
+                onClick={() => setShowReportMode(true)}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
+              >
+                🐑 Report Sheep
+              </button>
+            </div>
           </div>
         </div>
       </div>

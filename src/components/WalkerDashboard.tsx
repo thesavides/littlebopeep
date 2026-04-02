@@ -11,7 +11,11 @@ import { useTranslation } from '@/contexts/TranslationContext'
 
 type ViewState = 'dashboard' | 'reporting' | 'my-reports'
 
-export default function WalkerDashboard() {
+interface WalkerDashboardProps {
+  onExitToAdmin?: () => void
+}
+
+export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps = {}) {
   const { t } = useTranslation()
   const {
     currentUserId,
@@ -174,9 +178,22 @@ export default function WalkerDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* Admin reporting mode banner */}
+      {onExitToAdmin && (
+        <div className="bg-slate-800 text-white px-4 py-2 flex items-center justify-between sticky top-0 z-[60]">
+          <span className="text-sm">🛡️ Admin — reporting as walker</span>
+          <button
+            onClick={onExitToAdmin}
+            className="text-sm text-slate-300 hover:text-white font-medium flex items-center gap-1"
+          >
+            ← Back to Admin
+          </button>
+        </div>
+      )}
+
       {/* Persistent Header */}
-      <Header 
-        showBackButton={viewState !== 'dashboard'} 
+      <Header
+        showBackButton={viewState !== 'dashboard'}
         onBack={handleBack}
         title={getTitle()}
       />
