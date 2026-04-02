@@ -796,9 +796,9 @@ export default function AdminDashboard() {
                     <div key={report.id} className={`p-4 flex items-center justify-between ${report.archived ? 'bg-slate-50' : ''}`}>
                       <div className="flex items-center gap-3">
                         <input type="checkbox" checked={selectedReports.includes(report.id)} onChange={() => handleSelectReport(report.id)} className="rounded" />
-                        <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">🐑</div>
+                        <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">{report.categoryEmoji || '🐑'}</div>
                         <div>
-                          <div className="font-medium text-slate-800">{report.sheepCount} sheep • {report.condition}</div>
+                          <div className="font-medium text-slate-800">{report.sheepCount} {report.categoryName || 'sheep'} • {report.condition}</div>
                           <div className="text-sm text-slate-500">{new Date(report.timestamp).toLocaleString()}</div>
                           {report.description && <div className="text-xs text-slate-400 truncate max-w-xs">{report.description}</div>}
                         </div>
@@ -1832,7 +1832,7 @@ function ClaimReportModal({ reportId, report, farmers, onClose, onClaim }: any) 
         <div className="mb-6 p-4 bg-yellow-50 rounded-lg">
           <div className="font-medium text-slate-800 mb-2">Report Details</div>
           <div className="text-sm text-slate-600 space-y-1">
-            <div>🐑 {report.sheepCount} sheep ({report.condition})</div>
+            <div>{report.categoryEmoji || '🐑'} {report.sheepCount} {report.categoryName || 'sheep'} ({report.condition})</div>
             <div>📅 {new Date(report.timestamp).toLocaleString()}</div>
             {report.description && <div>📝 {report.description}</div>}
           </div>
