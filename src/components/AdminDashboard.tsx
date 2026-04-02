@@ -8,7 +8,7 @@ import AdminUserManagement from './AdminUserManagement'
 import WalkerDashboard from './WalkerDashboard'
 import { inviteUser, getAllUsers } from '@/lib/unified-auth'
 
-type AdminView = 'overview' | 'walkers' | 'farmers' | 'reports' | 'farms' | 'billing' | 'admins'
+type AdminView = 'overview' | 'walkers' | 'farmers' | 'reports' | 'farms' | 'billing' | 'admins' | 'categories'
 type SortBy = 'date' | 'daysUnclaimed'
 type FilterStatus = 'all' | 'reported' | 'claimed' | 'resolved'
 type FilterArchive = 'active' | 'archived' | 'all'
@@ -37,7 +37,11 @@ export default function AdminDashboard() {
     deleteField,
     claimReport,
     claimReportForFarmer,
-    resolveReport
+    resolveReport,
+    reportCategories,
+    addReportCategory,
+    updateReportCategory,
+    deleteReportCategory,
   } = useAppStore()
 
   const [currentView, setCurrentView] = useState<AdminView>('overview')
@@ -56,7 +60,9 @@ export default function AdminDashboard() {
   const [showEditFieldModal, setShowEditFieldModal] = useState<{farmId: string, fieldId: string} | null>(null)
   const [showClaimReportModal, setShowClaimReportModal] = useState<string | null>(null) // reportId
   const [showFarmDetailsModal, setShowFarmDetailsModal] = useState<string | null>(null) // farmId
-  
+  const [showCreateCategoryModal, setShowCreateCategoryModal] = useState(false)
+  const [editingCategory, setEditingCategory] = useState<any | null>(null)
+
   // Report filters and sorting
   const [sortBy, setSortBy] = useState<SortBy>('daysUnclaimed')
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all')
@@ -352,6 +358,7 @@ export default function AdminDashboard() {
             <NavButton view="farms" label="Farms" count={farms.length} />
             <NavButton view="billing" label="Billing" />
             <NavButton view="admins" label="Admin Users" />
+            <NavButton view="categories" label="Categories" count={reportCategories.length} />
             <div className="ml-auto flex-shrink-0">
               <button
                 onClick={() => setShowReportMode(true)}
@@ -743,6 +750,89 @@ export default function AdminDashboard() {
 
         {currentView === 'admins' && (
           <AdminUserManagement />
+        )}
+
+        {/* ===== CATEGORIES ===== */}
+        {currentView === 'categories' && (
+          <>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-slate-800">Report Categories</h2>
+              <button
+                onClick={() => setShowCreateCategoryModal(true)}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700"
+              >
+                + Add Category
+              </button>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+              <p className="text-sm text-blue-800">
+                <strong>🐑 Sheep</strong> is the built-in default category and cannot be removed. Add custom categories below for reporting other issues such as damaged property or other animals.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {reportCategories.length === 0 && (
+                <div className="bg-white rounded-xl p-8 shadow text-center text-slate-500">
+                  No custom categories yet. Click "+ Add Category" to create one.
+                </div>
+              )}
+              {[...reportCategories].sort((a, b) => a.sortOrder - b.sortOrder).map((cat) => (
+                <div key={cat.id} className="bg-white rounded-xl p-4 shadow flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">{cat.emoji}</span>
+                    <div>
+                      <div className="font-semibold text-slate-800 flex items-center gap-2">
+                        {cat.name}
+                        {!cat.isActive && <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">Inactive</span>}
+                      </div>
+                      {cat.description && <div className="text-sm text-slate-500">{cat.description}</div>}
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {cat.conditions.map((c) => (
+                          <span key={c} className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{c}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => setEditingCategory(cat)}
+                      className="px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm(`Delete "${cat.name}"? This cannot be undone.`)) {
+                          deleteReportCategory(cat.id)
+                        }
+                      }}
+                      className="px-3 py-1.5 text-sm bg-red-50 hover:bg-red-100 text-red-600 rounded-lg"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Create / Edit Category Modal */}
+            {(showCreateCategoryModal || editingCategory) && (
+              <CategoryFormModal
+                category={editingCategory}
+                onClose={() => { setShowCreateCategoryModal(false); setEditingCategory(null) }}
+                onSave={(data: any) => {
+                  if (editingCategory) {
+                    updateReportCategory(editingCategory.id, data)
+                  } else {
+                    addReportCategory(data)
+                  }
+                  setShowCreateCategoryModal(false)
+                  setEditingCategory(null)
+                }}
+              />
+            )}
+          </>
         )}
 
         <div className="mt-6 bg-slate-200 rounded-xl p-4 text-sm text-slate-600">
@@ -1552,6 +1642,166 @@ function ClaimReportModal({ reportId, report, farmers, onClose, onClaim }: any) 
             <button type="submit" className="flex-1 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700">Claim Report</button>
           </div>
         </form>
+      </div>
+    </div>
+  )
+}
+
+function CategoryFormModal({ category, onClose, onSave }: {
+  category?: any
+  onClose: () => void
+  onSave: (data: any) => void
+}) {
+  const [name, setName] = useState(category?.name || '')
+  const [emoji, setEmoji] = useState(category?.emoji || '📋')
+  const [description, setDescription] = useState(category?.description || '')
+  const [conditions, setConditions] = useState<string[]>(category?.conditions || [])
+  const [newCondition, setNewCondition] = useState('')
+  const [showCount, setShowCount] = useState(category?.showCount ?? true)
+  const [countLabel, setCountLabel] = useState(category?.countLabel || 'Quantity')
+  const [isActive, setIsActive] = useState(category?.isActive ?? true)
+  const [sortOrder, setSortOrder] = useState(category?.sortOrder ?? 0)
+
+  const addCondition = () => {
+    const trimmed = newCondition.trim()
+    if (trimmed && !conditions.includes(trimmed)) {
+      setConditions([...conditions, trimmed])
+      setNewCondition('')
+    }
+  }
+
+  const removeCondition = (c: string) => setConditions(conditions.filter(x => x !== c))
+
+  const handleSave = () => {
+    if (!name.trim()) { alert('Name is required'); return }
+    if (conditions.length === 0) { alert('Add at least one condition option'); return }
+    onSave({ name: name.trim(), emoji, description: description.trim(), conditions, showCount, countLabel, isActive, sortOrder: Number(sortOrder) })
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-auto">
+      <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl my-4">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-slate-800">{category ? 'Edit Category' : 'New Category'}</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">×</button>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex gap-3">
+            <div className="w-20">
+              <label className="block text-sm font-medium text-slate-700 mb-1">Emoji</label>
+              <input
+                type="text"
+                value={emoji}
+                onChange={(e) => setEmoji(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-center text-2xl"
+                maxLength={2}
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Fence, Wall, Road"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Description (optional)</label>
+            <input
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Brief description for walkers"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Condition options *</label>
+            <div className="flex flex-wrap gap-1 mb-2">
+              {conditions.map((c) => (
+                <span key={c} className="flex items-center gap-1 bg-green-100 text-green-700 text-sm px-2 py-1 rounded-full">
+                  {c}
+                  <button onClick={() => removeCondition(c)} className="text-green-500 hover:text-green-700 leading-none">×</button>
+                </span>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newCondition}
+                onChange={(e) => setNewCondition(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCondition())}
+                placeholder="e.g. Damaged, Collapsed..."
+                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+              />
+              <button
+                type="button"
+                onClick={addCondition}
+                className="px-3 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={showCount} onChange={(e) => setShowCount(e.target.checked)} className="rounded" />
+              <span className="text-sm font-medium text-slate-700">Ask for quantity</span>
+            </label>
+          </div>
+
+          {showCount && (
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Quantity label</label>
+              <input
+                type="text"
+                value={countLabel}
+                onChange={(e) => setCountLabel(e.target.value)}
+                placeholder="e.g. Number of animals, Number of sections"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+            </div>
+          )}
+
+          <div className="flex items-center gap-6">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} className="rounded" />
+              <span className="text-sm font-medium text-slate-700">Active (visible to walkers)</span>
+            </label>
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-slate-700">Order</label>
+              <input
+                type="number"
+                value={sortOrder}
+                onChange={(e) => setSortOrder(Number(e.target.value))}
+                className="w-16 px-2 py-1 border border-slate-300 rounded-lg text-sm"
+                min={0}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={handleSave}
+            className="flex-1 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700"
+          >
+            {category ? 'Save Changes' : 'Create Category'}
+          </button>
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
   )

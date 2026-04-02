@@ -11,7 +11,7 @@ export interface SheepReportDB {
   location: { lat: number; lng: number }
   timestamp: string
   sheep_count: number
-  condition: 'healthy' | 'injured' | 'dead' | 'unknown'
+  condition: string
   description: string | null
   reporter_contact: string | null
   reporter_id: string | null
@@ -20,6 +20,9 @@ export interface SheepReportDB {
   claimed_at: string | null
   archived: boolean
   photo_urls: string[] | null
+  category_id?: string
+  category_name?: string
+  category_emoji?: string
   created_at?: string
   updated_at?: string
 }
@@ -40,6 +43,9 @@ export function dbToAppReport(dbReport: SheepReportDB) {
     claimedAt: dbReport.claimed_at ? new Date(dbReport.claimed_at) : undefined,
     archived: dbReport.archived || false,
     photoUrls: dbReport.photo_urls || [],
+    categoryId: dbReport.category_id || 'sheep',
+    categoryName: dbReport.category_name || 'Sheep',
+    categoryEmoji: dbReport.category_emoji || '🐑',
   }
 }
 
@@ -59,6 +65,9 @@ export function appToDbReport(appReport: any) {
     claimed_at: appReport.claimedAt ? (appReport.claimedAt instanceof Date ? appReport.claimedAt.toISOString() : appReport.claimedAt) : null,
     archived: appReport.archived || false,
     photo_urls: appReport.photoUrls || [],
+    category_id: appReport.categoryId || 'sheep',
+    category_name: appReport.categoryName || 'Sheep',
+    category_emoji: appReport.categoryEmoji || '🐑',
   }
 }
 
@@ -147,6 +156,105 @@ export async function deleteReport(reportId: string) {
 
   if (error) {
     console.error('Error deleting report:', error)
+    throw error
+  }
+}
+
+// Report categories
+export interface ReportCategoryDB {
+  id: string
+  name: string
+  emoji: string
+  description: string | null
+  conditions: string[]
+  show_count: boolean
+  count_label: string
+  is_active: boolean
+  sort_order: number
+  created_at: string
+}
+
+export async function fetchReportCategories() {
+  const { data, error } = await supabase
+    .from('report_categories')
+    .select('*')
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true })
+
+  if (error) {
+    console.error('Error fetching report categories:', error)
+    return []
+  }
+
+  return (data || []).map((c: ReportCategoryDB) => ({
+    id: c.id,
+    name: c.name,
+    emoji: c.emoji,
+    description: c.description || undefined,
+    conditions: c.conditions || [],
+    showCount: c.show_count,
+    countLabel: c.count_label,
+    isActive: c.is_active,
+    sortOrder: c.sort_order,
+    createdAt: new Date(c.created_at),
+  }))
+}
+
+export async function createReportCategory(category: Omit<import('@/store/appStore').ReportCategory, 'id' | 'createdAt'>) {
+  const { data, error } = await supabase
+    .from('report_categories')
+    .insert([{
+      name: category.name,
+      emoji: category.emoji,
+      description: category.description || null,
+      conditions: category.conditions,
+      show_count: category.showCount,
+      count_label: category.countLabel,
+      is_active: category.isActive,
+      sort_order: category.sortOrder,
+    }])
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error creating report category:', error)
+    throw error
+  }
+  return data
+}
+
+export async function updateReportCategoryDB(id: string, updates: any) {
+  const { data, error } = await supabase
+    .from('report_categories')
+    .update({
+      name: updates.name,
+      emoji: updates.emoji,
+      description: updates.description || null,
+      conditions: updates.conditions,
+      show_count: updates.showCount,
+      count_label: updates.countLabel,
+      is_active: updates.isActive,
+      sort_order: updates.sortOrder,
+    })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error updating report category:', error)
+    throw error
+  }
+  return data
+}
+
+export async function deleteReportCategoryDB(id: string) {
+  const { error } = await supabase
+    .from('report_categories')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    console.error('Error deleting report category:', error)
     throw error
   }
 }

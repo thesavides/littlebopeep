@@ -71,7 +71,10 @@ export interface SheepReport {
   photoUrl?: string // Legacy single photo
   photoUrls?: string[] // New: multiple photos (max 3)
   sheepCount: number
-  condition: 'healthy' | 'injured' | 'dead' | 'unknown'
+  condition: string
+  categoryId: string        // 'sheep' for default; custom category id otherwise
+  categoryName: string      // 'Sheep' for default; custom category name otherwise
+  categoryEmoji: string     // '🐑' for default; custom category emoji otherwise
   reporterContact?: string
   reporterId?: string
   status: 'reported' | 'claimed' | 'resolved'
@@ -123,6 +126,19 @@ export interface MapPreferences {
   }
   lastZoomLevel: number
   disclaimerAccepted: boolean
+}
+
+export interface ReportCategory {
+  id: string
+  name: string             // e.g. 'Fence', 'Wall', 'Road', 'Other Animal'
+  emoji: string            // e.g. '🪵', '🧱', '🛣️', '🐄'
+  description?: string     // optional helper text
+  conditions: string[]     // e.g. ['Damaged', 'Collapsed', 'Hole', 'Needs repair']
+  showCount: boolean       // whether to ask "how many?"
+  countLabel: string       // e.g. 'Number of animals' or 'Number of sections'
+  isActive: boolean
+  sortOrder: number
+  createdAt: Date
 }
 
 interface AppState {
@@ -198,6 +214,12 @@ interface AppState {
   // Supabase sync (stub for now)
   loadReports: () => void
 
+  // Report category actions
+  reportCategories: ReportCategory[]
+  addReportCategory: (category: Omit<ReportCategory, 'id' | 'createdAt'>) => void
+  updateReportCategory: (id: string, data: Partial<Omit<ReportCategory, 'id' | 'createdAt'>>) => void
+  deleteReportCategory: (id: string) => void
+
   // Helpers
   getCurrentUser: () => User | undefined
   getFarmsByFarmerId: (farmerId: string) => Farm[]
@@ -221,6 +243,7 @@ export const useAppStore = create<AppState>()(
       farms: [],
       reports: [],
       notifications: [],
+      reportCategories: [],
       
       mapPreferences: {
         layersEnabled: {
@@ -336,6 +359,9 @@ export const useAppStore = create<AppState>()(
           description: draftReport.description || '',
           sheepCount: draftReport.sheepCount || 1,
           condition: draftReport.condition || 'unknown',
+          categoryId: draftReport.categoryId || 'sheep',
+          categoryName: draftReport.categoryName || 'Sheep',
+          categoryEmoji: draftReport.categoryEmoji || '🐑',
           reporterContact: draftReport.reporterContact,
           reporterId: currentUserId || undefined,
           status: 'reported',
@@ -537,6 +563,25 @@ export const useAppStore = create<AppState>()(
         const { currentRole, isAdmin } = get()
         return isAdmin || currentRole === 'super_admin' || currentRole === 'admin'
       },
+
+      // Report category actions
+      addReportCategory: (category) => set((state) => ({
+        reportCategories: [...state.reportCategories, {
+          ...category,
+          id: Date.now().toString(),
+          createdAt: new Date(),
+        }]
+      })),
+
+      updateReportCategory: (id, data) => set((state) => ({
+        reportCategories: state.reportCategories.map((c) =>
+          c.id === id ? { ...c, ...data } : c
+        )
+      })),
+
+      deleteReportCategory: (id) => set((state) => ({
+        reportCategories: state.reportCategories.filter((c) => c.id !== id)
+      })),
     }),
     {
       name: 'little-bo-peep-storage',

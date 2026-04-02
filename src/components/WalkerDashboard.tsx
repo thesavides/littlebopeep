@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAppStore, getDistanceMeters, MAP_CONFIG } from '@/store/appStore'
+import type { ReportCategory } from '@/store/appStore'
 import Header from './Header'
 import Map from './Map'
 import LocationButton from './LocationButton'
@@ -29,7 +30,8 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
     getNearbyReports,
     getReportsByUserId,
     getUnreadNotifications,
-    markNotificationRead
+    markNotificationRead,
+    reportCategories,
   } = useAppStore()
   
   const [viewState, setViewState] = useState<ViewState>('dashboard')
@@ -37,7 +39,9 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
   const [nearbyReports, setNearbyReports] = useState<typeof reports>([])
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null)
   const [showNotification, setShowNotification] = useState(false)
-  
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false)
+  const [activeCategory, setActiveCategory] = useState<ReportCategory | null>(null)
+
   // Guest contact info (for walkers without accounts)
   const [guestName, setGuestName] = useState('')
   const [guestEmail, setGuestEmail] = useState('')
@@ -96,6 +100,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
       } else {
         setViewState('dashboard')
         resetDraft()
+        setActiveCategory(null)
       }
     } else {
       setViewState('dashboard')
@@ -157,8 +162,32 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
     setViewState('reporting')
   }
 
+  const handleStartReportWithCategory = (category: ReportCategory | null) => {
+    resetDraft()
+    setActiveCategory(category)
+    if (category) {
+      updateDraftReport({
+        categoryId: category.id,
+        categoryName: category.name,
+        categoryEmoji: category.emoji,
+      })
+    } else {
+      updateDraftReport({
+        categoryId: 'sheep',
+        categoryName: 'Sheep',
+        categoryEmoji: '🐑',
+      })
+    }
+    setCurrentReportStep(1)
+    setViewState('reporting')
+    setShowCategoryPicker(false)
+  }
+
   const getTitle = () => {
-    if (viewState === 'reporting') return t('walker.reportSheepStep', { step: currentReportStep, total: 4 }, `Report Sheep (Step ${currentReportStep}/4)`)
+    if (viewState === 'reporting') {
+      const catName = activeCategory ? activeCategory.name : 'Sheep'
+      return `Report ${catName} (Step ${currentReportStep}/4)`
+    }
     if (viewState === 'my-reports') return t('walker.myReports', {}, 'My Reports')
     return ''
   }
@@ -301,14 +330,49 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
               </div>
             </div>
 
+            {/* Category Picker Modal */}
+            {showCategoryPicker && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-slate-800">What are you reporting?</h3>
+                    <button onClick={() => setShowCategoryPicker(false)} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">×</button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {reportCategories.filter(c => c.isActive).sort((a, b) => a.sortOrder - b.sortOrder).map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => handleStartReportWithCategory(cat)}
+                        className="flex flex-col items-center gap-2 p-4 bg-slate-50 hover:bg-green-50 border border-slate-200 hover:border-green-400 rounded-xl transition-colors"
+                      >
+                        <span className="text-3xl">{cat.emoji}</span>
+                        <span className="text-sm font-medium text-slate-700 text-center leading-tight">{cat.name}</span>
+                      </button>
+                    ))}
+                    {reportCategories.filter(c => c.isActive).length === 0 && (
+                      <p className="col-span-2 text-center text-slate-500 text-sm py-4">No additional categories available yet.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Actions */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               <button
-                onClick={handleStartReport}
+                onClick={() => handleStartReportWithCategory(null)}
                 className="w-full py-4 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow-lg"
               >
                 <span className="text-xl">🐑</span>
                 {t('walker.reportASheep', {}, 'Report a Sheep')}
+              </button>
+
+              <button
+                onClick={() => setShowCategoryPicker(true)}
+                className="w-full py-4 bg-slate-700 text-white rounded-xl font-semibold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+              >
+                <span className="text-xl">📋</span>
+                Report Other
               </button>
 
               <button
@@ -401,7 +465,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
-                      {t('walker.howManySheep', {}, 'How many sheep?')}
+                      {activeCategory ? (activeCategory.countLabel || 'Quantity') : t('walker.sheepCount', {}, 'Number of sheep')}
                     </label>
                     <input
                       type="number"
@@ -416,14 +480,25 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                       {t('walker.condition', {}, 'Condition')}
                     </label>
                     <select
-                      value={draftReport.condition || 'unknown'}
-                      onChange={(e) => updateDraftReport({ condition: e.target.value as any })}
+                      value={draftReport.condition || ''}
+                      onChange={(e) => updateDraftReport({ condition: e.target.value })}
                       className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     >
-                      <option value="healthy">{t('walker.conditionHealthy', {}, 'Healthy - looks fine')}</option>
-                      <option value="injured">{t('walker.conditionInjured', {}, 'Injured - needs attention')}</option>
-                      <option value="dead">{t('walker.conditionDead', {}, 'Dead - needs collection')}</option>
-                      <option value="unknown">{t('walker.conditionUnknown', {}, 'Not sure')}</option>
+                      {activeCategory ? (
+                        <>
+                          <option value="">Select condition...</option>
+                          {activeCategory.conditions.map((cond) => (
+                            <option key={cond} value={cond}>{cond}</option>
+                          ))}
+                        </>
+                      ) : (
+                        <>
+                          <option value="healthy">{t('walker.conditionHealthy', {}, 'Healthy - looks fine')}</option>
+                          <option value="injured">{t('walker.conditionInjured', {}, 'Injured - needs attention')}</option>
+                          <option value="dead">{t('walker.conditionDead', {}, 'Dead - needs collection')}</option>
+                          <option value="unknown">{t('walker.conditionUnknown', {}, 'Not sure')}</option>
+                        </>
+                      )}
                     </select>
                   </div>
                   <div>
@@ -522,6 +597,12 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                   {t('walker.confirmReport', {}, 'Confirm your report')}
                 </h2>
                 <div className="bg-white rounded-xl p-4 shadow space-y-3 border border-slate-200">
+                  {activeCategory && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-slate-500">Category</span>
+                      <span className="text-slate-800 font-medium">{activeCategory.emoji} {activeCategory.name}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-sm text-slate-500">{t('walker.location', {}, 'Location')}</span>
                     <span className="text-slate-800 font-medium">
@@ -529,7 +610,9 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-slate-500">{t('walker.sheepCount', {}, 'Sheep count')}</span>
+                    <span className="text-sm text-slate-500">
+                      {activeCategory ? (activeCategory.countLabel || 'Quantity') : t('walker.sheepCount', {}, 'Sheep count')}
+                    </span>
                     <span className="text-slate-800 font-medium">{draftReport.sheepCount || 1}</span>
                   </div>
                   <div className="flex justify-between">
