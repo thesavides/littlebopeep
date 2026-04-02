@@ -243,6 +243,15 @@ export async function resetPassword(newPassword: string): Promise<{
       return { success: false, error: error.message }
     }
 
+    // Clear password reset flag and restore active status
+    const user = await getCurrentUser()
+    if (user) {
+      await supabase
+        .from('user_profiles')
+        .update({ password_reset_required: false, status: 'active' })
+        .eq('id', user.id)
+    }
+
     return { success: true }
   } catch (error) {
     console.error('Reset password error:', error)

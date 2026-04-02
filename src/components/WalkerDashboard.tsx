@@ -307,7 +307,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                     id: 'user-location',
                     position: [userLocation.lat, userLocation.lng] as [number, number],
                     popup: '📍 Your location',
-                    type: 'default' as const
+                    type: 'walker-location' as const
                   }] : []),
                   // Recent sheep reports
                   ...getRecentAlerts().map((r) => ({

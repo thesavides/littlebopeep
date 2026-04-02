@@ -42,6 +42,7 @@ export default function AdminDashboard() {
     addReportCategory,
     updateReportCategory,
     deleteReportCategory,
+    updateFarmCategorySubscription,
   } = useAppStore()
 
   const [currentView, setCurrentView] = useState<AdminView>('overview')
@@ -66,10 +67,14 @@ export default function AdminDashboard() {
 
   // Admin map — user's geolocation
   const [adminMapCenter, setAdminMapCenter] = useState<[number, number]>([54.5, -2])
+  const [adminLocationAcquired, setAdminLocationAcquired] = useState(false)
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => setAdminMapCenter([pos.coords.latitude, pos.coords.longitude]),
+        (pos) => {
+          setAdminMapCenter([pos.coords.latitude, pos.coords.longitude])
+          setAdminLocationAcquired(true)
+        },
         () => {} // silently fall back to UK default
       )
     }
@@ -123,6 +128,7 @@ export default function AdminDashboard() {
   // Stats
   const walkers = allUsers.filter((u: any) => u.role === 'walker')
   const farmers = allUsers.filter((u: any) => u.role === 'farmer')
+  const admins = allUsers.filter((u: any) => u.role === 'admin' || u.role === 'super_admin')
   const activeUsers = allUsers.filter((u: any) => u.status === 'active').length
   
   const reportedCount = reports.filter((r) => r.status === 'reported' && !r.archived).length
@@ -340,6 +346,8 @@ export default function AdminDashboard() {
             deleteField(farmId, fieldId)
           }
         }}
+        categories={reportCategories}
+        onUpdateSubscription={updateFarmCategorySubscription}
       />}
 
       {/* Create Field Modal */}
@@ -427,46 +435,46 @@ export default function AdminDashboard() {
         {currentView === 'overview' && (
           <>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-white rounded-xl p-4 shadow">
-                <div className="text-3xl font-bold text-slate-800">{users.length}</div>
+              <button onClick={() => setCurrentView('admins')} className="bg-white rounded-xl p-4 shadow text-left hover:shadow-md transition-shadow">
+                <div className="text-3xl font-bold text-slate-800">{allUsers.length}</div>
                 <div className="text-sm text-slate-500">Total Users</div>
                 <div className="text-xs text-green-600 mt-1">{activeUsers} active</div>
-              </div>
-              <div className="bg-white rounded-xl p-4 shadow">
+              </button>
+              <button onClick={() => setCurrentView('walkers')} className="bg-white rounded-xl p-4 shadow text-left hover:shadow-md transition-shadow">
                 <div className="text-3xl font-bold text-green-600">{walkers.length}</div>
                 <div className="text-sm text-slate-500">Walkers</div>
-              </div>
-              <div className="bg-white rounded-xl p-4 shadow">
+              </button>
+              <button onClick={() => setCurrentView('farmers')} className="bg-white rounded-xl p-4 shadow text-left hover:shadow-md transition-shadow">
                 <div className="text-3xl font-bold text-blue-600">{farmers.length}</div>
                 <div className="text-sm text-slate-500">Farmers</div>
-              </div>
-              <div className="bg-white rounded-xl p-4 shadow">
+              </button>
+              <button onClick={() => setCurrentView('farms')} className="bg-white rounded-xl p-4 shadow text-left hover:shadow-md transition-shadow">
                 <div className="text-3xl font-bold text-amber-600">{farms.length}</div>
                 <div className="text-sm text-slate-500">Farms ({totalFields} fields)</div>
-              </div>
+              </button>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-              <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-200">
+              <button onClick={() => setCurrentView('reports')} className="bg-yellow-50 rounded-xl p-4 border border-yellow-200 text-left hover:shadow-md transition-shadow">
                 <div className="text-2xl font-bold text-yellow-700">{reportedCount}</div>
                 <div className="text-sm text-yellow-600">Reported</div>
-              </div>
-              <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+              </button>
+              <button onClick={() => setCurrentView('reports')} className="bg-blue-50 rounded-xl p-4 border border-blue-200 text-left hover:shadow-md transition-shadow">
                 <div className="text-2xl font-bold text-blue-700">{claimedCount}</div>
                 <div className="text-sm text-blue-600">Claimed</div>
-              </div>
-              <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+              </button>
+              <button onClick={() => setCurrentView('reports')} className="bg-green-50 rounded-xl p-4 border border-green-200 text-left hover:shadow-md transition-shadow">
                 <div className="text-2xl font-bold text-green-700">{resolvedCount}</div>
                 <div className="text-sm text-green-600">Resolved</div>
-              </div>
-              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+              </button>
+              <button onClick={() => setCurrentView('reports')} className="bg-slate-50 rounded-xl p-4 border border-slate-200 text-left hover:shadow-md transition-shadow">
                 <div className="text-2xl font-bold text-slate-700">{archivedCount}</div>
                 <div className="text-sm text-slate-600">Archived</div>
-              </div>
-              <div className="bg-purple-50 rounded-xl p-4 border border-purple-200">
+              </button>
+              <button onClick={() => setCurrentView('billing')} className="bg-purple-50 rounded-xl p-4 border border-purple-200 text-left hover:shadow-md transition-shadow">
                 <div className="text-2xl font-bold text-purple-700">{activeSubs}</div>
                 <div className="text-sm text-purple-600">Paid Subs</div>
-              </div>
+              </button>
             </div>
 
             <div className="bg-white rounded-xl shadow mb-6">
@@ -477,12 +485,20 @@ export default function AdminDashboard() {
                 <Map
                   center={adminMapCenter}
                   zoom={MAP_CONFIG.STANDARD_ZOOM_5KM}
-                  markers={reports.filter(r => !r.archived).map((r) => ({
-                    id: r.id,
-                    position: [r.location.lat, r.location.lng] as [number, number],
-                    popup: `🐑 ${r.sheepCount} sheep - ${r.status}`,
-                    type: 'sheep' as const
-                  }))}
+                  markers={[
+                    ...(adminLocationAcquired ? [{
+                      id: 'admin-location',
+                      position: adminMapCenter,
+                      popup: '📍 Your location',
+                      type: 'user-location' as const,
+                    }] : []),
+                    ...reports.filter(r => !r.archived).map((r) => ({
+                      id: r.id,
+                      position: [r.location.lat, r.location.lng] as [number, number],
+                      popup: `🐑 ${r.sheepCount} sheep - ${r.status}`,
+                      type: 'sheep' as const
+                    }))
+                  ]}
                   polygons={allFieldPolygons}
                 />
               </div>
@@ -1427,7 +1443,9 @@ function EditFarmModal({ farm, onClose, onSave }: { farm: any; onClose: () => vo
   )
 }
 
-function FarmDetailsModal({ farm, owner, onClose, onAddField, onEditField, onDeleteField }: any) {
+function FarmDetailsModal({ farm, owner, onClose, onAddField, onEditField, onDeleteField, categories, onUpdateSubscription }: any) {
+  const activeCategories = (categories || []).filter((c: any) => c.isActive)
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
       <div className="bg-white rounded-2xl p-6 max-w-3xl w-full shadow-xl my-8">
@@ -1464,7 +1482,7 @@ function FarmDetailsModal({ farm, owner, onClose, onAddField, onEditField, onDel
             <p>No fields added yet</p>
           </div>
         ) : (
-          <div className="space-y-3 max-h-96 overflow-y-auto">
+          <div className="space-y-3 max-h-64 overflow-y-auto">
             {farm.fields.map((field: any) => (
               <div key={field.id} className="p-4 bg-slate-50 rounded-lg flex justify-between items-center">
                 <div>
@@ -1490,6 +1508,46 @@ function FarmDetailsModal({ farm, owner, onClose, onAddField, onEditField, onDel
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {activeCategories.length > 0 && (
+          <div className="mt-6 pt-4 border-t">
+            <h4 className="font-semibold text-slate-800 mb-3">Notification Preferences</h4>
+            <p className="text-xs text-slate-500 mb-3">Control which report types trigger alerts for this farm.</p>
+            <div className="space-y-2">
+              {activeCategories.map((cat: any) => {
+                const isCompulsory = cat.subscriptionMode === 'compulsory'
+                const effective = isCompulsory
+                  ? true
+                  : cat.subscriptionMode === 'default_on'
+                    ? (farm.categorySubscriptions?.[cat.id] ?? true)
+                    : (farm.categorySubscriptions?.[cat.id] ?? false)
+                return (
+                  <div key={cat.id} className={`flex items-center justify-between p-3 rounded-lg ${isCompulsory ? 'bg-red-50 border border-red-100' : 'bg-slate-50 border border-slate-200'}`}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">{cat.emoji}</span>
+                      <div>
+                        <div className="text-sm font-medium text-slate-700">{cat.name}</div>
+                        <div className="text-xs text-slate-500">
+                          {isCompulsory ? '🔒 Compulsory — cannot be disabled' : cat.subscriptionMode === 'default_on' ? 'Default on' : 'Optional'}
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => !isCompulsory && onUpdateSubscription(farm.id, cat.id, !effective)}
+                      disabled={isCompulsory}
+                      className={`relative w-11 h-6 rounded-full transition-colors ${
+                        effective ? 'bg-green-500' : 'bg-slate-300'
+                      } ${isCompulsory ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                      title={isCompulsory ? 'Compulsory — cannot be changed' : undefined}
+                    >
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${effective ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         )}
 
@@ -1786,6 +1844,7 @@ function CategoryFormModal({ category, onClose, onSave }: {
   const [countLabel, setCountLabel] = useState(category?.countLabel || 'Quantity')
   const [isActive, setIsActive] = useState(category?.isActive ?? true)
   const [sortOrder, setSortOrder] = useState(category?.sortOrder ?? 0)
+  const [subscriptionMode, setSubscriptionMode] = useState<'compulsory' | 'default_on' | 'default_off'>(category?.subscriptionMode || 'default_off')
 
   const addCondition = () => {
     const trimmed = newCondition.trim()
@@ -1800,7 +1859,7 @@ function CategoryFormModal({ category, onClose, onSave }: {
   const handleSave = () => {
     if (!name.trim()) { alert('Name is required'); return }
     if (conditions.length === 0) { alert('Add at least one condition option'); return }
-    onSave({ name: name.trim(), emoji, description: description.trim(), conditions, showCount, countLabel, isActive, sortOrder: Number(sortOrder) })
+    onSave({ name: name.trim(), emoji, description: description.trim(), conditions, showCount, countLabel, isActive, sortOrder: Number(sortOrder), subscriptionMode })
   }
 
   return (
@@ -1812,17 +1871,32 @@ function CategoryFormModal({ category, onClose, onSave }: {
         </div>
 
         <div className="space-y-4">
-          <div className="flex gap-3">
-            <div className="w-20">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Emoji</label>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Emoji</label>
+            <div className="flex items-center gap-2 mb-2">
               <input
                 type="text"
                 value={emoji}
                 onChange={(e) => setEmoji(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-center text-2xl"
+                className="w-16 px-2 py-2 border border-slate-300 rounded-lg text-center text-2xl"
                 maxLength={2}
               />
+              <span className="text-xs text-slate-500">Or pick one:</span>
             </div>
+            <div className="flex flex-wrap gap-1">
+              {['🐑','🐄','🐖','🐎','🐓','🦆','🐇','🦊','🦡','🌾','🌿','🍀','🌲','🌳','🌵','🪨','🪵','🪺','🏡','🚜','🌄','🌅','🌦️','🌧️','🌫️','🛤️','🛣️','🏞️','⛰️','🗻','🌁','🌉','🏚️','🏗️','⛏️','🪚','🔨','⚒️','🪜','🧱','🪟','🚪','🏠','🏘️','🏕️','⛺','🔒','🔓','🪝','🧲','💧','🌊','🌬️','🍂','🍁','🌸','🌼','🌻','🥕','🌽','🫘','🫛'].map(e => (
+                <button
+                  key={e}
+                  type="button"
+                  onClick={() => setEmoji(e)}
+                  className={`text-xl p-1 rounded hover:bg-slate-100 transition-colors ${emoji === e ? 'bg-green-100 ring-2 ring-green-400' : ''}`}
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex gap-3">
             <div className="flex-1">
               <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
               <input
@@ -1909,6 +1983,33 @@ function CategoryFormModal({ category, onClose, onSave }: {
                 className="w-16 px-2 py-1 border border-slate-300 rounded-lg text-sm"
                 min={0}
               />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Farmer Notification Mode</label>
+            <div className="space-y-2">
+              <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+                <input type="radio" name="subscriptionMode" value="default_off" checked={subscriptionMode === 'default_off'} onChange={() => setSubscriptionMode('default_off')} className="mt-0.5" />
+                <div>
+                  <div className="text-sm font-medium text-slate-700">Optional</div>
+                  <div className="text-xs text-slate-500">Walkers can log it. Farmers must actively opt in to receive alerts.</div>
+                </div>
+              </label>
+              <label className="flex items-start gap-3 p-3 rounded-lg border border-blue-200 bg-blue-50 cursor-pointer hover:bg-blue-100">
+                <input type="radio" name="subscriptionMode" value="default_on" checked={subscriptionMode === 'default_on'} onChange={() => setSubscriptionMode('default_on')} className="mt-0.5" />
+                <div>
+                  <div className="text-sm font-medium text-blue-700">Default On</div>
+                  <div className="text-xs text-blue-600">All farmers are notified by default. They can choose to opt out.</div>
+                </div>
+              </label>
+              <label className="flex items-start gap-3 p-3 rounded-lg border border-red-200 bg-red-50 cursor-pointer hover:bg-red-100">
+                <input type="radio" name="subscriptionMode" value="compulsory" checked={subscriptionMode === 'compulsory'} onChange={() => setSubscriptionMode('compulsory')} className="mt-0.5" />
+                <div>
+                  <div className="text-sm font-medium text-red-700">Compulsory</div>
+                  <div className="text-xs text-red-600">All farmers receive alerts. Cannot be turned off.</div>
+                </div>
+              </label>
             </div>
           </div>
         </div>

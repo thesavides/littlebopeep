@@ -96,7 +96,7 @@ const sheepResolvedIcon = L.divIcon({
   popupAnchor: [0, -20],
 })
 
-// User location icon - Blue pin
+// User location icon - Blue pin (admin/default)
 const userLocationIcon = L.divIcon({
   className: 'user-location-marker',
   html: `<div style="
@@ -112,6 +112,46 @@ const userLocationIcon = L.divIcon({
   popupAnchor: [0, -10],
 })
 
+// Walker location icon - Blue circle with walking person
+const walkerLocationIcon = L.divIcon({
+  className: 'walker-location-marker',
+  html: `<div style="
+    font-size: 18px;
+    width: 34px;
+    height: 34px;
+    background: #3b82f6;
+    border: 3px solid white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  ">🚶</div>`,
+  iconSize: [34, 34],
+  iconAnchor: [17, 17],
+  popupAnchor: [0, -17],
+})
+
+// Farmer location icon - Green circle with farmer
+const farmerLocationIcon = L.divIcon({
+  className: 'farmer-location-marker',
+  html: `<div style="
+    font-size: 18px;
+    width: 34px;
+    height: 34px;
+    background: #16a34a;
+    border: 3px solid white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  ">🧑‍🌾</div>`,
+  iconSize: [34, 34],
+  iconAnchor: [17, 17],
+  popupAnchor: [0, -17],
+})
+
 L.Marker.prototype.options.icon = defaultIcon
 
 interface MapProps {
@@ -123,7 +163,7 @@ interface MapProps {
     position: [number, number]
     popup?: string
     color?: 'red' | 'green' | 'blue'
-    type?: 'default' | 'fencepost' | 'sheep' | 'existing' | 'selected' | 'user-location'
+    type?: 'default' | 'fencepost' | 'sheep' | 'existing' | 'selected' | 'user-location' | 'walker-location' | 'farmer-location'
     status?: 'reported' | 'claimed' | 'resolved'
   }>
   circles?: Array<{
@@ -303,6 +343,10 @@ function getMarkerIcon(type?: string, status?: string) {
       return fencePostIcon
     case 'user-location':
       return userLocationIcon
+    case 'walker-location':
+      return walkerLocationIcon
+    case 'farmer-location':
+      return farmerLocationIcon
     case 'sheep':
     case 'existing':
     case 'selected':
