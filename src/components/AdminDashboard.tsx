@@ -6,7 +6,7 @@ import Header from './Header'
 import Map from './Map'
 import AdminUserManagement from './AdminUserManagement'
 import WalkerDashboard from './WalkerDashboard'
-import { inviteUser, getAllUsers, adminResetUserPassword } from '@/lib/unified-auth'
+import { inviteUser, getAllUsers, adminResetUserPassword, updateUserProfile } from '@/lib/unified-auth'
 
 type AdminView = 'overview' | 'walkers' | 'farmers' | 'reports' | 'farms' | 'billing' | 'admins' | 'categories'
 type SortBy = 'date' | 'daysUnclaimed'
@@ -62,6 +62,18 @@ export default function AdminDashboard() {
   const [showFarmDetailsModal, setShowFarmDetailsModal] = useState<string | null>(null) // farmId
   const [showCreateCategoryModal, setShowCreateCategoryModal] = useState(false)
   const [editingCategory, setEditingCategory] = useState<any | null>(null)
+  const [viewingUser, setViewingUser] = useState<any | null>(null)
+
+  // Admin map — user's geolocation
+  const [adminMapCenter, setAdminMapCenter] = useState<[number, number]>([54.5, -2])
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setAdminMapCenter([pos.coords.latitude, pos.coords.longitude]),
+        () => {} // silently fall back to UK default
+      )
+    }
+  }, [])
 
   // Report filters and sorting
   const [sortBy, setSortBy] = useState<SortBy>('daysUnclaimed')
@@ -89,6 +101,20 @@ export default function AdminDashboard() {
     } else {
       alert(error || 'Failed to send password reset email')
     }
+  }
+
+  const handleUpdateUser = async (userId: string, updates: { full_name?: string; phone?: string; role?: string }) => {
+    const { success, error } = await updateUserProfile(userId, updates as any)
+    if (success) {
+      // Refresh real users list
+      const refreshed = await getAllUsers()
+      setRealUsers(refreshed)
+      // Update viewingUser in place so modal stays open with fresh data
+      setViewingUser((prev: any) => prev ? { ...prev, ...updates } : prev)
+    } else {
+      alert(error || 'Failed to update user')
+    }
+    return success
   }
 
   // Use real users from Supabase, fallback to mock users for backwards compatibility
@@ -350,6 +376,20 @@ export default function AdminDashboard() {
         }}
       />}
 
+      {/* User Detail / Edit Modal */}
+      {viewingUser && (
+        <UserDetailModal
+          user={viewingUser}
+          reports={reports}
+          farms={farms}
+          onClose={() => setViewingUser(null)}
+          onUpdate={handleUpdateUser}
+          onReset={handleResetUserPassword}
+          onSuspend={(id) => { suspendUser(id); setViewingUser((u: any) => u ? { ...u, status: 'suspended' } : u) }}
+          onActivate={(id) => { activateUser(id); setViewingUser((u: any) => u ? { ...u, status: 'active' } : u) }}
+        />
+      )}
+
       {/* Walker Report Mode Overlay */}
       {showReportMode && (
         <div className="fixed inset-0 z-[100] bg-slate-50 overflow-auto">
@@ -434,7 +474,7 @@ export default function AdminDashboard() {
               </div>
               <div className="h-80">
                 <Map
-                  center={[54.5, -2]}
+                  center={adminMapCenter}
                   zoom={MAP_CONFIG.STANDARD_ZOOM_5KM}
                   markers={reports.filter(r => !r.archived).map((r) => ({
                     id: r.id,
@@ -480,7 +520,7 @@ export default function AdminDashboard() {
                     return (
                       <tr key={user.id} className={!isActive ? 'bg-slate-50 opacity-60' : ''}>
                         <td className="px-4 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-slate-900">{user.email || '-'}</div>
+                          <button onClick={() => setViewingUser(user)} className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline text-left">{user.email || '-'}</button>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
                           <div className="text-sm text-slate-600">{displayName}</div>
@@ -509,6 +549,7 @@ export default function AdminDashboard() {
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
+                            <button onClick={() => setViewingUser(user)} className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-medium hover:bg-slate-200">View</button>
                             {isActive ? (
                               <button onClick={() => suspendUser(user.id)} className="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-medium hover:bg-amber-200">Suspend</button>
                             ) : (
@@ -531,7 +572,7 @@ export default function AdminDashboard() {
 
         {/* ===== FARMERS ===== */}
         {currentView === 'farmers' && (
-          <div className="bg-white rounded-xl shadow">
+          <div className="bg-white rounded-xl shadow overflow-x-auto">
             <div className="p-4 border-b flex justify-between items-center">
               <h2 className="font-semibold text-slate-800">Farmers ({farmers.length})</h2>
               <button
@@ -546,39 +587,72 @@ export default function AdminDashboard() {
                 <div className="text-4xl mb-2">🧑‍🌾</div>No farmers registered yet
               </div>
             ) : (
-              <div className="divide-y">
-                {farmers.map((user: any) => {
-                  const userFarms = farms.filter(f => f.farmerId === user.id)
-                  const displayName = user.full_name || user.name || 'Unknown'
-                  const displayStatus = user.status === 'suspended' ? 'suspended' : 'active'
-                  return (
-                    <div key={user.id} className="p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">🧑‍🌾</div>
-                        <div>
-                          <div className="font-medium text-slate-800">{displayName}</div>
-                          <div className="text-sm text-slate-500">{user.email || 'No email'}</div>
-                          <div className="text-xs text-slate-400">{userFarms.length} farm(s) • {new Date(user.created_at || user.createdAt).toLocaleDateString()}</div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {getSubscriptionBadge(user)}
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${displayStatus === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{displayStatus}</span>
-                        <button onClick={() => setShowEditFarmerModal(user.id)} className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200">Edit</button>
-                        {displayStatus === 'active' ? (
-                          <button onClick={() => suspendUser(user.id)} className="px-3 py-1 bg-amber-100 text-amber-700 rounded text-sm hover:bg-amber-200">Suspend</button>
-                        ) : (
-                          <button onClick={() => activateUser(user.id)} className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200">Activate</button>
-                        )}
-                        {user.email && (
-                          <button onClick={() => handleResetUserPassword(user.id, user.email)} className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200">Reset Password</button>
-                        )}
-                        <button onClick={() => confirmDelete(user.id, 'user')} className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200">Delete</button>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+              <table className="w-full min-w-[750px]">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Email</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Full Name</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Phone</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Last Login</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Farms</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {farmers.map((user: any) => {
+                    const userFarms = farms.filter(f => f.farmerId === user.id)
+                    const displayName = user.full_name || user.name || '-'
+                    const isActive = user.status !== 'suspended'
+                    return (
+                      <tr key={user.id} className={!isActive ? 'bg-slate-50 opacity-60' : ''}>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <button onClick={() => setViewingUser(user)} className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline text-left">{user.email || '-'}</button>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <div className="text-sm text-slate-600">{displayName}</div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <div className="text-sm text-slate-600">{user.phone || '-'}</div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          {user.status === 'active' ? (
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                          ) : user.status === 'suspended' ? (
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Suspended</span>
+                          ) : user.status === 'password_reset_required' ? (
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">Reset Required</span>
+                          ) : (
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <div className="text-sm text-slate-600">
+                            {user.last_login_at ? new Date(user.last_login_at).toLocaleDateString() : 'Never'}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <div className="text-sm text-slate-600">{userFarms.length}</div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => setViewingUser(user)} className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-medium hover:bg-slate-200">View</button>
+                            {isActive ? (
+                              <button onClick={() => suspendUser(user.id)} className="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-medium hover:bg-amber-200">Suspend</button>
+                            ) : (
+                              <button onClick={() => activateUser(user.id)} className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium hover:bg-green-200">Activate</button>
+                            )}
+                            {user.email && (
+                              <button onClick={() => handleResetUserPassword(user.id, user.email)} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium hover:bg-blue-200">Reset</button>
+                            )}
+                            <button onClick={() => confirmDelete(user.id, 'user')} className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium hover:bg-red-200">Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             )}
           </div>
         )}
@@ -1851,6 +1925,199 @@ function CategoryFormModal({ category, onClose, onSave }: {
           >
             Cancel
           </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── User Detail / Edit Modal ───────────────────────────────────────────────
+function UserDetailModal({ user, reports, farms, onClose, onUpdate, onReset, onSuspend, onActivate }: {
+  user: any
+  reports: any[]
+  farms: any[]
+  onClose: () => void
+  onUpdate: (id: string, updates: any) => Promise<boolean>
+  onReset: (id: string, email: string) => void
+  onSuspend: (id: string) => void
+  onActivate: (id: string) => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [fullName, setFullName] = useState(user.full_name || '')
+  const [phone, setPhone] = useState(user.phone || '')
+  const [saving, setSaving] = useState(false)
+
+  const userReports = reports.filter((r: any) => r.reporterId === user.id)
+  const userFarms = farms.filter((f: any) => f.farmerId === user.id)
+
+  const roleLabel: Record<string, string> = {
+    walker: '🚶 Walker',
+    farmer: '🧑‍🌾 Farmer',
+    admin: '🛡️ Admin',
+    super_admin: '⭐ Super Admin',
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    const ok = await onUpdate(user.id, { full_name: fullName || null, phone: phone || null })
+    setSaving(false)
+    if (ok) setEditing(false)
+  }
+
+  const handleCancel = () => {
+    setFullName(user.full_name || '')
+    setPhone(user.phone || '')
+    setEditing(false)
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200] p-4 overflow-auto">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg my-4">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b">
+          <div>
+            <h3 className="text-lg font-bold text-slate-800">{user.full_name || user.email || 'User'}</h3>
+            <p className="text-sm text-slate-500">{roleLabel[user.role] || user.role}</p>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">×</button>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {/* Details / Edit form */}
+          {editing ? (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={e => setFullName(e.target.value)}
+                  placeholder="Full name"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={e => setPhone(e.target.value)}
+                  placeholder="+44 7700 900000"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </div>
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="flex-1 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50"
+                >
+                  {saving ? 'Saving…' : 'Save Changes'}
+                </button>
+                <button onClick={handleCancel} className="flex-1 py-2 bg-slate-100 text-slate-700 rounded-lg font-medium hover:bg-slate-200">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                <div>
+                  <p className="text-slate-500 text-xs uppercase tracking-wide mb-0.5">Email</p>
+                  <p className="font-medium text-slate-800 break-all">{user.email || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-slate-500 text-xs uppercase tracking-wide mb-0.5">Full Name</p>
+                  <p className="font-medium text-slate-800">{user.full_name || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-slate-500 text-xs uppercase tracking-wide mb-0.5">Phone</p>
+                  <p className="font-medium text-slate-800">{user.phone || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-slate-500 text-xs uppercase tracking-wide mb-0.5">Status</p>
+                  <p className="font-medium text-slate-800 capitalize">{user.status?.replace(/_/g, ' ') || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-slate-500 text-xs uppercase tracking-wide mb-0.5">Last Login</p>
+                  <p className="font-medium text-slate-800">{user.last_login_at ? new Date(user.last_login_at).toLocaleDateString() : 'Never'}</p>
+                </div>
+                <div>
+                  <p className="text-slate-500 text-xs uppercase tracking-wide mb-0.5">Member Since</p>
+                  <p className="font-medium text-slate-800">{user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}</p>
+                </div>
+                {(user.role === 'walker') && (
+                  <div>
+                    <p className="text-slate-500 text-xs uppercase tracking-wide mb-0.5">Reports Submitted</p>
+                    <p className="font-medium text-slate-800">{userReports.length}</p>
+                  </div>
+                )}
+                {(user.role === 'farmer') && (
+                  <div>
+                    <p className="text-slate-500 text-xs uppercase tracking-wide mb-0.5">Farms</p>
+                    <p className="font-medium text-slate-800">{userFarms.length}</p>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => setEditing(true)}
+                className="w-full py-2 bg-slate-100 text-slate-700 rounded-lg font-medium hover:bg-slate-200 text-sm"
+              >
+                ✏️ Edit Details
+              </button>
+            </div>
+          )}
+
+          {/* Recent reports (walkers) */}
+          {user.role === 'walker' && userReports.length > 0 && !editing && (
+            <div>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Recent Reports</p>
+              <div className="space-y-1 max-h-40 overflow-y-auto">
+                {userReports.slice(0, 10).map((r: any) => (
+                  <div key={r.id} className="flex items-center justify-between text-sm bg-slate-50 rounded-lg px-3 py-2">
+                    <span className="text-slate-700">{r.categoryEmoji || '🐑'} {r.sheepCount || 1} × {r.categoryName || 'Sheep'} — {r.condition}</span>
+                    <span className="text-slate-400 text-xs">{new Date(r.timestamp).toLocaleDateString()}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Farms (farmers) */}
+          {user.role === 'farmer' && userFarms.length > 0 && !editing && (
+            <div>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Farms</p>
+              <div className="space-y-1">
+                {userFarms.map((f: any) => (
+                  <div key={f.id} className="flex items-center justify-between text-sm bg-slate-50 rounded-lg px-3 py-2">
+                    <span className="text-slate-700">🏡 {f.name}</span>
+                    <span className="text-slate-400 text-xs">{f.fields?.length || 0} field(s)</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Quick actions */}
+          {!editing && (
+            <div className="border-t pt-4 flex flex-wrap gap-2">
+              {user.status === 'active' ? (
+                <button onClick={() => onSuspend(user.id)} className="px-3 py-1.5 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">
+                  Suspend Account
+                </button>
+              ) : (
+                <button onClick={() => onActivate(user.id)} className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200">
+                  Activate Account
+                </button>
+              )}
+              {user.email && (
+                <button onClick={() => onReset(user.id, user.email)} className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200">
+                  Send Password Reset
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
