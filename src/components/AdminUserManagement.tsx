@@ -215,37 +215,33 @@ export default function AdminUserManagement() {
       )}
 
       {/* Admin List */}
-      <div className="bg-white rounded-2xl shadow overflow-hidden">
+      <div className="bg-white rounded-2xl shadow overflow-x-auto">
         {loading ? (
           <div className="p-8 text-center text-slate-500">Loading admin users...</div>
         ) : users.length === 0 ? (
           <div className="p-8 text-center text-slate-500">No admin users found</div>
         ) : (
-          <table className="w-full">
+          <table className="w-full min-w-[700px]">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Full Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Phone</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Role</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Last Login</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Email</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Full Name</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Role</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Last Login</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
               {users.map((user) => (
                 <tr key={user.id} className={user.status !== 'active' ? 'bg-slate-50 opacity-60' : ''}>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-slate-900">{user.email}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <div className="text-sm text-slate-600">{user.full_name || '-'}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-slate-600">{user.phone || '-'}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     {user.role === 'super_admin' ? (
                       <span className="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
                         Super Admin
@@ -256,7 +252,7 @@ export default function AdminUserManagement() {
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     {user.status === 'active' ? (
                       <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                         Active
@@ -271,37 +267,37 @@ export default function AdminUserManagement() {
                       </span>
                     ) : (
                       <span className="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">
-                        Password Reset Required
+                        Reset Required
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <div className="text-sm text-slate-600">
                       {user.last_login_at ? new Date(user.last_login_at).toLocaleDateString() : 'Never'}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm">
-                    <div className="flex items-center gap-2 flex-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
                       {isSuperAdmin && user.id !== currentUser.id && (
                         <>
                           {user.status === 'active' ? (
                             <button
                               onClick={() => handleSuspendUser(user.id, user.email)}
-                              className="px-2 py-1 rounded bg-amber-100 text-amber-700 hover:bg-amber-200 text-xs font-medium whitespace-nowrap"
+                              className="px-2 py-1 rounded bg-amber-100 text-amber-700 hover:bg-amber-200 text-xs font-medium"
                             >
                               Suspend
                             </button>
                           ) : (
                             <button
                               onClick={() => handleActivateUser(user.id, user.email)}
-                              className="px-2 py-1 rounded bg-green-100 text-green-700 hover:bg-green-200 text-xs font-medium whitespace-nowrap"
+                              className="px-2 py-1 rounded bg-green-100 text-green-700 hover:bg-green-200 text-xs font-medium"
                             >
                               Activate
                             </button>
                           )}
                           <button
                             onClick={() => handleResetPassword(user.id, user.email)}
-                            className="px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs font-medium whitespace-nowrap"
+                            className="px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs font-medium"
                           >
                             Reset
                           </button>
