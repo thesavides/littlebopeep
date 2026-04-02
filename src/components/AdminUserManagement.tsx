@@ -280,30 +280,30 @@ export default function AdminUserManagement() {
                       {user.last_login_at ? new Date(user.last_login_at).toLocaleDateString() : 'Never'}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <div className="flex gap-2">
+                  <td className="px-6 py-4 text-sm">
+                    <div className="flex items-center gap-2 flex-nowrap">
                       {isSuperAdmin && user.id !== currentUser.id && (
                         <>
                           {user.status === 'active' ? (
                             <button
                               onClick={() => handleSuspendUser(user.id, user.email)}
-                              className="text-amber-600 hover:text-amber-800 font-medium"
+                              className="px-2 py-1 rounded bg-amber-100 text-amber-700 hover:bg-amber-200 text-xs font-medium whitespace-nowrap"
                             >
                               Suspend
                             </button>
                           ) : (
                             <button
                               onClick={() => handleActivateUser(user.id, user.email)}
-                              className="text-green-600 hover:text-green-800 font-medium"
+                              className="px-2 py-1 rounded bg-green-100 text-green-700 hover:bg-green-200 text-xs font-medium whitespace-nowrap"
                             >
                               Activate
                             </button>
                           )}
                           <button
                             onClick={() => handleResetPassword(user.id, user.email)}
-                            className="text-blue-600 hover:text-blue-800 font-medium"
+                            className="px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs font-medium whitespace-nowrap"
                           >
-                            Reset Password
+                            Reset
                           </button>
                         </>
                       )}

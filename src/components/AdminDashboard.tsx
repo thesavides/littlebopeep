@@ -6,7 +6,7 @@ import Header from './Header'
 import Map from './Map'
 import AdminUserManagement from './AdminUserManagement'
 import WalkerDashboard from './WalkerDashboard'
-import { inviteUser, getAllUsers } from '@/lib/unified-auth'
+import { inviteUser, getAllUsers, adminResetUserPassword } from '@/lib/unified-auth'
 
 type AdminView = 'overview' | 'walkers' | 'farmers' | 'reports' | 'farms' | 'billing' | 'admins' | 'categories'
 type SortBy = 'date' | 'daysUnclaimed'
@@ -80,6 +80,16 @@ export default function AdminDashboard() {
     }
     loadUsers()
   }, [])
+
+  const handleResetUserPassword = async (userId: string, email: string) => {
+    if (!confirm(`Send a password reset email to "${email}"?`)) return
+    const { success, error } = await adminResetUserPassword(userId, email)
+    if (success) {
+      alert(`Password reset email sent to ${email}`)
+    } else {
+      alert(error || 'Failed to send password reset email')
+    }
+  }
 
   // Use real users from Supabase, fallback to mock users for backwards compatibility
   const allUsers = realUsers.length > 0 ? realUsers : users
@@ -465,12 +475,15 @@ export default function AdminDashboard() {
                           <div className="text-xs text-slate-400">{userReports.length} reports • {new Date(user.created_at || user.createdAt).toLocaleDateString()}</div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className={`px-2 py-1 rounded text-xs font-medium ${displayStatus === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{displayStatus}</span>
                         {displayStatus === 'active' ? (
                           <button onClick={() => suspendUser(user.id)} className="px-3 py-1 bg-amber-100 text-amber-700 rounded text-sm hover:bg-amber-200">Suspend</button>
                         ) : (
                           <button onClick={() => activateUser(user.id)} className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200">Activate</button>
+                        )}
+                        {user.email && (
+                          <button onClick={() => handleResetUserPassword(user.id, user.email)} className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200">Reset Password</button>
                         )}
                         <button onClick={() => confirmDelete(user.id, 'user')} className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200">Delete</button>
                       </div>
@@ -514,7 +527,7 @@ export default function AdminDashboard() {
                           <div className="text-xs text-slate-400">{userFarms.length} farm(s) • {new Date(user.created_at || user.createdAt).toLocaleDateString()}</div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         {getSubscriptionBadge(user)}
                         <span className={`px-2 py-1 rounded text-xs font-medium ${displayStatus === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{displayStatus}</span>
                         <button onClick={() => setShowEditFarmerModal(user.id)} className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200">Edit</button>
@@ -522,6 +535,9 @@ export default function AdminDashboard() {
                           <button onClick={() => suspendUser(user.id)} className="px-3 py-1 bg-amber-100 text-amber-700 rounded text-sm hover:bg-amber-200">Suspend</button>
                         ) : (
                           <button onClick={() => activateUser(user.id)} className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200">Activate</button>
+                        )}
+                        {user.email && (
+                          <button onClick={() => handleResetUserPassword(user.id, user.email)} className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200">Reset Password</button>
                         )}
                         <button onClick={() => confirmDelete(user.id, 'user')} className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200">Delete</button>
                       </div>
