@@ -316,7 +316,7 @@ export default function AdminDashboard() {
 
       {/* Create Farm Modal */}
       {showCreateFarmModal && <CreateFarmModal
-        farmers={farmers}
+        farmers={[...farmers, ...admins]}
         onClose={() => setShowCreateFarmModal(false)}
         onCreate={(farm: any) => {
           addFarm(farm)
@@ -376,7 +376,7 @@ export default function AdminDashboard() {
       {showClaimReportModal && <ClaimReportModal
         reportId={showClaimReportModal}
         report={reports.find(r => r.id === showClaimReportModal)!}
-        farmers={farmers}
+        farmers={[...farmers, ...admins]}
         onClose={() => setShowClaimReportModal(null)}
         onClaim={(reportId: string, farmerId: string) => {
           claimReportForFarmer(reportId, farmerId)
@@ -1310,7 +1310,7 @@ function CreateFarmModal({ farmers, onClose, onCreate }: { farmers: any[]; onClo
               <option value="">Select farmer...</option>
               {farmers.map((farmer) => (
                 <option key={farmer.id} value={farmer.id}>
-                  {farmer.name} ({farmer.email || 'No email'})
+                  {farmer.full_name || farmer.name || farmer.email} ({farmer.email || 'No email'})
                 </option>
               ))}
             </select>
@@ -1810,7 +1810,7 @@ function ClaimReportModal({ reportId, report, farmers, onClose, onClaim }: any) 
               <option value="">Choose farmer...</option>
               {farmers.map((farmer: any) => (
                 <option key={farmer.id} value={farmer.id}>
-                  {farmer.name} ({farmer.email || 'No email'})
+                  {farmer.full_name || farmer.name || farmer.email} ({farmer.email || 'No email'})
                 </option>
               ))}
             </select>
