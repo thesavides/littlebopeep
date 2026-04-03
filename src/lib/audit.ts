@@ -26,7 +26,12 @@ export type AuditAction =
   // Report actions
   | 'report.create'
   | 'report.claim'
+  | 'report.unclaim'
   | 'report.resolve'
+  | 'report.reopen'
+  | 'report.escalate'
+  | 'report.complete'
+  | 'report.flag'
   | 'report.archive'
   | 'report.delete'
   // Auth actions

@@ -15,8 +15,9 @@ export interface SheepReportDB {
   description: string | null
   reporter_contact: string | null
   reporter_id: string | null
-  status: 'reported' | 'claimed' | 'resolved'
+  status: 'reported' | 'claimed' | 'resolved' | 'escalated' | 'complete'
   claimed_by_farmer_id: string | null
+  claimed_by_farmer_ids?: string[] | null
   claimed_at: string | null
   archived: boolean
   photo_urls: string[] | null
@@ -25,7 +26,7 @@ export interface SheepReportDB {
   category_emoji?: string
   created_at?: string
   updated_at?: string
-  // Workstream 1: attribution + metadata
+  // Attribution + metadata
   submitted_by_user_name?: string | null
   role_of_submitter?: string | null
   affected_farm_ids?: string[] | null
@@ -33,6 +34,19 @@ export interface SheepReportDB {
   location_accuracy?: number | null
   device_type?: string | null
   app_version?: string | null
+  // WS8: extended status model
+  resolution_reason?: string | null
+  admin_notes?: string | null
+  completed_by?: string | null
+  completed_at?: string | null
+  escalated_by?: string | null
+  escalated_at?: string | null
+  farmer_flag_note?: string | null
+  flagged_by_farmer?: string | null
+  flagged_at?: string | null
+  // WS14: screening
+  screening_required?: boolean | null
+  metadata_completeness_score?: number | null
 }
 
 // Convert DB format to App format
@@ -61,6 +75,18 @@ export function dbToAppReport(dbReport: SheepReportDB) {
     locationAccuracy: dbReport.location_accuracy || undefined,
     deviceType: dbReport.device_type || undefined,
     appVersion: dbReport.app_version || undefined,
+    claimedByFarmerIds: dbReport.claimed_by_farmer_ids || [],
+    resolutionReason: dbReport.resolution_reason || undefined,
+    adminNotes: dbReport.admin_notes || undefined,
+    completedBy: dbReport.completed_by || undefined,
+    completedAt: dbReport.completed_at ? new Date(dbReport.completed_at) : undefined,
+    escalatedBy: dbReport.escalated_by || undefined,
+    escalatedAt: dbReport.escalated_at ? new Date(dbReport.escalated_at) : undefined,
+    farmerFlagNote: dbReport.farmer_flag_note || undefined,
+    flaggedByFarmer: dbReport.flagged_by_farmer || undefined,
+    flaggedAt: dbReport.flagged_at ? new Date(dbReport.flagged_at) : undefined,
+    screeningRequired: dbReport.screening_required ?? false,
+    metadataCompletenessScore: dbReport.metadata_completeness_score ?? undefined,
   }
 }
 
@@ -89,6 +115,18 @@ export function appToDbReport(appReport: any) {
     location_accuracy: appReport.locationAccuracy || null,
     device_type: appReport.deviceType || null,
     app_version: appReport.appVersion || null,
+    claimed_by_farmer_ids: appReport.claimedByFarmerIds || [],
+    resolution_reason: appReport.resolutionReason || null,
+    admin_notes: appReport.adminNotes || null,
+    completed_by: appReport.completedBy || null,
+    completed_at: appReport.completedAt instanceof Date ? appReport.completedAt.toISOString() : (appReport.completedAt || null),
+    escalated_by: appReport.escalatedBy || null,
+    escalated_at: appReport.escalatedAt instanceof Date ? appReport.escalatedAt.toISOString() : (appReport.escalatedAt || null),
+    farmer_flag_note: appReport.farmerFlagNote || null,
+    flagged_by_farmer: appReport.flaggedByFarmer || null,
+    flagged_at: appReport.flaggedAt instanceof Date ? appReport.flaggedAt.toISOString() : (appReport.flaggedAt || null),
+    screening_required: appReport.screeningRequired ?? null,
+    metadata_completeness_score: appReport.metadataCompletenessScore ?? null,
   }
   // Only include id if provided — omitting lets Supabase generate a UUID
   if (appReport.id !== undefined) {
@@ -571,6 +609,18 @@ export async function deleteFieldFromFarm(fieldId: string) {
 
   if (error) {
     console.error('Error deleting field:', error)
+    throw error
+  }
+}
+
+// Admin: clear screening_required so a report becomes visible to farmers/walkers
+export async function approveReportScreening(reportId: string): Promise<void> {
+  const { error } = await supabase
+    .from('sheep_reports')
+    .update({ screening_required: false, screened_by: (await supabase.auth.getUser()).data.user?.id ?? null, screened_at: new Date().toISOString() })
+    .eq('id', reportId)
+  if (error) {
+    console.error('Error approving report screening:', error)
     throw error
   }
 }

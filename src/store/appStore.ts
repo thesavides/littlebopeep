@@ -163,13 +163,14 @@ export interface SheepReport {
   categoryEmoji: string     // '🐑' for default; custom category emoji otherwise
   reporterContact?: string
   reporterId?: string
-  status: 'reported' | 'claimed' | 'resolved'
+  status: 'reported' | 'claimed' | 'resolved' | 'escalated' | 'complete'
   claimedByFarmerId?: string
+  claimedByFarmerIds?: string[]       // all current claimants (multi-claim)
   claimedAt?: Date
   resolvedAt?: Date
-  thankedAt?: Date // When walker was thanked
+  thankedAt?: Date
   archived?: boolean
-  // Attribution and metadata (Workstream 1)
+  // Attribution and metadata
   submittedByUserName?: string
   roleOfSubmitter?: string
   affectedFarmIds?: string[]
@@ -177,6 +178,19 @@ export interface SheepReport {
   locationAccuracy?: number
   deviceType?: string
   appVersion?: string
+  // WS8: extended status model
+  resolutionReason?: string           // farmer's reason on resolve
+  adminNotes?: string                 // admin notes when marking complete
+  completedBy?: string
+  completedAt?: Date
+  escalatedBy?: string
+  escalatedAt?: Date
+  farmerFlagNote?: string             // farmer's note when flagging to admin
+  flaggedByFarmer?: string
+  flaggedAt?: Date
+  // WS14: screening
+  screeningRequired?: boolean
+  metadataCompletenessScore?: number
 }
 
 // A field/paddock within a farm - defined by fence posts (polygon)
@@ -288,7 +302,12 @@ interface AppState {
   getNearbyReports: (lat: number, lng: number, radiusMeters: number, hoursAgo: number) => SheepReport[]
   claimReport: (reportId: string) => void
   claimReportForFarmer: (reportId: string, farmerId: string) => void
-  resolveReport: (reportId: string) => void
+  unclaimReport: (reportId: string) => void
+  resolveReport: (reportId: string, reason?: string) => void
+  reopenReport: (reportId: string) => void
+  markReportComplete: (reportId: string, notes?: string) => void
+  escalateReport: (reportId: string) => void
+  flagReportToAdmin: (reportId: string, note: string) => void
   deleteReport: (id: string) => void
   archiveReport: (id: string) => void
   batchArchiveReports: (ids: string[]) => void
@@ -606,17 +625,24 @@ export const useAppStore = create<AppState>()(
       },
       
       claimReport: (reportId) => {
-        const { currentUserId, reports, notifications } = get()
+        const { currentUserId, reports } = get()
         const report = reports.find(r => r.id === reportId)
+        const existing = report?.claimedByFarmerIds || []
+        const alreadyClaimed = currentUserId && existing.includes(currentUserId)
+        if (alreadyClaimed) return
 
+        const newClaimants = currentUserId ? [...existing, currentUserId] : existing
         set((state) => ({
           reports: state.reports.map((r) =>
             r.id === reportId
-              ? { ...r, status: 'claimed', claimedByFarmerId: currentUserId || undefined, claimedAt: new Date() }
+              ? { ...r, status: 'claimed', claimedByFarmerId: currentUserId || undefined, claimedByFarmerIds: newClaimants, claimedAt: r.claimedAt || new Date() }
               : r
           )
         }))
-
+        // Persist to Supabase
+        import('@/lib/supabase-client').then(({ updateReport }) => {
+          updateReport(reportId, { status: 'claimed', claimedByFarmerId: currentUserId, claimedByFarmerIds: newClaimants, claimedAt: new Date() }).catch(() => {})
+        })
         writeAuditLog({
           actorId: currentUserId,
           action: 'report.claim',
@@ -624,73 +650,155 @@ export const useAppStore = create<AppState>()(
           entityId: reportId,
           detail: { categoryName: report?.categoryName, location: report?.location },
         })
-
-        // Send thank you notification to walker
-        if (report?.reporterId) {
-          const thankYouNotification: Notification = {
-            id: Date.now().toString(),
-            userId: report.reporterId,
-            type: 'thank_you',
-            message: 'Thank you for your sheep report! A farmer has claimed it and is on their way.',
-            reportId: reportId,
-            read: false,
-            createdAt: new Date()
-          }
-          set((state) => ({
-            notifications: [...state.notifications, thankYouNotification],
-            reports: state.reports.map(r =>
-              r.id === reportId ? { ...r, thankedAt: new Date() } : r
-            )
-          }))
-        }
       },
 
-      claimReportForFarmer: (reportId, farmerId) => {
-        const { reports } = get()
+      unclaimReport: (reportId) => {
+        const { currentUserId, reports } = get()
         const report = reports.find(r => r.id === reportId)
-
+        const remaining = (report?.claimedByFarmerIds || []).filter(id => id !== currentUserId)
+        const newStatus = remaining.length > 0 ? 'claimed' : 'reported'
+        const newPrimary = remaining[0] || null
         set((state) => ({
           reports: state.reports.map((r) =>
             r.id === reportId
-              ? { ...r, status: 'claimed', claimedByFarmerId: farmerId, claimedAt: new Date() }
+              ? { ...r, status: newStatus as any, claimedByFarmerId: newPrimary || undefined, claimedByFarmerIds: remaining }
               : r
           )
         }))
-
-        // Send thank you notification to walker
-        if (report?.reporterId) {
-          const thankYouNotification: Notification = {
-            id: Date.now().toString(),
-            userId: report.reporterId,
-            type: 'thank_you',
-            message: 'Thank you for your sheep report! A farmer has claimed it and is on their way.',
-            reportId: reportId,
-            read: false,
-            createdAt: new Date()
-          }
-          set((state) => ({
-            notifications: [...state.notifications, thankYouNotification],
-            reports: state.reports.map(r =>
-              r.id === reportId ? { ...r, thankedAt: new Date() } : r
-            )
-          }))
-        }
+        import('@/lib/supabase-client').then(({ updateReport }) => {
+          updateReport(reportId, { status: newStatus, claimedByFarmerId: newPrimary, claimedByFarmerIds: remaining }).catch(() => {})
+        })
+        writeAuditLog({
+          actorId: currentUserId,
+          action: 'report.unclaim',
+          entityType: 'report',
+          entityId: reportId,
+          detail: { remaining },
+        })
       },
-      
-      resolveReport: (reportId) => {
+
+      claimReportForFarmer: (reportId, farmerId) => {
+        const { currentUserId, reports } = get()
+        const report = reports.find(r => r.id === reportId)
+        const existing = report?.claimedByFarmerIds || []
+        const newClaimants = existing.includes(farmerId) ? existing : [...existing, farmerId]
+        set((state) => ({
+          reports: state.reports.map((r) =>
+            r.id === reportId
+              ? { ...r, status: 'claimed', claimedByFarmerId: farmerId, claimedByFarmerIds: newClaimants, claimedAt: r.claimedAt || new Date() }
+              : r
+          )
+        }))
+        import('@/lib/supabase-client').then(({ updateReport }) => {
+          updateReport(reportId, { status: 'claimed', claimedByFarmerId: farmerId, claimedByFarmerIds: newClaimants, claimedAt: new Date() }).catch(() => {})
+        })
+        writeAuditLog({
+          actorId: currentUserId,
+          action: 'report.claim',
+          entityType: 'report',
+          entityId: reportId,
+          detail: { assignedTo: farmerId },
+        })
+      },
+
+      resolveReport: (reportId, reason?) => {
         const { currentUserId, reports } = get()
         const report = reports.find(r => r.id === reportId)
         set((state) => ({
           reports: state.reports.map((r) =>
-            r.id === reportId ? { ...r, status: 'resolved', resolvedAt: new Date() } : r
+            r.id === reportId ? { ...r, status: 'resolved', resolvedAt: new Date(), resolutionReason: reason } : r
           )
         }))
+        import('@/lib/supabase-client').then(({ updateReport }) => {
+          updateReport(reportId, { status: 'resolved', resolutionReason: reason }).catch(() => {})
+        })
         writeAuditLog({
           actorId: currentUserId,
           action: 'report.resolve',
           entityType: 'report',
           entityId: reportId,
-          detail: { categoryName: report?.categoryName, location: report?.location },
+          detail: { reason, categoryName: report?.categoryName },
+        })
+      },
+
+      reopenReport: (reportId) => {
+        const { currentUserId, reports } = get()
+        const report = reports.find(r => r.id === reportId)
+        if (report?.status === 'complete') return // Cannot reopen complete reports
+        set((state) => ({
+          reports: state.reports.map((r) =>
+            r.id === reportId ? { ...r, status: 'claimed', resolvedAt: undefined, resolutionReason: undefined } : r
+          )
+        }))
+        import('@/lib/supabase-client').then(({ updateReport }) => {
+          updateReport(reportId, { status: 'claimed', resolutionReason: null }).catch(() => {})
+        })
+        writeAuditLog({
+          actorId: currentUserId,
+          action: 'report.reopen',
+          entityType: 'report',
+          entityId: reportId,
+          detail: { previousStatus: report?.status },
+        })
+      },
+
+      markReportComplete: (reportId, notes?) => {
+        const { currentUserId } = get()
+        const now = new Date()
+        set((state) => ({
+          reports: state.reports.map((r) =>
+            r.id === reportId ? { ...r, status: 'complete', adminNotes: notes, completedBy: currentUserId || undefined, completedAt: now } : r
+          )
+        }))
+        import('@/lib/supabase-client').then(({ updateReport }) => {
+          updateReport(reportId, { status: 'complete', adminNotes: notes, completedBy: currentUserId, completedAt: now }).catch(() => {})
+        })
+        writeAuditLog({
+          actorId: currentUserId,
+          action: 'report.complete',
+          entityType: 'report',
+          entityId: reportId,
+          detail: { notes },
+        })
+      },
+
+      escalateReport: (reportId) => {
+        const { currentUserId } = get()
+        const now = new Date()
+        set((state) => ({
+          reports: state.reports.map((r) =>
+            r.id === reportId ? { ...r, status: 'escalated', escalatedBy: currentUserId || undefined, escalatedAt: now } : r
+          )
+        }))
+        import('@/lib/supabase-client').then(({ updateReport }) => {
+          updateReport(reportId, { status: 'escalated', escalatedBy: currentUserId, escalatedAt: now }).catch(() => {})
+        })
+        writeAuditLog({
+          actorId: currentUserId,
+          action: 'report.escalate',
+          entityType: 'report',
+          entityId: reportId,
+          detail: {},
+        })
+      },
+
+      flagReportToAdmin: (reportId, note) => {
+        const { currentUserId } = get()
+        const now = new Date()
+        set((state) => ({
+          reports: state.reports.map((r) =>
+            r.id === reportId ? { ...r, farmerFlagNote: note, flaggedByFarmer: currentUserId || undefined, flaggedAt: now } : r
+          )
+        }))
+        import('@/lib/supabase-client').then(({ updateReport }) => {
+          updateReport(reportId, { farmerFlagNote: note, flaggedByFarmer: currentUserId, flaggedAt: now }).catch(() => {})
+        })
+        writeAuditLog({
+          actorId: currentUserId,
+          action: 'report.flag',
+          entityType: 'report',
+          entityId: reportId,
+          detail: { note },
         })
       },
       

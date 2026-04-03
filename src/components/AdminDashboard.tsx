@@ -8,11 +8,11 @@ import AdminUserManagement from './AdminUserManagement'
 import WalkerDashboard from './WalkerDashboard'
 import { inviteUser, getAllUsers, adminResetUserPassword, updateUserProfile, deleteUser as deleteUserFromSupabase, suspendUser as suspendUserInSupabase, activateUser as activateUserInSupabase } from '@/lib/unified-auth'
 import { fetchAuditLogs } from '@/lib/audit'
-import { fetchNotificationsForReport } from '@/lib/supabase-client'
+import { fetchNotificationsForReport, approveReportScreening } from '@/lib/supabase-client'
 
 type AdminView = 'overview' | 'walkers' | 'farmers' | 'reports' | 'farms' | 'billing' | 'admins' | 'categories' | 'audit'
 type SortBy = 'date' | 'daysUnclaimed'
-type FilterStatus = 'all' | 'reported' | 'claimed' | 'resolved'
+type FilterStatus = 'all' | 'reported' | 'claimed' | 'resolved' | 'escalated' | 'complete' | 'needs_review' | 'flagged'
 type FilterArchive = 'active' | 'archived' | 'all'
 
 export default function AdminDashboard() {
@@ -40,6 +40,8 @@ export default function AdminDashboard() {
     claimReport,
     claimReportForFarmer,
     resolveReport,
+    escalateReport,
+    markReportComplete,
     reportCategories,
     addReportCategory,
     updateReportCategory,
@@ -101,6 +103,9 @@ export default function AdminDashboard() {
   const [detailNotifications, setDetailNotifications] = useState<any[]>([])
   const [detailAuditLogs, setDetailAuditLogs] = useState<any[]>([])
   const [loadingDetail, setLoadingDetail] = useState(false)
+  // Complete modal
+  const [completeReportId, setCompleteReportId] = useState<string | null>(null)
+  const [completeNotes, setCompleteNotes] = useState('')
 
   // Load real users and reports from Supabase on mount
   useEffect(() => {
@@ -170,10 +175,13 @@ export default function AdminDashboard() {
   const admins = allUsers.filter((u: any) => u.role === 'admin' || u.role === 'super_admin')
   const activeUsers = allUsers.filter((u: any) => u.status === 'active').length
   
-  const reportedCount = reports.filter((r) => r.status === 'reported' && !r.archived).length
+  const reportedCount = reports.filter((r) => r.status === 'reported' && !r.archived && !r.screeningRequired).length
   const claimedCount = reports.filter((r) => r.status === 'claimed' && !r.archived).length
   const resolvedCount = reports.filter((r) => r.status === 'resolved' && !r.archived).length
+  const escalatedCount = reports.filter((r) => r.status === 'escalated' && !r.archived).length
   const archivedCount = reports.filter((r) => r.archived).length
+  const needsReviewCount = reports.filter((r) => r.screeningRequired && !r.archived).length
+  const flaggedCount = reports.filter((r) => r.flaggedByFarmer && !r.archived && r.status !== 'complete').length
   
   const totalFields = farms.reduce((sum, f) => sum + f.fields.length, 0)
 
@@ -200,7 +208,11 @@ export default function AdminDashboard() {
     }
 
     // Filter by status
-    if (filterStatus !== 'all') {
+    if (filterStatus === 'needs_review') {
+      result = result.filter(r => r.screeningRequired)
+    } else if (filterStatus === 'flagged') {
+      result = result.filter(r => r.flaggedByFarmer && r.status !== 'complete')
+    } else if (filterStatus !== 'all') {
       result = result.filter(r => r.status === filterStatus)
     }
 
@@ -545,12 +557,31 @@ export default function AdminDashboard() {
 
                     {/* Admin Actions */}
                     <section className="border-t pt-4">
+                      {report.screeningRequired && !report.archived && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3 text-sm">
+                          <div className="font-medium text-red-700 mb-1">⚠️ Pending Screening Review</div>
+                          <div className="text-red-600 text-xs mb-2">This report was flagged for admin review before being visible to farmers.</div>
+                          <button onClick={() => { approveReportScreening(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm hover:bg-teal-700 font-medium">Approve &amp; Publish</button>
+                        </div>
+                      )}
+                      {report.flaggedByFarmer && report.status !== 'complete' && (
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3 text-sm">
+                          <div className="font-medium text-amber-700 mb-1">🚩 Flagged by Farmer</div>
+                          {report.farmerFlagNote && <div className="text-amber-800 italic text-xs mb-1">&ldquo;{report.farmerFlagNote}&rdquo;</div>}
+                        </div>
+                      )}
                       <div className="flex flex-wrap gap-2">
-                        {!report.archived && report.status === 'reported' && (
+                        {!report.archived && report.status === 'reported' && !report.screeningRequired && (
                           <button onClick={() => { setShowClaimReportModal(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm hover:bg-green-200">Claim for Farmer</button>
                         )}
                         {!report.archived && report.status === 'claimed' && (
                           <button onClick={() => { resolveReport(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200">Resolve</button>
+                        )}
+                        {!report.archived && (report.status === 'resolved' || report.status === 'escalated') && (
+                          <button onClick={() => { escalateReport(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-orange-100 text-orange-700 rounded-lg text-sm hover:bg-orange-200">Escalate</button>
+                        )}
+                        {!report.archived && (report.status === 'resolved' || report.status === 'escalated') && (
+                          <button onClick={() => { setCompleteReportId(report.id); setCompleteNotes(''); setDetailReportId(null) }} className="px-3 py-2 bg-slate-700 text-white rounded-lg text-sm hover:bg-slate-800">Mark Complete</button>
                         )}
                         {!report.archived && (
                           <button onClick={() => { archiveReport(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm hover:bg-slate-200">Archive</button>
@@ -565,6 +596,35 @@ export default function AdminDashboard() {
           </div>
         )
       })()}
+
+      {/* Mark Complete Modal */}
+      {completeReportId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+            <div className="text-center mb-4">
+              <div className="text-4xl mb-2">✅</div>
+              <h3 className="text-lg font-bold text-slate-800">Mark Report Complete</h3>
+              <p className="text-sm text-slate-500 mt-1">Optionally add admin notes before closing this report.</p>
+            </div>
+            <textarea
+              value={completeNotes}
+              onChange={(e) => setCompleteNotes(e.target.value)}
+              placeholder="Admin notes (optional)…"
+              rows={4}
+              className="w-full px-3 py-2 border rounded-lg text-sm mb-4 resize-none focus:outline-none focus:ring-2 focus:ring-slate-400"
+            />
+            <div className="space-y-3">
+              <button
+                onClick={() => { markReportComplete(completeReportId, completeNotes || undefined); setCompleteReportId(null); setCompleteNotes('') }}
+                className="w-full py-3 bg-slate-800 text-white rounded-xl font-semibold hover:bg-slate-900"
+              >
+                Mark Complete
+              </button>
+              <button onClick={() => { setCompleteReportId(null); setCompleteNotes('') }} className="w-full py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
@@ -751,7 +811,7 @@ export default function AdminDashboard() {
               </button>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
               <button onClick={() => setCurrentView('reports')} className="bg-yellow-50 rounded-xl p-4 border border-yellow-200 text-left hover:shadow-md transition-shadow">
                 <div className="text-2xl font-bold text-yellow-700">{reportedCount}</div>
                 <div className="text-sm text-yellow-600">Reported</div>
@@ -768,6 +828,23 @@ export default function AdminDashboard() {
                 <div className="text-2xl font-bold text-slate-700">{archivedCount}</div>
                 <div className="text-sm text-slate-600">Archived</div>
               </button>
+            </div>
+            {/* Action-required queue cards */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+              <button onClick={() => setCurrentView('reports')} className={`rounded-xl p-4 border text-left hover:shadow-md transition-shadow ${needsReviewCount > 0 ? 'bg-red-50 border-red-300' : 'bg-slate-50 border-slate-200'}`}>
+                <div className={`text-2xl font-bold ${needsReviewCount > 0 ? 'text-red-700' : 'text-slate-400'}`}>{needsReviewCount}</div>
+                <div className={`text-sm ${needsReviewCount > 0 ? 'text-red-600 font-medium' : 'text-slate-500'}`}>⚠️ Needs Review</div>
+              </button>
+              <button onClick={() => setCurrentView('reports')} className={`rounded-xl p-4 border text-left hover:shadow-md transition-shadow ${escalatedCount > 0 ? 'bg-orange-50 border-orange-300' : 'bg-slate-50 border-slate-200'}`}>
+                <div className={`text-2xl font-bold ${escalatedCount > 0 ? 'text-orange-700' : 'text-slate-400'}`}>{escalatedCount}</div>
+                <div className={`text-sm ${escalatedCount > 0 ? 'text-orange-600 font-medium' : 'text-slate-500'}`}>🚨 Escalated</div>
+              </button>
+              <button onClick={() => setCurrentView('reports')} className={`rounded-xl p-4 border text-left hover:shadow-md transition-shadow ${flaggedCount > 0 ? 'bg-amber-50 border-amber-300' : 'bg-slate-50 border-slate-200'}`}>
+                <div className={`text-2xl font-bold ${flaggedCount > 0 ? 'text-amber-700' : 'text-slate-400'}`}>{flaggedCount}</div>
+                <div className={`text-sm ${flaggedCount > 0 ? 'text-amber-600 font-medium' : 'text-slate-500'}`}>🚩 Flagged by Farmer</div>
+              </button>
+            </div>
+            <div className="grid grid-cols-1 mb-6">
               <button onClick={() => setCurrentView('billing')} className="bg-purple-50 rounded-xl p-4 border border-purple-200 text-left hover:shadow-md transition-shadow">
                 <div className="text-2xl font-bold text-purple-700">{activeSubs}</div>
                 <div className="text-sm text-purple-600">Paid Subs</div>
@@ -985,6 +1062,10 @@ export default function AdminDashboard() {
                     <option value="reported">Reported</option>
                     <option value="claimed">Claimed</option>
                     <option value="resolved">Resolved</option>
+                    <option value="escalated">Escalated</option>
+                    <option value="complete">Complete</option>
+                    <option value="needs_review">⚠️ Needs Review</option>
+                    <option value="flagged">🚩 Flagged by Farmer</option>
                   </select>
                   <select value={filterArchive} onChange={(e) => setFilterArchive(e.target.value as FilterArchive)} className="px-3 py-2 border rounded-lg text-sm">
                     <option value="active">Active</option>
@@ -1116,20 +1197,37 @@ export default function AdminDashboard() {
                           {report.description && <div className="text-xs text-slate-400 truncate max-w-xs">{report.description}</div>}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap justify-end">
                         {getDaysUnclaimedBadge(report)}
+                        {report.screeningRequired && !report.archived && (
+                          <span className="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700">⚠️ Review</span>
+                        )}
+                        {report.flaggedByFarmer && report.status !== 'complete' && (
+                          <span className="px-2 py-1 rounded text-xs font-medium bg-amber-100 text-amber-700">🚩 Flagged</span>
+                        )}
                         <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          report.status === 'complete' ? 'bg-slate-200 text-slate-700' :
+                          report.status === 'escalated' ? 'bg-orange-100 text-orange-700' :
                           report.status === 'resolved' ? 'bg-green-100 text-green-700' :
                           report.status === 'claimed' ? 'bg-blue-100 text-blue-700' :
                           'bg-yellow-100 text-yellow-700'
                         }`}>{report.status}</span>
                         {report.archived && <span className="px-2 py-1 rounded text-xs bg-slate-200 text-slate-600">Archived</span>}
                         <button onClick={() => openReportDetail(report.id)} className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded text-sm hover:bg-indigo-200">View</button>
-                        {!report.archived && report.status === 'reported' && (
+                        {!report.archived && report.screeningRequired && (
+                          <button onClick={() => approveReportScreening(report.id)} className="px-3 py-1 bg-teal-100 text-teal-700 rounded text-sm hover:bg-teal-200">Approve</button>
+                        )}
+                        {!report.archived && report.status === 'reported' && !report.screeningRequired && (
                           <button onClick={() => setShowClaimReportModal(report.id)} className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200">Claim for Farmer</button>
                         )}
                         {!report.archived && report.status === 'claimed' && (
                           <button onClick={() => resolveReport(report.id)} className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200">Resolve</button>
+                        )}
+                        {!report.archived && (report.status === 'resolved' || report.status === 'escalated') && (
+                          <button onClick={() => escalateReport(report.id)} className="px-3 py-1 bg-orange-100 text-orange-700 rounded text-sm hover:bg-orange-200">Escalate</button>
+                        )}
+                        {!report.archived && (report.status === 'resolved' || report.status === 'escalated') && (
+                          <button onClick={() => { setCompleteReportId(report.id); setCompleteNotes('') }} className="px-3 py-1 bg-slate-700 text-white rounded text-sm hover:bg-slate-800">Complete</button>
                         )}
                         {!report.archived && (
                           <button onClick={() => archiveReport(report.id)} className="px-3 py-1 bg-slate-100 text-slate-600 rounded text-sm hover:bg-slate-200">Archive</button>
