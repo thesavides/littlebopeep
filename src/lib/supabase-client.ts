@@ -242,6 +242,33 @@ export async function markNotificationRead(notificationId: string): Promise<void
   }
 }
 
+// Fetch all notifications for a specific report (admin use — requires admin RLS policy)
+export async function fetchNotificationsForReport(reportId: string): Promise<NotificationDB[]> {
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('report_id', reportId)
+    .order('sent_at', { ascending: false })
+  if (error) {
+    console.error('Error fetching report notifications:', error)
+    return []
+  }
+  return data || []
+}
+
+// Mark notifications for a specific report as read (for a specific user)
+export async function markReportNotificationsRead(userId: string, reportId: string): Promise<void> {
+  const { error } = await supabase
+    .from('notifications')
+    .update({ read_at: new Date().toISOString(), status: 'read' })
+    .eq('user_id', userId)
+    .eq('report_id', reportId)
+    .is('read_at', null)
+  if (error) {
+    console.error('Error marking report notifications read:', error)
+  }
+}
+
 export async function markAllNotificationsRead(userId: string): Promise<void> {
   const { error } = await supabase
     .from('notifications')

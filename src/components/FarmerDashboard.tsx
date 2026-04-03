@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAppStore, Farm, FarmField, MAP_CONFIG, isReportNearFarm } from '@/store/appStore'
-import { supabase, fetchUserNotifications, markAllNotificationsRead, NotificationDB, sendThankYouMessage } from '@/lib/supabase-client'
+import { supabase, fetchUserNotifications, markAllNotificationsRead, markReportNotificationsRead, NotificationDB, sendThankYouMessage } from '@/lib/supabase-client'
 import { useTranslation } from '@/contexts/TranslationContext'
 import Header from './Header'
 import Map from './Map'
@@ -524,7 +524,14 @@ export default function FarmerDashboard() {
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => setViewState('subscription')} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm">{t('farmer.manage', {}, 'Manage')}</button>
-                    <button onClick={() => setViewState('notifications')} className="relative px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm hover:bg-slate-200">
+                    <button onClick={async () => {
+                      setViewState('notifications')
+                      // Auto-clear unread new_report notifications on open (spec: cleared on open)
+                      if (currentUserId && unreadCount > 0) {
+                        await markAllNotificationsRead(currentUserId)
+                        setFarmerNotifications(prev => prev.map(n => ({ ...n, read_at: n.read_at || new Date().toISOString(), status: 'read' })))
+                      }
+                    }} className="relative px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm hover:bg-slate-200">
                       🔔 Notifications
                       {unreadCount > 0 && (
                         <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
@@ -634,7 +641,16 @@ export default function FarmerDashboard() {
                       </div>
                       {report.description && <p className="text-sm text-slate-600 mb-3">{report.description}</p>}
                       <div className="flex gap-2">
-                        <button onClick={() => claimReport(report.id)} className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm">{t('farmer.claim', {}, 'Claim')}</button>
+                        <button onClick={async () => {
+                          claimReport(report.id)
+                          // Auto-clear the notification for this report when farmer claims it
+                          if (currentUserId) {
+                            await markReportNotificationsRead(currentUserId, report.id)
+                            setFarmerNotifications(prev => prev.map(n =>
+                              n.report_id === report.id ? { ...n, read_at: n.read_at || new Date().toISOString(), status: 'read' } : n
+                            ))
+                          }
+                        }} className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm">{t('farmer.claim', {}, 'Claim')}</button>
                         <button onClick={() => resolveReport(report.id)} className="flex-1 py-2 bg-green-600 text-white rounded-lg text-sm">{t('farmer.resolved', {}, 'Resolved')}</button>
                       </div>
                     </div>

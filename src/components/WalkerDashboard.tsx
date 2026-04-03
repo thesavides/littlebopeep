@@ -80,7 +80,14 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
     setShowNotification(false)
   }
 
-  // Get user's location on mount
+  // Detect device type for submission metadata
+  const getDeviceType = (): string => {
+    if (typeof navigator === 'undefined') return 'web'
+    if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) return 'mobile'
+    return 'desktop'
+  }
+
+  // Get user's location on mount — also stores accuracy for submission metadata
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -89,9 +96,20 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
             lat: position.coords.latitude,
             lng: position.coords.longitude
           })
+          // Pre-populate submission metadata in draft report
+          updateDraftReport({
+            locationAccuracy: position.coords.accuracy ?? undefined,
+            deviceType: getDeviceType(),
+            appVersion: '1.0.0',
+          })
         },
         (error) => {
           console.log('Could not get location:', error)
+          // Still set device metadata even without GPS
+          updateDraftReport({
+            deviceType: getDeviceType(),
+            appVersion: '1.0.0',
+          })
         }
       )
     }

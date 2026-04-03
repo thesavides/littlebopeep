@@ -8,7 +8,7 @@ import AdminUserManagement from './AdminUserManagement'
 import WalkerDashboard from './WalkerDashboard'
 import { inviteUser, getAllUsers, adminResetUserPassword, updateUserProfile, deleteUser as deleteUserFromSupabase, suspendUser as suspendUserInSupabase, activateUser as activateUserInSupabase } from '@/lib/unified-auth'
 import { fetchAuditLogs } from '@/lib/audit'
-import { fetchUserNotifications } from '@/lib/supabase-client'
+import { fetchNotificationsForReport } from '@/lib/supabase-client'
 
 type AdminView = 'overview' | 'walkers' | 'farmers' | 'reports' | 'farms' | 'billing' | 'admins' | 'categories' | 'audit'
 type SortBy = 'date' | 'daysUnclaimed'
@@ -289,12 +289,15 @@ export default function AdminDashboard() {
     setDetailReportId(reportId)
     setLoadingDetail(true)
     try {
-      const [logs] = await Promise.all([
+      const [logs, notifs] = await Promise.all([
         fetchAuditLogs({ entityId: reportId }),
+        fetchNotificationsForReport(reportId),
       ])
       setDetailAuditLogs(logs)
+      setDetailNotifications(notifs)
     } catch {
       setDetailAuditLogs([])
+      setDetailNotifications([])
     }
     setLoadingDetail(false)
   }
@@ -490,6 +493,35 @@ export default function AdminDashboard() {
                         </div>
                       </section>
                     )}
+
+                    {/* Notification History */}
+                    <section>
+                      <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Notification History ({detailNotifications.length})</h3>
+                      {detailNotifications.length === 0 ? (
+                        <div className="text-sm text-slate-400 italic">No notifications sent for this report.</div>
+                      ) : (
+                        <div className="space-y-1">
+                          {detailNotifications.map((n: any) => {
+                            const recipient = allUsers.find((u: any) => u.id === n.user_id)
+                            return (
+                              <div key={n.id} className="bg-slate-50 rounded-lg p-3 text-sm">
+                                <div className="flex items-center justify-between">
+                                  <span className={`font-medium ${n.type === 'thank_you' ? 'text-amber-700' : 'text-blue-700'}`}>
+                                    {n.type === 'thank_you' ? '💌 Thank You' : n.type === 'new_report' ? '🔔 New report alert' : n.type}
+                                  </span>
+                                  <span className="text-xs text-slate-400">{new Date(n.sent_at).toLocaleString('en-GB')}</span>
+                                </div>
+                                <div className="text-xs text-slate-500 mt-0.5">
+                                  To: {recipient?.full_name || recipient?.email || n.user_id}
+                                  {n.read_at ? <span className="ml-2 text-green-600">✓ Read {new Date(n.read_at).toLocaleDateString('en-GB')}</span> : <span className="ml-2 text-slate-400">Unread</span>}
+                                </div>
+                                {n.message_text && <div className="text-xs text-slate-600 mt-1 italic">&ldquo;{n.message_text}&rdquo;</div>}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </section>
 
                     {/* Action History */}
                     <section>
