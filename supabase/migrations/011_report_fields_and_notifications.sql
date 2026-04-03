@@ -28,7 +28,7 @@ CREATE INDEX IF NOT EXISTS sheep_reports_affected_farmer_ids_idx
 CREATE TABLE IF NOT EXISTS notifications (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id       UUID NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
-  report_id     UUID REFERENCES sheep_reports(id) ON DELETE CASCADE,
+  report_id     TEXT REFERENCES sheep_reports(id) ON DELETE CASCADE,
   type          TEXT NOT NULL,         -- e.g. 'new_report', 'report_claimed', 'thank_you'
   sent_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   read_at       TIMESTAMPTZ,
