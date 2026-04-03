@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAppStore, Farm, FarmField, MAP_CONFIG, isReportNearFarm } from '@/store/appStore'
-import { supabase, fetchUserNotifications, markAllNotificationsRead, NotificationDB } from '@/lib/supabase-client'
+import { supabase, fetchUserNotifications, markAllNotificationsRead, NotificationDB, sendThankYouMessage } from '@/lib/supabase-client'
 import { useTranslation } from '@/contexts/TranslationContext'
 import Header from './Header'
 import Map from './Map'
@@ -43,6 +43,11 @@ export default function FarmerDashboard() {
   const [farmsLoaded, setFarmsLoaded] = useState(false)
   const [farmerNotifications, setFarmerNotifications] = useState<NotificationDB[]>([])
   const unreadCount = farmerNotifications.filter(n => !n.read_at).length
+  // Thank You message state — keyed by reportId
+  const [thankYouOpen, setThankYouOpen] = useState<string | null>(null)
+  const [thankYouText, setThankYouText] = useState('')
+  const [thankYouSent, setThankYouSent] = useState<Set<string>>(new Set())
+  const [sendingThankYou, setSendingThankYou] = useState(false)
 
   const currentUser = getCurrentUser()
 
@@ -279,6 +284,22 @@ export default function FarmerDashboard() {
   }
 
   const canSaveField = fieldName.trim() && fencePosts.length >= 3
+
+  const handleSendThankYou = async (reportId: string, reporterId: string | undefined) => {
+    if (!reporterId) return
+    setSendingThankYou(true)
+    try {
+      const msg = thankYouText.trim() || 'Thank you for reporting this — the animals have been safely recovered!'
+      await sendThankYouMessage(reporterId, reportId, msg)
+      setThankYouSent(prev => new Set(prev).add(reportId))
+      setThankYouOpen(null)
+      setThankYouText('')
+    } catch {
+      alert('Failed to send message. Please try again.')
+    } finally {
+      setSendingThankYou(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -631,11 +652,53 @@ export default function FarmerDashboard() {
                     <div key={report.id} className="bg-white rounded-xl p-4 shadow border-l-4 border-blue-500">
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <h3 className="font-semibold text-slate-800">{t('farmer.sheepCount', { count: report.sheepCount }, `🐑 ${report.sheepCount} sheep`)}</h3>
+                          <h3 className="font-semibold text-slate-800">{report.categoryEmoji || '🐑'} {report.sheepCount} {report.categoryName || 'sheep'}</h3>
                           <p className="text-sm text-slate-500">{new Date(report.timestamp).toLocaleString()}</p>
+                          {report.description && <p className="text-xs text-slate-400 mt-1">{report.description}</p>}
                         </div>
                       </div>
-                      <button onClick={() => resolveReport(report.id)} className="w-full py-2 bg-green-600 text-white rounded-lg text-sm">{t('farmer.markResolved', {}, 'Mark Resolved')}</button>
+                      <div className="flex gap-2 mt-2">
+                        <button onClick={() => resolveReport(report.id)} className="flex-1 py-2 bg-green-600 text-white rounded-lg text-sm">{t('farmer.markResolved', {}, 'Mark Resolved')}</button>
+                        {report.reporterId && !thankYouSent.has(report.id) && (
+                          <button
+                            onClick={() => { setThankYouOpen(report.id); setThankYouText('') }}
+                            className="px-4 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm hover:bg-amber-200"
+                          >
+                            💌 Thank You
+                          </button>
+                        )}
+                        {thankYouSent.has(report.id) && (
+                          <span className="px-4 py-2 text-green-600 text-sm font-medium">✓ Message sent</span>
+                        )}
+                      </div>
+
+                      {/* Thank You compose inline */}
+                      {thankYouOpen === report.id && (
+                        <div className="mt-3 bg-amber-50 rounded-lg p-3 space-y-2">
+                          <p className="text-xs text-amber-700 font-medium">Send an anonymous thank you to the walker who reported this:</p>
+                          <textarea
+                            value={thankYouText}
+                            onChange={(e) => setThankYouText(e.target.value)}
+                            placeholder="Thank you for reporting this — the animals have been safely recovered!"
+                            className="w-full text-sm px-3 py-2 border border-amber-200 rounded-lg resize-none h-20"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleSendThankYou(report.id, report.reporterId)}
+                              disabled={sendingThankYou}
+                              className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm hover:bg-amber-600 disabled:opacity-50"
+                            >
+                              {sendingThankYou ? 'Sending…' : 'Send'}
+                            </button>
+                            <button
+                              onClick={() => setThankYouOpen(null)}
+                              className="px-4 py-2 bg-white text-slate-600 rounded-lg text-sm border"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

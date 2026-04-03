@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAppStore, getDistanceMeters, MAP_CONFIG } from '@/store/appStore'
+import { fetchUserNotifications, markAllNotificationsRead } from '@/lib/supabase-client'
 import type { ReportCategory } from '@/store/appStore'
 import Header from './Header'
 import Map from './Map'
@@ -54,9 +55,17 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
   // Get unread notifications (thank you messages)
   const unreadNotifications = currentUserId ? getUnreadNotifications(currentUserId) : []
 
-  // Load reports from Supabase on mount
+  // Thank You messages from Supabase
+  const [thankYouMessages, setThankYouMessages] = useState<any[]>([])
+
+  // Load reports and thank-you messages from Supabase on mount
   useEffect(() => {
     loadReports()
+    if (currentUserId) {
+      fetchUserNotifications(currentUserId).then(notifs => {
+        setThankYouMessages(notifs.filter(n => n.type === 'thank_you'))
+      }).catch(() => {})
+    }
   }, [])
 
   // Show notification banner if there are unread notifications
@@ -675,6 +684,45 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
         {/* ===== MY REPORTS VIEW ===== */}
         {viewState === 'my-reports' && (
           <>
+            {/* Thank You messages from farmers */}
+            {thankYouMessages.length > 0 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-amber-800">💌 Messages from Farmers ({thankYouMessages.length})</h3>
+                  {thankYouMessages.some(m => !m.read_at) && (
+                    <button
+                      onClick={async () => {
+                        if (currentUserId) {
+                          await markAllNotificationsRead(currentUserId)
+                          setThankYouMessages(prev => prev.map(m => ({ ...m, read_at: m.read_at || new Date().toISOString() })))
+                        }
+                      }}
+                      className="text-xs text-amber-600 hover:underline"
+                    >
+                      Mark all read
+                    </button>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  {thankYouMessages.map(msg => {
+                    const report = myReports.find(r => r.id === msg.report_id)
+                    const isUnread = !msg.read_at
+                    return (
+                      <div key={msg.id} className={`rounded-lg p-3 text-sm ${isUnread ? 'bg-white border border-amber-300 shadow-sm' : 'bg-amber-50/60'}`}>
+                        {isUnread && <span className="inline-block w-2 h-2 bg-amber-500 rounded-full mr-2" />}
+                        <p className="text-slate-700 italic">&ldquo;{msg.message_text || 'Thank you!'}&rdquo;</p>
+                        {report && (
+                          <p className="text-xs text-slate-400 mt-1">
+                            Re: {report.categoryEmoji} {report.categoryName} · {new Date(msg.sent_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                          </p>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
             {myReports.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">🐑</div>
