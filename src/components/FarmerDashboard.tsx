@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAppStore, Farm, FarmField, MAP_CONFIG } from '@/store/appStore'
+import { useAppStore, Farm, FarmField, MAP_CONFIG, isReportNearFarm } from '@/store/appStore'
+import { supabase } from '@/lib/supabase-client'
 import { useTranslation } from '@/contexts/TranslationContext'
 import Header from './Header'
 import Map from './Map'
@@ -31,19 +32,29 @@ export default function FarmerDashboard() {
     reportCategories,
     updateFarmCategorySubscription,
     loadReports,
+    loadFarms,
   } = useAppStore()
-  
+
+  // Supabase profile for the current user (pre-populates form fields correctly
+  // for admin-invited farmers who aren't in the local Zustand users array)
+  const [supabaseProfile, setSupabaseProfile] = useState<{
+    full_name?: string; email?: string; phone?: string
+  } | null>(null)
+  const [farmsLoaded, setFarmsLoaded] = useState(false)
+
   const currentUser = getCurrentUser()
-  const [viewState, setViewState] = useState<ViewState>(currentUser?.subscriptionStatus ? 'dashboard' : 'register')
+
+  // Always start at 'register' until we know the farmer's farm count
+  const [viewState, setViewState] = useState<ViewState>('register')
   const [selectedFarmId, setSelectedFarmId] = useState<string | null>(null)
   const [registrationStep, setRegistrationStep] = useState<RegistrationStep>(1)
-  
-  // Registration form state
+
+  // Registration form state (initially empty; filled once supabaseProfile loads)
   const [formData, setFormData] = useState({
     farmName: '',
-    contactName: currentUser?.name || '',
-    email: currentUser?.email || '',
-    phone: currentUser?.phone || '',
+    contactName: '',
+    email: '',
+    phone: '',
     billingLine1: '',
     billingLine2: '',
     billingCity: '',
@@ -67,8 +78,34 @@ export default function FarmerDashboard() {
   const [fencePosts, setFencePosts] = useState<Array<{ lat: number; lng: number }>>([])
   
   const [farmerLocation, setFarmerLocation] = useState<[number, number] | null>(null)
+
+  // Load farms from Supabase and fetch the current user's profile on mount
   useEffect(() => {
-    loadReports()
+    const init = async () => {
+      await loadReports()
+      await loadFarms()
+      setFarmsLoaded(true)
+
+      // Fetch Supabase profile for pre-population (works for admin-invited farmers
+      // who aren't in the local Zustand users mock array)
+      if (currentUserId) {
+        const { data } = await supabase
+          .from('user_profiles')
+          .select('full_name, email, phone')
+          .eq('id', currentUserId)
+          .single()
+        if (data) {
+          setSupabaseProfile(data)
+          setFormData((prev) => ({
+            ...prev,
+            contactName: data.full_name || prev.contactName,
+            email: data.email || prev.email,
+            phone: data.phone || prev.phone,
+          }))
+        }
+      }
+    }
+    init()
   }, [])
 
   useEffect(() => {
@@ -91,16 +128,34 @@ export default function FarmerDashboard() {
     }))
   )
   
-  const relevantReports = reports.filter(r => r.status !== 'resolved' && !r.archived)
+  // A farmer only sees reports near their defined fields.
+  // If they have no fields on any farm, they see nothing (with a prompt to add fields).
+  const farmsWithFields = myFarms.filter(f => f.fields.length > 0)
+  const hasFields = farmsWithFields.length > 0
+
+  const relevantReports = hasFields
+    ? reports.filter(r =>
+        !r.archived &&
+        r.status !== 'resolved' &&
+        farmsWithFields.some(farm => isReportNearFarm(r, farm))
+      )
+    : []
+
   const reportedAlerts = relevantReports.filter(r => r.status === 'reported')
   const claimedAlerts = relevantReports.filter(r => r.status === 'claimed' && r.claimedByFarmerId === currentUserId)
 
-  // Check if user needs to register
+  // Once farms are loaded from Supabase, decide whether to show the dashboard
+  // or the registration flow.  Farmers with existing farms (assigned by admin
+  // or created previously) go straight to the dashboard.
   useEffect(() => {
-    if (currentUser && !currentUser.subscriptionStatus) {
-      setViewState('register')
+    if (!farmsLoaded) return
+    const hasFarms = myFarms.length > 0
+    const hasSubscription = !!currentUser?.subscriptionStatus
+    if (hasFarms || hasSubscription) {
+      setViewState('dashboard')
     }
-  }, [currentUser])
+    // If no farms and no subscription, stay in 'register' (the initial state)
+  }, [farmsLoaded, farms])
 
   const handleBack = () => {
     if (viewState === 'add-field') {
@@ -259,6 +314,12 @@ export default function FarmerDashboard() {
                   </div>
                 </div>
                 <button onClick={handleRegistrationNext} disabled={!formData.farmName || !formData.email} className="w-full mt-6 py-3 bg-blue-600 text-white rounded-xl font-semibold disabled:bg-slate-300">{t('farmer.continue', {}, 'Continue')}</button>
+                <button
+                  onClick={() => setViewState('dashboard')}
+                  className="w-full mt-3 py-2 text-sm text-slate-500 hover:text-slate-700"
+                >
+                  {t('farmer.skipForNow', {}, 'Skip for now — I\'ll add a farm later')}
+                </button>
               </div>
             )}
 
@@ -504,11 +565,29 @@ export default function FarmerDashboard() {
               </div>
             )}
 
+            {/* No fields prompt */}
+            {myFarms.length > 0 && !hasFields && (
+              <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-5">
+                <h3 className="font-semibold text-amber-800 mb-1">📍 Add fields to see nearby reports</h3>
+                <p className="text-sm text-amber-700 mb-3">
+                  You have {myFarms.length} farm{myFarms.length > 1 ? 's' : ''} but no fields mapped yet. Reports are only shown when they fall within your field boundaries and alert buffer.
+                </p>
+                <button
+                  onClick={() => { setSelectedFarmId(myFarms[0].id); setViewState('view-farm') }}
+                  className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-semibold hover:bg-amber-700"
+                >
+                  Map your fields →
+                </button>
+              </div>
+            )}
+
             {/* Alerts */}
             <div className="mb-6">
               <h2 className="font-semibold text-slate-800 mb-3">{t('farmer.reportedSheep', { count: reportedAlerts.length }, `Reported Sheep (${reportedAlerts.length})`)}</h2>
               {reportedAlerts.length === 0 ? (
-                <div className="bg-green-50 rounded-xl p-4 text-center text-green-700">{t('farmer.noNewReports', {}, 'No new reports. All clear! 🎉')}</div>
+                <div className="bg-green-50 rounded-xl p-4 text-center text-green-700">
+                  {!hasFields ? t('farmer.noFieldsMapped', {}, 'Map your fields above to start receiving alerts.') : t('farmer.noNewReports', {}, 'No new reports. All clear! 🎉')}
+                </div>
               ) : (
                 <div className="space-y-3">
                   {reportedAlerts.map((report) => (

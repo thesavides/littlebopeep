@@ -1,14 +1,15 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import { useAppStore, getDaysSince, MAP_CONFIG } from '@/store/appStore'
+import { useAppStore, getDaysSince, MAP_CONFIG, isReportNearFarm } from '@/store/appStore'
 import Header from './Header'
 import Map from './Map'
 import AdminUserManagement from './AdminUserManagement'
 import WalkerDashboard from './WalkerDashboard'
 import { inviteUser, getAllUsers, adminResetUserPassword, updateUserProfile, deleteUser as deleteUserFromSupabase, suspendUser as suspendUserInSupabase, activateUser as activateUserInSupabase } from '@/lib/unified-auth'
+import { fetchAuditLogs } from '@/lib/audit'
 
-type AdminView = 'overview' | 'walkers' | 'farmers' | 'reports' | 'farms' | 'billing' | 'admins' | 'categories'
+type AdminView = 'overview' | 'walkers' | 'farmers' | 'reports' | 'farms' | 'billing' | 'admins' | 'categories' | 'audit'
 type SortBy = 'date' | 'daysUnclaimed'
 type FilterStatus = 'all' | 'reported' | 'claimed' | 'resolved'
 type FilterArchive = 'active' | 'archived' | 'all'
@@ -44,6 +45,7 @@ export default function AdminDashboard() {
     deleteReportCategory,
     updateFarmCategorySubscription,
     loadReports,
+    loadFarms,
   } = useAppStore()
 
   const [currentView, setCurrentView] = useState<AdminView>('overview')
@@ -52,6 +54,8 @@ export default function AdminDashboard() {
   const [deleteType, setDeleteType] = useState<'user' | 'report' | 'farm' | 'field'>('user')
   const [realUsers, setRealUsers] = useState<any[]>([]) // Users from Supabase
   const [loadingUsers, setLoadingUsers] = useState(true)
+  const [auditLogs, setAuditLogs] = useState<any[]>([])
+  const [loadingAudit, setLoadingAudit] = useState(false)
 
   // Modal states for CRUD operations
   const [showCreateFarmerModal, setShowCreateFarmerModal] = useState(false)
@@ -85,6 +89,8 @@ export default function AdminDashboard() {
   const [sortBy, setSortBy] = useState<SortBy>('daysUnclaimed')
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all')
   const [filterArchive, setFilterArchive] = useState<FilterArchive>('active')
+  const [filterFarmerId, setFilterFarmerId] = useState<string>('all')
+  const [filterFarmId, setFilterFarmId] = useState<string>('all')
   const [selectedReports, setSelectedReports] = useState<string[]>([])
   const [mapBounds, setMapBounds] = useState<{north: number, south: number, east: number, west: number} | null>(null)
 
@@ -98,6 +104,7 @@ export default function AdminDashboard() {
     }
     loadUsers()
     loadReports()
+    loadFarms()
   }, [])
 
   const handleResetUserPassword = async (userId: string, email: string) => {
@@ -168,31 +175,51 @@ export default function AdminDashboard() {
   const cancelledSubs = farmers.filter(f => users.find(u => u.id === f.id)?.subscriptionStatus === 'cancelled').length
 
   // Filtered and sorted reports
+  // Farms belonging to the selected farmer filter (for the farm dropdown)
+  const farmerFilterFarms = useMemo(() => {
+    if (filterFarmerId === 'all') return farms
+    return farms.filter(f => f.farmerId === filterFarmerId)
+  }, [farms, filterFarmerId])
+
   const filteredReports = useMemo(() => {
     let result = [...reports]
-    
+
     // Filter by archive status
     if (filterArchive === 'active') {
       result = result.filter(r => !r.archived)
     } else if (filterArchive === 'archived') {
       result = result.filter(r => r.archived)
     }
-    
+
     // Filter by status
     if (filterStatus !== 'all') {
       result = result.filter(r => r.status === filterStatus)
     }
-    
+
+    // Filter by farm — only show reports near that specific farm's fields
+    if (filterFarmId !== 'all') {
+      const farm = farms.find(f => f.id === filterFarmId)
+      if (farm && farm.fields.length > 0) {
+        result = result.filter(r => isReportNearFarm(r, farm))
+      }
+    } else if (filterFarmerId !== 'all') {
+      // Filter by farmer — show reports near any of their farms
+      const farmerFarms = farms.filter(f => f.farmerId === filterFarmerId && f.fields.length > 0)
+      if (farmerFarms.length > 0) {
+        result = result.filter(r => farmerFarms.some(farm => isReportNearFarm(r, farm)))
+      }
+    }
+
     // Filter by map bounds if set
     if (mapBounds) {
-      result = result.filter(r => 
+      result = result.filter(r =>
         r.location.lat >= mapBounds.south &&
         r.location.lat <= mapBounds.north &&
         r.location.lng >= mapBounds.west &&
         r.location.lng <= mapBounds.east
       )
     }
-    
+
     // Sort
     if (sortBy === 'daysUnclaimed') {
       result.sort((a, b) => {
@@ -203,9 +230,9 @@ export default function AdminDashboard() {
     } else {
       result.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     }
-    
+
     return result
-  }, [reports, filterStatus, filterArchive, sortBy, mapBounds])
+  }, [reports, filterStatus, filterArchive, sortBy, mapBounds, filterFarmerId, filterFarmId, farms])
 
   const handleDelete = async () => {
     if (!showDeleteConfirm) return
@@ -363,6 +390,7 @@ export default function AdminDashboard() {
       {/* Edit Farm Modal */}
       {showEditFarmModal && <EditFarmModal
         farm={farms.find(f => f.id === showEditFarmModal)!}
+        allFarmers={[...farmers, ...admins]}
         onClose={() => setShowEditFarmModal(null)}
         onSave={(id: string, data: any) => {
           updateFarm(id, data)
@@ -734,6 +762,26 @@ export default function AdminDashboard() {
                     <option value="daysUnclaimed">Sort: Days Unclaimed</option>
                     <option value="date">Sort: Date</option>
                   </select>
+                  <select
+                    value={filterFarmerId}
+                    onChange={(e) => { setFilterFarmerId(e.target.value); setFilterFarmId('all') }}
+                    className="px-3 py-2 border rounded-lg text-sm"
+                  >
+                    <option value="all">All Farmers</option>
+                    {[...farmers, ...admins].map((u: any) => (
+                      <option key={u.id} value={u.id}>{u.full_name || u.name || u.email}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={filterFarmId}
+                    onChange={(e) => setFilterFarmId(e.target.value)}
+                    className="px-3 py-2 border rounded-lg text-sm"
+                  >
+                    <option value="all">All Farms</option>
+                    {farmerFilterFarms.map((f: any) => (
+                      <option key={f.id} value={f.id}>{f.name}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="flex gap-2">
                   {selectedReports.length > 0 && (
@@ -849,15 +897,19 @@ export default function AdminDashboard() {
             ) : (
               <div className="divide-y">
                 {farms.map((farm) => {
-                  const owner = users.find(u => u.id === farm.farmerId)
+                  const owner = allUsers.find((u: any) => u.id === farm.farmerId)
+                  const isOrphaned = !farm.farmerId || !owner
                   return (
-                    <div key={farm.id} className="p-4 flex items-center justify-between">
+                    <div key={farm.id} className={`p-4 flex items-center justify-between ${isOrphaned ? 'bg-red-50' : ''}`}>
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">🏡</div>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isOrphaned ? 'bg-red-100' : 'bg-amber-100'}`}>🏡</div>
                         <div>
-                          <div className="font-medium text-slate-800">{farm.name}</div>
+                          <div className="font-medium text-slate-800 flex items-center gap-2">
+                            {farm.name}
+                            {isOrphaned && <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-semibold">⚠️ No owner — click Edit to reassign</span>}
+                          </div>
                           <div className="text-sm text-slate-500">{farm.fields.length} fields • Buffer: {farm.alertBufferMeters}m</div>
-                          <div className="text-xs text-slate-400">Owner: {owner?.name || 'Unknown'}</div>
+                          <div className="text-xs text-slate-400">Owner: {owner?.full_name || owner?.name || (isOrphaned ? 'Unassigned' : 'Unknown')}</div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -1012,6 +1064,58 @@ export default function AdminDashboard() {
                   setEditingCategory(null)
                 }}
               />
+            )}
+          </>
+        )}
+
+        {/* ===== AUDIT LOG ===== */}
+        {currentView === 'audit' && (
+          <>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-slate-800">Audit Log</h2>
+              <button
+                onClick={async () => {
+                  setLoadingAudit(true)
+                  const logs = await fetchAuditLogs({ limit: 200 })
+                  setAuditLogs(logs)
+                  setLoadingAudit(false)
+                }}
+                className="px-4 py-2 bg-slate-600 text-white rounded-lg font-medium hover:bg-slate-700"
+              >
+                Refresh
+              </button>
+            </div>
+            {loadingAudit ? (
+              <div className="text-center py-8 text-slate-500">Loading…</div>
+            ) : auditLogs.length === 0 ? (
+              <div className="bg-white rounded-xl p-8 shadow text-center text-slate-500">
+                <div className="text-4xl mb-2">📋</div>
+                No audit logs yet. Click Refresh to load.
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl shadow divide-y overflow-hidden">
+                {auditLogs.map((log: any) => (
+                  <div key={log.id} className="p-3 flex items-start gap-3 text-sm">
+                    <div className="text-xs text-slate-400 w-36 flex-shrink-0 pt-0.5">
+                      {new Date(log.created_at).toLocaleString()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="font-medium text-slate-800">{log.action}</span>
+                      {log.entity_type && (
+                        <span className="ml-2 text-slate-500">· {log.entity_type} {log.entity_id ? `(${String(log.entity_id).slice(0, 8)}…)` : ''}</span>
+                      )}
+                      {log.detail && Object.keys(log.detail).length > 0 && (
+                        <div className="text-xs text-slate-400 mt-0.5 truncate">
+                          {JSON.stringify(log.detail)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-xs text-slate-400 flex-shrink-0">
+                      {log.actor_email || log.actor_id?.slice(0, 8) || 'system'}
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </>
         )}
@@ -1408,10 +1512,16 @@ function CreateFarmModal({ farmers, onClose, onCreate }: { farmers: any[]; onClo
   )
 }
 
-function EditFarmModal({ farm, onClose, onSave }: { farm: any; onClose: () => void; onSave: (id: string, data: any) => void }) {
+function EditFarmModal({ farm, allFarmers, onClose, onSave }: {
+  farm: any
+  allFarmers: any[]
+  onClose: () => void
+  onSave: (id: string, data: any) => void
+}) {
   const [name, setName] = useState(farm.name)
   const [alertBufferMeters, setAlertBufferMeters] = useState(farm.alertBufferMeters)
   const [alertsEnabled, setAlertsEnabled] = useState(farm.alertsEnabled)
+  const [farmerId, setFarmerId] = useState(farm.farmerId || '')
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -1419,11 +1529,11 @@ function EditFarmModal({ farm, onClose, onSave }: { farm: any; onClose: () => vo
       alert('Please enter farm name')
       return
     }
-
     onSave(farm.id, {
       name: name.trim(),
       alertBufferMeters,
-      alertsEnabled
+      alertsEnabled,
+      farmerId: farmerId || null,
     })
   }
 
@@ -1435,6 +1545,12 @@ function EditFarmModal({ farm, onClose, onSave }: { farm: any; onClose: () => vo
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
         </div>
 
+        {!farm.farmerId && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+            ⚠️ This farm has no owner. Assign a farmer below.
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Farm Name *</label>
@@ -1445,6 +1561,22 @@ function EditFarmModal({ farm, onClose, onSave }: { farm: any; onClose: () => vo
               className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500"
               required
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Farmer Owner</label>
+            <select
+              value={farmerId}
+              onChange={(e) => setFarmerId(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500"
+            >
+              <option value="">— Unassigned —</option>
+              {allFarmers.map((f: any) => (
+                <option key={f.id} value={f.id}>
+                  {f.full_name || f.name || f.email} ({f.email || 'No email'})
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>

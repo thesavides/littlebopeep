@@ -22,13 +22,36 @@ function ResetPasswordForm() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
 
-  // Exchange the PKCE code for a session client-side
+  // Handle all Supabase password reset URL formats
   useEffect(() => {
-    // Supabase redirects here with token in URL hash: #access_token=xxx&type=recovery
-    // The supabase-js client automatically detects and sets the session from the hash
+    const searchParams = new URLSearchParams(window.location.search)
+    const tokenHash = searchParams.get('token_hash')
+    const type = searchParams.get('type')
+    const code = searchParams.get('code')
     const hash = window.location.hash
-    if (hash && hash.includes('access_token')) {
-      // Give supabase-js a moment to parse the hash and set the session
+
+    if (tokenHash && type === 'recovery') {
+      // New Supabase format: token_hash + type=recovery in query params
+      supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' })
+        .then(({ data, error }) => {
+          if (error) {
+            setError('Invalid or expired reset link. Please request a new one.')
+          } else if (data.session) {
+            setSessionReady(true)
+          }
+        })
+    } else if (code) {
+      // PKCE flow: exchange code for session
+      supabase.auth.exchangeCodeForSession(code)
+        .then(({ data, error }) => {
+          if (error) {
+            setError('Invalid or expired reset link. Please request a new one.')
+          } else if (data.session) {
+            setSessionReady(true)
+          }
+        })
+    } else if (hash && hash.includes('access_token')) {
+      // Legacy implicit flow: token in hash fragment
       setTimeout(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
           if (session) {
@@ -39,10 +62,13 @@ function ResetPasswordForm() {
         })
       }, 500)
     } else {
-      // Check for existing session (e.g. already authenticated)
+      // No token at all — check for existing session
       supabase.auth.getSession().then(({ data: { session } }) => {
-        setSessionReady(!!session)
-        if (!session) setError('Invalid or expired reset link. Please request a new one.')
+        if (session) {
+          setSessionReady(true)
+        } else {
+          setError('Invalid or expired reset link. Please request a new one.')
+        }
       })
     }
   }, [])

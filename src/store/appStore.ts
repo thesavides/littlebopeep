@@ -1,12 +1,84 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createReport as createReportInSupabase, fetchAllReports } from '@/lib/supabase-client'
+import { writeAuditLog } from '@/lib/audit'
+import {
+  createReport as createReportInSupabase,
+  fetchAllReports,
+  fetchFarms,
+  createFarmInSupabase,
+  updateFarmInSupabase,
+  deleteFarmInSupabase,
+  addFieldToFarm,
+  updateFieldInFarm,
+  deleteFieldFromFarm,
+} from '@/lib/supabase-client'
 
 // Map configuration
 export const MAP_CONFIG = {
   DEFAULT_CENTER: [54.5, -2] as [number, number],
   DEFAULT_ZOOM: 6,
   STANDARD_ZOOM_5KM: 13, // Approximately 5km view
+}
+
+// Ray-casting point-in-polygon for lat/lng coordinates
+export function isPointInPolygon(
+  point: { lat: number; lng: number },
+  polygon: Array<{ lat: number; lng: number }>
+): boolean {
+  if (polygon.length < 3) return false
+  let inside = false
+  const { lat: px, lng: py } = point
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const { lat: xi, lng: yi } = polygon[i]
+    const { lat: xj, lng: yj } = polygon[j]
+    const intersect = ((yi > py) !== (yj > py)) && (px < ((xj - xi) * (py - yi)) / (yj - yi) + xi)
+    if (intersect) inside = !inside
+  }
+  return inside
+}
+
+// Returns true if a point is within bufferMeters of any edge of the polygon
+export function isPointWithinBufferOfPolygon(
+  point: { lat: number; lng: number },
+  polygon: Array<{ lat: number; lng: number }>,
+  bufferMeters: number
+): boolean {
+  if (polygon.length === 0) return false
+  for (let i = 0; i < polygon.length; i++) {
+    const a = polygon[i]
+    const b = polygon[(i + 1) % polygon.length]
+    // Closest point on segment a→b to point
+    const dist = distanceToSegmentMeters(point, a, b)
+    if (dist <= bufferMeters) return true
+  }
+  return false
+}
+
+function distanceToSegmentMeters(
+  p: { lat: number; lng: number },
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number }
+): number {
+  const dx = b.lat - a.lat
+  const dy = b.lng - a.lng
+  const lenSq = dx * dx + dy * dy
+  if (lenSq === 0) return getDistanceMeters(p.lat, p.lng, a.lat, a.lng)
+  const t = Math.max(0, Math.min(1, ((p.lat - a.lat) * dx + (p.lng - a.lng) * dy) / lenSq))
+  return getDistanceMeters(p.lat, p.lng, a.lat + t * dx, a.lng + t * dy)
+}
+
+// Returns true if a report location is relevant to a farm:
+// inside any field polygon OR within the farm's alert buffer of any field polygon
+export function isReportNearFarm(
+  report: { location: { lat: number; lng: number } },
+  farm: { fields: Array<{ fencePosts: Array<{ lat: number; lng: number }> }>; alertBufferMeters: number }
+): boolean {
+  for (const field of farm.fields) {
+    if (field.fencePosts.length < 3) continue
+    if (isPointInPolygon(report.location, field.fencePosts)) return true
+    if (isPointWithinBufferOfPolygon(report.location, field.fencePosts, farm.alertBufferMeters)) return true
+  }
+  return false
 }
 
 // Calculate distance between two points in meters using Haversine formula
@@ -225,8 +297,9 @@ interface AppState {
   // Map preferences actions
   updateMapPreferences: (preferences: Partial<MapPreferences>) => void
 
-  // Supabase sync (stub for now)
+  // Supabase sync
   loadReports: () => Promise<void>
+  loadFarms: () => Promise<void>
 
   // Report category actions
   reportCategories: ReportCategory[]
@@ -310,54 +383,121 @@ export const useAppStore = create<AppState>()(
       })),
       
       // Farm actions
-      addFarm: (farm) => set((state) => ({
-        farms: [...state.farms, {
-          ...farm,
-          id: Date.now().toString(),
-          createdAt: new Date()
-        }]
-      })),
-      
-      updateFarm: (id, data) => set((state) => ({
-        farms: state.farms.map((f) => 
-          f.id === id ? { ...f, ...data } : f
-        )
-      })),
-      
-      deleteFarm: (id) => set((state) => ({
-        farms: state.farms.filter((f) => f.id !== id)
-      })),
-      
+      addFarm: (farm) => {
+        const tempId = Date.now().toString()
+        const { currentUserId } = get()
+        set((state) => ({
+          farms: [...state.farms, { ...farm, id: tempId, createdAt: new Date() }]
+        }))
+        createFarmInSupabase(farm).then((saved) => {
+          set((state) => ({
+            farms: state.farms.map((f) =>
+              f.id === tempId ? { ...saved, fields: f.fields } : f
+            )
+          }))
+          writeAuditLog({
+            actorId: currentUserId,
+            action: 'farm.create',
+            entityType: 'farm',
+            entityId: saved.id,
+            detail: { name: farm.name, farmerId: farm.farmerId },
+          })
+        }).catch((err) => {
+          console.error('Failed to save farm to Supabase:', err)
+        })
+      },
+
+      updateFarm: (id, data) => {
+        const { currentUserId, farms } = get()
+        const existing = farms.find(f => f.id === id)
+        set((state) => ({
+          farms: state.farms.map((f) => (f.id === id ? { ...f, ...data } : f))
+        }))
+        updateFarmInSupabase(id, data).then(() => {
+          const action = 'farmerId' in data ? 'farm.reassign' : 'farm.update'
+          writeAuditLog({
+            actorId: currentUserId,
+            action,
+            entityType: 'farm',
+            entityId: id,
+            detail: { before: { name: existing?.name, farmerId: existing?.farmerId }, after: data },
+          })
+        }).catch((err) => {
+          console.error('Failed to update farm in Supabase:', err)
+        })
+      },
+
+      deleteFarm: (id) => {
+        const { currentUserId, farms } = get()
+        const existing = farms.find(f => f.id === id)
+        set((state) => ({ farms: state.farms.filter((f) => f.id !== id) }))
+        deleteFarmInSupabase(id).then(() => {
+          writeAuditLog({
+            actorId: currentUserId,
+            action: 'farm.delete',
+            entityType: 'farm',
+            entityId: id,
+            detail: { name: existing?.name, farmerId: existing?.farmerId },
+          })
+        }).catch((err) => {
+          console.error('Failed to delete farm from Supabase:', err)
+        })
+      },
+
       // Field actions
-      addField: (farmId, field) => set((state) => ({
-        farms: state.farms.map((f) => 
-          f.id === farmId 
-            ? { ...f, fields: [...f.fields, { ...field, id: Date.now().toString() }] }
-            : f
-        )
-      })),
-      
-      updateField: (farmId, fieldId, data) => set((state) => ({
-        farms: state.farms.map((f) => 
-          f.id === farmId 
-            ? { 
-                ...f, 
-                fields: f.fields.map(field => 
-                  field.id === fieldId ? { ...field, ...data } : field
-                ) 
-              }
-            : f
-        )
-      })),
-      
-      deleteField: (farmId, fieldId) => set((state) => ({
-        farms: state.farms.map((f) => 
-          f.id === farmId 
-            ? { ...f, fields: f.fields.filter(field => field.id !== fieldId) }
-            : f
-        )
-      })),
-      
+      addField: (farmId, field) => {
+        const tempId = Date.now().toString()
+        set((state) => ({
+          farms: state.farms.map((f) =>
+            f.id === farmId
+              ? { ...f, fields: [...f.fields, { ...field, id: tempId }] }
+              : f
+          )
+        }))
+        addFieldToFarm(farmId, field).then((saved) => {
+          set((state) => ({
+            farms: state.farms.map((f) =>
+              f.id === farmId
+                ? { ...f, fields: f.fields.map((fld) => (fld.id === tempId ? saved : fld)) }
+                : f
+            )
+          }))
+        }).catch((err) => {
+          console.error('Failed to save field to Supabase:', err)
+        })
+      },
+
+      updateField: (farmId, fieldId, data) => {
+        set((state) => ({
+          farms: state.farms.map((f) =>
+            f.id === farmId
+              ? {
+                  ...f,
+                  fields: f.fields.map((field) =>
+                    field.id === fieldId ? { ...field, ...data } : field
+                  ),
+                }
+              : f
+          )
+        }))
+        updateFieldInFarm(fieldId, data).catch((err) => {
+          console.error('Failed to update field in Supabase:', err)
+        })
+      },
+
+      deleteField: (farmId, fieldId) => {
+        set((state) => ({
+          farms: state.farms.map((f) =>
+            f.id === farmId
+              ? { ...f, fields: f.fields.filter((field) => field.id !== fieldId) }
+              : f
+          )
+        }))
+        deleteFieldFromFarm(fieldId).catch((err) => {
+          console.error('Failed to delete field from Supabase:', err)
+        })
+      },
+
       // Report actions
       setCurrentReportStep: (step) => set({ currentReportStep: step }),
       
@@ -427,6 +567,14 @@ export const useAppStore = create<AppState>()(
           )
         }))
 
+        writeAuditLog({
+          actorId: currentUserId,
+          action: 'report.claim',
+          entityType: 'report',
+          entityId: reportId,
+          detail: { categoryName: report?.categoryName, location: report?.location },
+        })
+
         // Send thank you notification to walker
         if (report?.reporterId) {
           const thankYouNotification: Notification = {
@@ -479,11 +627,22 @@ export const useAppStore = create<AppState>()(
         }
       },
       
-      resolveReport: (reportId) => set((state) => ({
-        reports: state.reports.map((r) => 
-          r.id === reportId ? { ...r, status: 'resolved', resolvedAt: new Date() } : r
-        )
-      })),
+      resolveReport: (reportId) => {
+        const { currentUserId, reports } = get()
+        const report = reports.find(r => r.id === reportId)
+        set((state) => ({
+          reports: state.reports.map((r) =>
+            r.id === reportId ? { ...r, status: 'resolved', resolvedAt: new Date() } : r
+          )
+        }))
+        writeAuditLog({
+          actorId: currentUserId,
+          action: 'report.resolve',
+          entityType: 'report',
+          entityId: reportId,
+          detail: { categoryName: report?.categoryName, location: report?.location },
+        })
+      },
       
       deleteReport: (id) => set((state) => ({
         reports: state.reports.filter((r) => r.id !== id)
@@ -583,6 +742,17 @@ export const useAppStore = create<AppState>()(
         }
       },
 
+      loadFarms: async () => {
+        try {
+          const supabaseFarms = await fetchFarms()
+          if (supabaseFarms.length > 0) {
+            set({ farms: supabaseFarms })
+          }
+        } catch (err) {
+          console.error('Failed to load farms from Supabase:', err)
+        }
+      },
+
       // Helpers
       getCurrentUser: () => {
         const { currentUserId, users } = get()
@@ -634,13 +804,21 @@ export const useAppStore = create<AppState>()(
         reportCategories: state.reportCategories.filter((c) => c.id !== id)
       })),
 
-      updateFarmCategorySubscription: (farmId, categoryId, subscribed) => set((state) => ({
-        farms: state.farms.map((f) =>
-          f.id === farmId
-            ? { ...f, categorySubscriptions: { ...(f.categorySubscriptions || {}), [categoryId]: subscribed } }
-            : f
-        )
-      })),
+      updateFarmCategorySubscription: (farmId, categoryId, subscribed) => {
+        set((state) => ({
+          farms: state.farms.map((f) =>
+            f.id === farmId
+              ? { ...f, categorySubscriptions: { ...(f.categorySubscriptions || {}), [categoryId]: subscribed } }
+              : f
+          )
+        }))
+        const updatedFarm = get().farms.find(f => f.id === farmId)
+        if (updatedFarm) {
+          updateFarmInSupabase(farmId, { categorySubscriptions: updatedFarm.categorySubscriptions }).catch((err) => {
+            console.error('Failed to update farm subscriptions in Supabase:', err)
+          })
+        }
+      },
     }),
     {
       name: 'little-bo-peep-storage',

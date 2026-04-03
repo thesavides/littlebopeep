@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { sendEmail, buildInviteEmail } from '@/lib/email'
+import { writeAuditLog } from '@/lib/audit'
 
 // This runs on the server, so we can use service role key
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -120,16 +122,31 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Send password reset email
+    // Send password-set link so the invited user can activate their account
     const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'https://littlebopeep.pages.dev'
     const { error: resetError } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
       redirectTo: `${origin}/auth/reset-password?new=true`
     })
 
     if (resetError) {
-      console.error('Failed to send password reset email:', resetError)
-      // Don't fail the whole operation if email fails
+      console.error('Failed to send account setup email:', resetError)
+      // Don't fail the whole operation if the Supabase email service has issues
     }
+
+    // Also send a branded invitation email explaining what Little Bo Peep is
+    // (silently skips if RESEND_API_KEY is not configured)
+    const { subject, html } = buildInviteEmail({ name: fullName, role })
+    await sendEmail({ to: email, subject, html })
+
+    // Audit log
+    await writeAuditLog({
+      actorId: user.id,
+      actorEmail: user.email,
+      action: 'user.invite',
+      entityType: 'user',
+      entityId: authData.user.id,
+      detail: { email, fullName, role },
+    })
 
     return NextResponse.json({ success: true, user: profile })
 

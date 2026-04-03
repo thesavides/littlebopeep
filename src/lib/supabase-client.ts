@@ -263,6 +263,183 @@ export async function deleteReportCategoryDB(id: string) {
   }
 }
 
+// ==================== FARMS ====================
+
+export interface FarmDB {
+  id: string
+  farmer_id: string
+  name: string
+  address: string | null
+  alert_buffer_meters: number
+  alerts_enabled: boolean
+  category_subscriptions: Record<string, boolean> | null
+  created_at: string
+  updated_at: string
+  farm_fields?: {
+    id: string
+    farm_id: string
+    name: string
+    fence_posts: Array<{ lat: number; lng: number }>
+    created_at: string
+  }[]
+}
+
+export function dbToAppFarm(dbFarm: FarmDB) {
+  return {
+    id: dbFarm.id,
+    farmerId: dbFarm.farmer_id,
+    name: dbFarm.name,
+    address: dbFarm.address || undefined,
+    alertBufferMeters: dbFarm.alert_buffer_meters,
+    alertsEnabled: dbFarm.alerts_enabled,
+    categorySubscriptions: dbFarm.category_subscriptions || {},
+    createdAt: new Date(dbFarm.created_at),
+    fields: (dbFarm.farm_fields || []).map(f => ({
+      id: f.id,
+      name: f.name,
+      fencePosts: f.fence_posts,
+    })),
+  }
+}
+
+export async function fetchFarms() {
+  const { data, error } = await supabase
+    .from('farms')
+    .select('*, farm_fields(*)')
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching farms:', error)
+    return []
+  }
+  return (data || []).map(dbToAppFarm)
+}
+
+export async function createFarmInSupabase(farm: {
+  farmerId: string
+  name: string
+  alertBufferMeters?: number
+  alertsEnabled?: boolean
+  categorySubscriptions?: Record<string, boolean>
+  address?: string
+}) {
+  const { data, error } = await supabase
+    .from('farms')
+    .insert([{
+      farmer_id: farm.farmerId,
+      name: farm.name,
+      address: farm.address || null,
+      alert_buffer_meters: farm.alertBufferMeters ?? 500,
+      alerts_enabled: farm.alertsEnabled !== false,
+      category_subscriptions: farm.categorySubscriptions || {},
+    }])
+    .select('*, farm_fields(*)')
+    .single()
+
+  if (error) {
+    console.error('Error creating farm:', error)
+    throw error
+  }
+  return dbToAppFarm(data)
+}
+
+export async function updateFarmInSupabase(id: string, updates: {
+  name?: string
+  alertBufferMeters?: number
+  alertsEnabled?: boolean
+  categorySubscriptions?: Record<string, boolean>
+  address?: string
+  farmerId?: string | null
+}) {
+  const dbUpdates: Record<string, unknown> = {}
+  if (updates.name !== undefined) dbUpdates.name = updates.name
+  if (updates.alertBufferMeters !== undefined) dbUpdates.alert_buffer_meters = updates.alertBufferMeters
+  if (updates.alertsEnabled !== undefined) dbUpdates.alerts_enabled = updates.alertsEnabled
+  if (updates.categorySubscriptions !== undefined) dbUpdates.category_subscriptions = updates.categorySubscriptions
+  if (updates.address !== undefined) dbUpdates.address = updates.address || null
+  if ('farmerId' in updates) dbUpdates.farmer_id = updates.farmerId || null
+
+  const { data, error } = await supabase
+    .from('farms')
+    .update(dbUpdates)
+    .eq('id', id)
+    .select('*, farm_fields(*)')
+    .single()
+
+  if (error) {
+    console.error('Error updating farm:', error)
+    throw error
+  }
+  return data ? dbToAppFarm(data) : null
+}
+
+export async function deleteFarmInSupabase(id: string) {
+  const { error } = await supabase
+    .from('farms')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    console.error('Error deleting farm:', error)
+    throw error
+  }
+}
+
+export async function addFieldToFarm(farmId: string, field: {
+  name: string
+  fencePosts: Array<{ lat: number; lng: number }>
+}) {
+  const { data, error } = await supabase
+    .from('farm_fields')
+    .insert([{
+      farm_id: farmId,
+      name: field.name,
+      fence_posts: field.fencePosts,
+    }])
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error adding field:', error)
+    throw error
+  }
+  return { id: data.id, name: data.name, fencePosts: data.fence_posts as Array<{ lat: number; lng: number }> }
+}
+
+export async function updateFieldInFarm(fieldId: string, updates: {
+  name?: string
+  fencePosts?: Array<{ lat: number; lng: number }>
+}) {
+  const dbUpdates: Record<string, unknown> = {}
+  if (updates.name !== undefined) dbUpdates.name = updates.name
+  if (updates.fencePosts !== undefined) dbUpdates.fence_posts = updates.fencePosts
+
+  const { data, error } = await supabase
+    .from('farm_fields')
+    .update(dbUpdates)
+    .eq('id', fieldId)
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error updating field:', error)
+    throw error
+  }
+  return data ? { id: data.id, name: data.name, fencePosts: data.fence_posts as Array<{ lat: number; lng: number }> } : null
+}
+
+export async function deleteFieldFromFarm(fieldId: string) {
+  const { error } = await supabase
+    .from('farm_fields')
+    .delete()
+    .eq('id', fieldId)
+
+  if (error) {
+    console.error('Error deleting field:', error)
+    throw error
+  }
+}
+
 // Subscribe to real-time changes
 export function subscribeToReports(callback: (report: any) => void) {
   const channel = supabase
