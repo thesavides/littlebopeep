@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAppStore, Farm, FarmField, MAP_CONFIG, isReportNearFarm } from '@/store/appStore'
-import { supabase } from '@/lib/supabase-client'
+import { supabase, fetchUserNotifications, markAllNotificationsRead, NotificationDB } from '@/lib/supabase-client'
 import { useTranslation } from '@/contexts/TranslationContext'
 import Header from './Header'
 import Map from './Map'
@@ -41,6 +41,8 @@ export default function FarmerDashboard() {
     full_name?: string; email?: string; phone?: string
   } | null>(null)
   const [farmsLoaded, setFarmsLoaded] = useState(false)
+  const [farmerNotifications, setFarmerNotifications] = useState<NotificationDB[]>([])
+  const unreadCount = farmerNotifications.filter(n => !n.read_at).length
 
   const currentUser = getCurrentUser()
 
@@ -103,6 +105,10 @@ export default function FarmerDashboard() {
             phone: data.phone || prev.phone,
           }))
         }
+
+        // Load notifications
+        const notifs = await fetchUserNotifications(currentUserId)
+        setFarmerNotifications(notifs)
       }
     }
     init()
@@ -497,7 +503,14 @@ export default function FarmerDashboard() {
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => setViewState('subscription')} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm">{t('farmer.manage', {}, 'Manage')}</button>
-                    <button onClick={() => setViewState('notifications')} className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm hover:bg-slate-200">🔔 Notifications</button>
+                    <button onClick={() => setViewState('notifications')} className="relative px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm hover:bg-slate-200">
+                      🔔 Notifications
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -842,6 +855,51 @@ export default function FarmerDashboard() {
 
         {viewState === 'notifications' && (
           <div className="space-y-4">
+            {/* Incoming report notifications from Supabase */}
+            {farmerNotifications.length > 0 && (
+              <div className="bg-white rounded-xl shadow p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-slate-800">Recent Alerts</h3>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={async () => {
+                        if (currentUserId) {
+                          await markAllNotificationsRead(currentUserId)
+                          setFarmerNotifications(prev => prev.map(n => ({ ...n, read_at: n.read_at || new Date().toISOString(), status: 'read' })))
+                        }
+                      }}
+                      className="text-xs text-blue-600 hover:underline"
+                    >
+                      Mark all read
+                    </button>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  {farmerNotifications.slice(0, 20).map(notif => {
+                    const report = reports.find(r => r.id === notif.report_id)
+                    const isUnread = !notif.read_at
+                    return (
+                      <div key={notif.id} className={`p-3 rounded-lg border text-sm ${isUnread ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'}`}>
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            {isUnread && <span className="inline-block w-2 h-2 bg-amber-500 rounded-full mr-2 mt-1 flex-shrink-0" />}
+                            <span className="font-medium text-slate-700">
+                              {notif.type === 'new_report' ? '🚨 New report near your farm' : notif.type}
+                            </span>
+                            {report && (
+                              <div className="text-xs text-slate-500 mt-0.5">
+                                {report.categoryEmoji} {report.categoryName} · {new Date(notif.sent_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
             <p className="text-sm text-slate-500">Choose which report types you want to be alerted about for your farms.</p>
             {myFarms.length === 0 ? (
               <div className="p-8 text-center text-slate-500 bg-white rounded-xl shadow">

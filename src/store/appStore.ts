@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { writeAuditLog } from '@/lib/audit'
 import {
+  supabase,
   createReport as createReportInSupabase,
   fetchAllReports,
   fetchFarms,
@@ -11,6 +12,7 @@ import {
   addFieldToFarm,
   updateFieldInFarm,
   deleteFieldFromFarm,
+  createNotificationsForFarmers,
 } from '@/lib/supabase-client'
 
 // Map configuration
@@ -167,6 +169,14 @@ export interface SheepReport {
   resolvedAt?: Date
   thankedAt?: Date // When walker was thanked
   archived?: boolean
+  // Attribution and metadata (Workstream 1)
+  submittedByUserName?: string
+  roleOfSubmitter?: string
+  affectedFarmIds?: string[]
+  affectedFarmerIds?: string[]
+  locationAccuracy?: number
+  deviceType?: string
+  appVersion?: string
 }
 
 // A field/paddock within a farm - defined by fence posts (polygon)
@@ -506,10 +516,42 @@ export const useAppStore = create<AppState>()(
       })),
       
       submitReport: async () => {
-        const { draftReport, reports, currentUserId } = get()
+        const { draftReport, reports, currentUserId, farms, currentRole } = get()
+
+        // Fetch submitter name from Supabase profile (Workstream 2: fix attribution)
+        let submittedByUserName: string | undefined
+        let roleOfSubmitter: string | undefined = currentRole || undefined
+        try {
+          const { data: { user } } = await supabase.auth.getUser()
+          if (user) {
+            const { data: profile } = await supabase
+              .from('user_profiles')
+              .select('full_name, role')
+              .eq('id', user.id)
+              .single()
+            if (profile) {
+              submittedByUserName = profile.full_name || undefined
+              roleOfSubmitter = profile.role || roleOfSubmitter
+            }
+          }
+        } catch {
+          // Non-fatal — report submits without attribution if profile fetch fails
+        }
+
+        // Compute affected farms/farmers from geo-proximity (Workstream 3)
+        const farmsWithFields = farms.filter(f => f.fields.length > 0)
+        const reportLocation = draftReport.location || { lat: 51.5, lng: -0.1 }
+        const nearbyFarms = farmsWithFields.filter(farm =>
+          isReportNearFarm({ location: reportLocation }, farm)
+        )
+        const affectedFarmIds = nearbyFarms.map(f => f.id)
+        const affectedFarmerIds = [...new Set(
+          nearbyFarms.map(f => f.farmerId).filter(Boolean) as string[]
+        )]
+
         const localReport: SheepReport = {
           id: Date.now().toString(),
-          location: draftReport.location || { lat: 51.5, lng: -0.1 },
+          location: reportLocation,
           timestamp: new Date(),
           description: draftReport.description || '',
           sheepCount: draftReport.sheepCount || 1,
@@ -520,6 +562,10 @@ export const useAppStore = create<AppState>()(
           reporterContact: draftReport.reporterContact,
           reporterId: currentUserId || undefined,
           status: 'reported',
+          submittedByUserName,
+          roleOfSubmitter,
+          affectedFarmIds,
+          affectedFarmerIds,
         }
         // Save to local store immediately (optimistic)
         set({
@@ -534,6 +580,10 @@ export const useAppStore = create<AppState>()(
             set((state) => ({
               reports: state.reports.map((r) => r.id === localReport.id ? saved : r)
             }))
+            // Notify affected farmers (Workstream 4)
+            if (affectedFarmerIds.length > 0) {
+              createNotificationsForFarmers(saved.id, affectedFarmerIds, 'new_report').catch(() => {})
+            }
           }
         } catch (err) {
           console.error('Failed to save report to Supabase:', err)

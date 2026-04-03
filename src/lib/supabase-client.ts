@@ -25,6 +25,14 @@ export interface SheepReportDB {
   category_emoji?: string
   created_at?: string
   updated_at?: string
+  // Workstream 1: attribution + metadata
+  submitted_by_user_name?: string | null
+  role_of_submitter?: string | null
+  affected_farm_ids?: string[] | null
+  affected_farmer_ids?: string[] | null
+  location_accuracy?: number | null
+  device_type?: string | null
+  app_version?: string | null
 }
 
 // Convert DB format to App format
@@ -46,6 +54,13 @@ export function dbToAppReport(dbReport: SheepReportDB) {
     categoryId: dbReport.category_id || 'sheep',
     categoryName: dbReport.category_name || 'Sheep',
     categoryEmoji: dbReport.category_emoji || '🐑',
+    submittedByUserName: dbReport.submitted_by_user_name || undefined,
+    roleOfSubmitter: dbReport.role_of_submitter || undefined,
+    affectedFarmIds: dbReport.affected_farm_ids || [],
+    affectedFarmerIds: dbReport.affected_farmer_ids || [],
+    locationAccuracy: dbReport.location_accuracy || undefined,
+    deviceType: dbReport.device_type || undefined,
+    appVersion: dbReport.app_version || undefined,
   }
 }
 
@@ -67,6 +82,13 @@ export function appToDbReport(appReport: any) {
     category_id: appReport.categoryId || 'sheep',
     category_name: appReport.categoryName || 'Sheep',
     category_emoji: appReport.categoryEmoji || '🐑',
+    submitted_by_user_name: appReport.submittedByUserName || null,
+    role_of_submitter: appReport.roleOfSubmitter || null,
+    affected_farm_ids: appReport.affectedFarmIds || [],
+    affected_farmer_ids: appReport.affectedFarmerIds || [],
+    location_accuracy: appReport.locationAccuracy || null,
+    device_type: appReport.deviceType || null,
+    app_version: appReport.appVersion || null,
   }
   // Only include id if provided — omitting lets Supabase generate a UUID
   if (appReport.id !== undefined) {
@@ -161,6 +183,73 @@ export async function deleteReport(reportId: string) {
   if (error) {
     console.error('Error deleting report:', error)
     throw error
+  }
+}
+
+// ============================================================
+// Notifications (Workstream 4)
+// ============================================================
+
+export interface NotificationDB {
+  id: string
+  user_id: string
+  report_id: string | null
+  type: string
+  sent_at: string
+  read_at: string | null
+  status: string
+}
+
+export async function createNotificationsForFarmers(
+  reportId: string,
+  farmerIds: string[],
+  type: string = 'new_report'
+): Promise<void> {
+  if (farmerIds.length === 0) return
+  const rows = farmerIds.map((userId) => ({
+    user_id: userId,
+    report_id: reportId,
+    type,
+    status: 'sent',
+  }))
+  const { error } = await supabase.from('notifications').insert(rows)
+  if (error) {
+    console.error('Error creating notifications:', error)
+  }
+}
+
+export async function fetchUserNotifications(userId: string): Promise<NotificationDB[]> {
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('user_id', userId)
+    .order('sent_at', { ascending: false })
+    .limit(50)
+  if (error) {
+    console.error('Error fetching notifications:', error)
+    return []
+  }
+  return data || []
+}
+
+export async function markNotificationRead(notificationId: string): Promise<void> {
+  const { error } = await supabase
+    .from('notifications')
+    .update({ read_at: new Date().toISOString(), status: 'read' })
+    .eq('id', notificationId)
+  if (error) {
+    console.error('Error marking notification read:', error)
+  }
+}
+
+export async function markAllNotificationsRead(userId: string): Promise<void> {
+  const { error } = await supabase
+    .from('notifications')
+    .update({ read_at: new Date().toISOString(), status: 'read' })
+    .eq('user_id', userId)
+    .is('read_at', null)
+  if (error) {
+    console.error('Error marking all notifications read:', error)
   }
 }
 
