@@ -8,6 +8,7 @@ import AdminUserManagement from './AdminUserManagement'
 import WalkerDashboard from './WalkerDashboard'
 import { inviteUser, getAllUsers, adminResetUserPassword, updateUserProfile, deleteUser as deleteUserFromSupabase, suspendUser as suspendUserInSupabase, activateUser as activateUserInSupabase } from '@/lib/unified-auth'
 import { fetchAuditLogs } from '@/lib/audit'
+import { fetchUserNotifications } from '@/lib/supabase-client'
 
 type AdminView = 'overview' | 'walkers' | 'farmers' | 'reports' | 'farms' | 'billing' | 'admins' | 'categories' | 'audit'
 type SortBy = 'date' | 'daysUnclaimed'
@@ -91,8 +92,15 @@ export default function AdminDashboard() {
   const [filterArchive, setFilterArchive] = useState<FilterArchive>('active')
   const [filterFarmerId, setFilterFarmerId] = useState<string>('all')
   const [filterFarmId, setFilterFarmId] = useState<string>('all')
+  const [filterDateFrom, setFilterDateFrom] = useState<string>('')
+  const [filterDateTo, setFilterDateTo] = useState<string>('')
+  const [filterKeyword, setFilterKeyword] = useState<string>('')
   const [selectedReports, setSelectedReports] = useState<string[]>([])
   const [mapBounds, setMapBounds] = useState<{north: number, south: number, east: number, west: number} | null>(null)
+  const [detailReportId, setDetailReportId] = useState<string | null>(null)
+  const [detailNotifications, setDetailNotifications] = useState<any[]>([])
+  const [detailAuditLogs, setDetailAuditLogs] = useState<any[]>([])
+  const [loadingDetail, setLoadingDetail] = useState(false)
 
   // Load real users and reports from Supabase on mount
   useEffect(() => {
@@ -210,6 +218,28 @@ export default function AdminDashboard() {
       }
     }
 
+    // Filter by date range (Workstream 6)
+    if (filterDateFrom) {
+      const from = new Date(filterDateFrom).getTime()
+      result = result.filter(r => new Date(r.timestamp).getTime() >= from)
+    }
+    if (filterDateTo) {
+      const to = new Date(filterDateTo + 'T23:59:59').getTime()
+      result = result.filter(r => new Date(r.timestamp).getTime() <= to)
+    }
+
+    // Filter by keyword or report ID (Workstream 6)
+    if (filterKeyword.trim()) {
+      const kw = filterKeyword.trim().toLowerCase()
+      result = result.filter(r =>
+        r.id.toLowerCase().includes(kw) ||
+        r.description?.toLowerCase().includes(kw) ||
+        r.categoryName?.toLowerCase().includes(kw) ||
+        r.submittedByUserName?.toLowerCase().includes(kw) ||
+        r.condition?.toLowerCase().includes(kw)
+      )
+    }
+
     // Filter by map bounds if set
     if (mapBounds) {
       result = result.filter(r =>
@@ -232,7 +262,7 @@ export default function AdminDashboard() {
     }
 
     return result
-  }, [reports, filterStatus, filterArchive, sortBy, mapBounds, filterFarmerId, filterFarmId, farms])
+  }, [reports, filterStatus, filterArchive, sortBy, mapBounds, filterFarmerId, filterFarmId, farms, filterDateFrom, filterDateTo, filterKeyword])
 
   const handleDelete = async () => {
     if (!showDeleteConfirm) return
@@ -252,6 +282,21 @@ export default function AdminDashboard() {
       deleteFarm(showDeleteConfirm)
     }
     setShowDeleteConfirm(null)
+  }
+
+  // Open report detail panel (Workstream 5)
+  const openReportDetail = async (reportId: string) => {
+    setDetailReportId(reportId)
+    setLoadingDetail(true)
+    try {
+      const [logs] = await Promise.all([
+        fetchAuditLogs({ entityId: reportId }),
+      ])
+      setDetailAuditLogs(logs)
+    } catch {
+      setDetailAuditLogs([])
+    }
+    setLoadingDetail(false)
   }
 
   const confirmDelete = (id: string, type: 'user' | 'report' | 'farm') => {
@@ -332,6 +377,162 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-slate-100">
       <Header title="Admin Dashboard" />
+
+      {/* Report Detail Panel — Workstream 5 */}
+      {detailReportId && (() => {
+        const report = reports.find(r => r.id === detailReportId)
+        if (!report) return null
+        const affectedFarms = (report.affectedFarmIds || []).map(id => farms.find(f => f.id === id)).filter(Boolean)
+        const affectedFarmerUsers = (report.affectedFarmerIds || []).map(id => allUsers.find((u: any) => u.id === id)).filter(Boolean)
+        return (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-end z-50">
+            <div className="bg-white w-full max-w-xl h-full overflow-y-auto shadow-2xl flex flex-col">
+              <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white z-10">
+                <h2 className="font-bold text-slate-800">Report Detail</h2>
+                <button onClick={() => setDetailReportId(null)} className="text-slate-500 hover:text-slate-700 text-2xl leading-none">×</button>
+              </div>
+              <div className="p-4 space-y-5 flex-1">
+                {loadingDetail ? (
+                  <div className="text-center text-slate-400 py-8">Loading…</div>
+                ) : (
+                  <>
+                    {/* Identity */}
+                    <section>
+                      <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Submitter</h3>
+                      <div className="bg-slate-50 rounded-lg p-3 text-sm space-y-1">
+                        <div><span className="text-slate-500">Name:</span> <span className="font-medium">{report.submittedByUserName || <span className="text-red-500 italic">Unknown</span>}</span></div>
+                        <div><span className="text-slate-500">Role:</span> <span className="font-medium capitalize">{report.roleOfSubmitter || '—'}</span></div>
+                        <div><span className="text-slate-500">Reporter ID:</span> <span className="font-mono text-xs text-slate-400">{report.reporterId || '—'}</span></div>
+                      </div>
+                    </section>
+
+                    {/* Category & Content */}
+                    <section>
+                      <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Report</h3>
+                      <div className="bg-slate-50 rounded-lg p-3 text-sm space-y-1">
+                        <div className="text-2xl">{report.categoryEmoji} <span className="text-base font-medium">{report.categoryName}</span></div>
+                        <div><span className="text-slate-500">Count:</span> {report.sheepCount}</div>
+                        <div><span className="text-slate-500">Condition:</span> {report.condition}</div>
+                        <div><span className="text-slate-500">Status:</span> <span className={`capitalize font-medium ${report.status === 'reported' ? 'text-yellow-600' : report.status === 'claimed' ? 'text-blue-600' : 'text-green-600'}`}>{report.status}</span></div>
+                        <div><span className="text-slate-500">Submitted:</span> {new Date(report.timestamp).toLocaleString('en-GB')}</div>
+                        {report.description && <div><span className="text-slate-500">Description:</span> {report.description}</div>}
+                      </div>
+                    </section>
+
+                    {/* GPS Location */}
+                    <section>
+                      <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">GPS Location</h3>
+                      <div className="bg-slate-50 rounded-lg p-3 text-sm mb-2">
+                        <div>{report.location.lat.toFixed(6)}, {report.location.lng.toFixed(6)}</div>
+                        {report.locationAccuracy && <div className="text-slate-500 text-xs">Accuracy: ±{report.locationAccuracy}m</div>}
+                      </div>
+                      <div className="rounded-lg overflow-hidden h-40">
+                        <Map
+                          center={[report.location.lat, report.location.lng]}
+                          zoom={15}
+                          markers={[{
+                            id: report.id,
+                            position: [report.location.lat, report.location.lng],
+                            popup: `${report.categoryEmoji} ${report.sheepCount} ${report.categoryName}`,
+                            type: 'sheep' as const,
+                            status: report.status as 'reported' | 'claimed' | 'resolved',
+                            emoji: report.categoryEmoji,
+                          }]}
+                        />
+                      </div>
+                    </section>
+
+                    {/* Photos */}
+                    {(report.photoUrls || []).length > 0 && (
+                      <section>
+                        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Photos</h3>
+                        <div className="grid grid-cols-3 gap-2">
+                          {(report.photoUrls || []).map((url, i) => (
+                            <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                              <img src={url} alt={`Photo ${i + 1}`} className="rounded-lg object-cover w-full h-24" />
+                            </a>
+                          ))}
+                        </div>
+                      </section>
+                    )}
+
+                    {/* Affected Farms */}
+                    <section>
+                      <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Affected Farms ({affectedFarms.length})</h3>
+                      {affectedFarms.length === 0 ? (
+                        <div className="text-sm text-slate-400 italic">No farms within alert range of this report.</div>
+                      ) : (
+                        <div className="space-y-1">
+                          {affectedFarms.map((farm: any) => {
+                            const owner = allUsers.find((u: any) => u.id === farm.farmerId)
+                            return (
+                              <div key={farm.id} className="bg-amber-50 rounded-lg p-3 text-sm">
+                                <div className="font-medium">🏡 {farm.name}</div>
+                                {owner && <div className="text-slate-500 text-xs">Owner: {owner.full_name || owner.email}</div>}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </section>
+
+                    {/* Affected Farmers */}
+                    {affectedFarmerUsers.length > 0 && (
+                      <section>
+                        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Notified Farmers</h3>
+                        <div className="space-y-1">
+                          {affectedFarmerUsers.map((u: any) => (
+                            <div key={u.id} className="bg-green-50 rounded-lg p-3 text-sm">
+                              <div className="font-medium">🧑‍🌾 {u.full_name || u.email}</div>
+                              <div className="text-slate-500 text-xs">{u.email}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+                    )}
+
+                    {/* Action History */}
+                    <section>
+                      <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Action History ({detailAuditLogs.length})</h3>
+                      {detailAuditLogs.length === 0 ? (
+                        <div className="text-sm text-slate-400 italic">No audit log entries for this report.</div>
+                      ) : (
+                        <div className="space-y-1">
+                          {detailAuditLogs.map((log: any) => (
+                            <div key={log.id} className="bg-slate-50 rounded-lg p-3 text-sm">
+                              <div className="flex items-center justify-between">
+                                <span className="font-mono text-xs text-indigo-700 font-medium">{log.action}</span>
+                                <span className="text-xs text-slate-400">{new Date(log.created_at).toLocaleString('en-GB')}</span>
+                              </div>
+                              <div className="text-slate-500 text-xs mt-0.5">{log.actor_email || log.actor_id}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </section>
+
+                    {/* Admin Actions */}
+                    <section className="border-t pt-4">
+                      <div className="flex flex-wrap gap-2">
+                        {!report.archived && report.status === 'reported' && (
+                          <button onClick={() => { setShowClaimReportModal(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm hover:bg-green-200">Claim for Farmer</button>
+                        )}
+                        {!report.archived && report.status === 'claimed' && (
+                          <button onClick={() => { resolveReport(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200">Resolve</button>
+                        )}
+                        {!report.archived && (
+                          <button onClick={() => { archiveReport(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm hover:bg-slate-200">Archive</button>
+                        )}
+                        <button onClick={() => { confirmDelete(report.id, 'report'); setDetailReportId(null) }} className="px-3 py-2 bg-red-100 text-red-700 rounded-lg text-sm hover:bg-red-200">Delete</button>
+                      </div>
+                    </section>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
@@ -783,7 +984,39 @@ export default function AdminDashboard() {
                     ))}
                   </select>
                 </div>
-                <div className="flex gap-2">
+                {/* Workstream 6 — date range + keyword search */}
+                <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t w-full">
+                  <input
+                    type="text"
+                    value={filterKeyword}
+                    onChange={(e) => setFilterKeyword(e.target.value)}
+                    placeholder="Search ID, description, reporter…"
+                    className="px-3 py-2 border rounded-lg text-sm flex-1 min-w-48"
+                  />
+                  <input
+                    type="date"
+                    value={filterDateFrom}
+                    onChange={(e) => setFilterDateFrom(e.target.value)}
+                    className="px-3 py-2 border rounded-lg text-sm"
+                    title="From date"
+                  />
+                  <input
+                    type="date"
+                    value={filterDateTo}
+                    onChange={(e) => setFilterDateTo(e.target.value)}
+                    className="px-3 py-2 border rounded-lg text-sm"
+                    title="To date"
+                  />
+                  {(filterKeyword || filterDateFrom || filterDateTo) && (
+                    <button
+                      onClick={() => { setFilterKeyword(''); setFilterDateFrom(''); setFilterDateTo('') }}
+                      className="px-3 py-2 text-sm text-blue-600 hover:underline"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <div className="flex gap-2 mt-2">
                   {selectedReports.length > 0 && (
                     <>
                       <button onClick={handleBatchArchive} className="px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm hover:bg-slate-200">
@@ -859,6 +1092,7 @@ export default function AdminDashboard() {
                           'bg-yellow-100 text-yellow-700'
                         }`}>{report.status}</span>
                         {report.archived && <span className="px-2 py-1 rounded text-xs bg-slate-200 text-slate-600">Archived</span>}
+                        <button onClick={() => openReportDetail(report.id)} className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded text-sm hover:bg-indigo-200">View</button>
                         {!report.archived && report.status === 'reported' && (
                           <button onClick={() => setShowClaimReportModal(report.id)} className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200">Claim for Farmer</button>
                         )}
