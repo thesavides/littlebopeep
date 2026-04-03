@@ -27,7 +27,7 @@ UPDATE sheep_reports SET photo_urls = '{}';
 -- ============================================================
 
 ALTER TABLE sheep_reports
-  ADD COLUMN IF NOT EXISTS claimed_by_farmer_ids UUID[] DEFAULT '{}';
+  ADD COLUMN IF NOT EXISTS claimed_by_farmer_ids TEXT[] DEFAULT '{}';
 
 -- Backfill: migrate any existing single claim into the array
 UPDATE sheep_reports
