@@ -1,160 +1,323 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/appStore'
 import { useTranslation } from '@/contexts/TranslationContext'
+import { signIn, signUp } from '@/lib/unified-auth'
 import LanguageSelector from './LanguageSelector'
-import { useEffect, useState } from 'react'
+import PasswordInput from './PasswordInput'
+import { input } from '@/lib/ui'
+
+type AuthMode = 'signin' | 'signup'
+type SignupRole = 'walker' | 'farmer'
 
 export default function HomePage() {
   const router = useRouter()
-  const { t, language } = useTranslation() // Added language to trigger re-renders
+  const { t } = useTranslation()
   const {
     setRole,
     setAdmin,
-    users,
-    currentRole,
-    isAdmin,
+    setCurrentUserId,
     canAccessWalkerFeatures,
-    canAccessFarmerFeatures
+    canAccessFarmerFeatures,
   } = useAppStore()
 
-  // CRITICAL FIX: Force component re-render when language changes
-  const [renderTrigger, setRenderTrigger] = useState(0)
+  // Auth form state
+  const [mode, setMode] = useState<AuthMode>('signin')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [fullName, setFullName] = useState('')
+  const [signupRole, setSignupRole] = useState<SignupRole>('walker')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    console.log('🏠 Language changed to:', language, '- forcing re-render')
-    setRenderTrigger(prev => prev + 1)
-  }, [language])
-
-  // Force re-render by using language in state - this creates a dependency
-  console.log('🏠 HomePage rendering with language:', language, 'trigger:', renderTrigger)
-
-  const handleWalkerClick = () => {
-    // Check if user already has walker access (admin, super_admin, farmer, or walker)
-    if (canAccessWalkerFeatures()) {
-      // User is already authenticated with sufficient permissions
+  // If already authenticated, skip the form entirely and route straight in
+  const handleAlreadyLoggedIn = (role: SignupRole) => {
+    if (role === 'walker' && canAccessWalkerFeatures()) {
       setRole('walker')
-    } else {
-      // User needs to authenticate
-      router.push('/auth')
+      return true
     }
-  }
-
-  const handleFarmerClick = () => {
-    // Check if user already has farmer access (admin, super_admin, or farmer)
-    if (canAccessFarmerFeatures()) {
-      // User is already authenticated with sufficient permissions
+    if (role === 'farmer' && canAccessFarmerFeatures()) {
       setRole('farmer')
-    } else {
-      // User needs to authenticate
-      router.push('/auth')
+      return true
+    }
+    return false
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    try {
+      if (mode === 'signup') {
+        if (!fullName.trim()) {
+          setError(t('auth.nameRequired', {}, 'Please enter your full name'))
+          setLoading(false)
+          return
+        }
+        const { success, user, error: signUpError } = await signUp(email, password, fullName.trim(), signupRole)
+        if (!success || !user) {
+          setError(signUpError || t('auth.signupFailed', {}, 'Sign up failed'))
+          setLoading(false)
+          return
+        }
+        setCurrentUserId(user.id)
+        setRole(user.role as any)
+        router.push('/')
+        return
+      }
+
+      const { success, user, error: signInError } = await signIn(email, password)
+      if (!success || !user) {
+        setError(signInError || t('auth.authenticationFailed', {}, 'Incorrect email or password'))
+        setLoading(false)
+        return
+      }
+      setCurrentUserId(user.id)
+      setRole(user.role as any)
+      if (user.password_reset_required) {
+        router.push('/auth/reset-password?new=true')
+        return
+      }
+      router.push('/')
+    } catch (err: any) {
+      setError(err.message || t('auth.authenticationFailed', {}, 'Authentication failed'))
+    } finally {
+      setLoading(false)
     }
   }
-
-  const handleAdminClick = () => {
-    router.push('/admin-login')
-  }
-
-  // Force re-render when language changes by using a visible dependency
-  const renderKey = `home-${language}`
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50" data-language={language}>
-      {/* Language Selector - Top Right */}
-      <div className="absolute top-4 right-4 z-10">
-        <LanguageSelector />
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
+
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-4 py-3 max-w-5xl mx-auto">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">🐑</span>
+          <span className="font-bold text-green-800 text-lg">Little Bo Peep</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <LanguageSelector />
+          <button
+            onClick={() => router.push('/admin-login')}
+            className="text-xs text-slate-400 hover:text-slate-600"
+          >
+            Admin
+          </button>
+        </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <span className="text-6xl">🐑</span>
-            <h1 className="text-5xl font-bold text-slate-800">{t('header.appName', {}, 'Little Bo Peep')}</h1>
-          </div>
-          <p className="text-xl text-slate-600 mb-2">{t('home.tagline', {}, 'Helping sheep get home')}</p>
-          <p className="text-slate-500">
-            {t('home.description', {}, 'A simple way for countryside walkers to report lost sheep and help farmers recover their flock.')}
+      <div className="max-w-5xl mx-auto px-4 pb-16">
+
+        {/* ── Hero ────────────────────────────────────────────── */}
+        <div className="text-center pt-8 pb-10">
+          <h1 className="text-4xl sm:text-5xl font-bold text-slate-800 mb-3">
+            Helping sheep<br className="sm:hidden" /> get home
+          </h1>
+          <p className="text-slate-500 text-lg max-w-md mx-auto">
+            Connect countryside walkers with farmers to recover lost livestock — fast.
           </p>
-          {users.length > 0 && (
-            <p className="text-sm text-slate-400 mt-2">{t('home.registeredUsers', { count: users.length }, `${users.length} registered users`)}</p>
-          )}
+          <p className="text-xs text-slate-400 mt-2 tracking-wide">littlebopeep.app</p>
         </div>
 
-        {/* Role Selection */}
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-8">
-          <button
-            onClick={handleWalkerClick}
-            className="bg-white rounded-2xl shadow-lg p-8 text-left hover:shadow-xl transition-shadow border-2 border-transparent hover:border-green-500"
-          >
-            <div className="text-5xl mb-4">🚶</div>
-            <h3 className="text-2xl font-bold text-slate-800 mb-2">{t('home.welcomeWalker', {}, "I'm a Walker")}</h3>
-            <p className="text-slate-600">{t('home.walkerDescription', {}, 'Spotted some sheep that look lost? Report their location and help a farmer find them.')}</p>
-            <div className="mt-4 text-green-600 font-semibold">{t('home.reportSheepCta', {}, 'Report a sheep →')}</div>
-          </button>
+        {/* ── Auth card ───────────────────────────────────────── */}
+        <div className="max-w-md mx-auto">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
 
-          <button
-            onClick={handleFarmerClick}
-            className="bg-white rounded-2xl shadow-lg p-8 text-left hover:shadow-xl transition-shadow border-2 border-transparent hover:border-blue-500"
-          >
-            <div className="text-5xl mb-4">🧑‍🌾</div>
-            <h3 className="text-2xl font-bold text-slate-800 mb-2">{t('home.welcomeFarmer', {}, "I'm a Farmer")}</h3>
-            <p className="text-slate-600">{t('home.farmerDescription', {}, 'Set up your farm fields and receive alerts when sheep are spotted nearby.')}</p>
-            <div className="mt-4 text-blue-600 font-semibold">{t('home.manageFarmCta', {}, 'Manage my farm →')}</div>
-          </button>
-        </div>
-
-        {/* Admin Link */}
-        <div className="text-center mb-12">
-          <button onClick={handleAdminClick} className="text-slate-400 hover:text-slate-600 text-sm underline">
-            {t('header.adminAccess', {}, 'Admin Access')}
-          </button>
-        </div>
-
-        {/* How it works */}
-        <div className="bg-white rounded-2xl shadow-lg p-8">
-          <h3 className="text-2xl font-bold text-slate-800 mb-6 text-center">{t('home.howItWorks', {}, 'How it works')}</h3>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-green-600 font-bold">1</span>
-              </div>
-              <h4 className="font-semibold text-slate-800 mb-2">{t('home.step1Title', {}, 'Spot')}</h4>
-              <p className="text-slate-600 text-sm">{t('home.step1Description', {}, 'Walker spots sheep that appear lost or out of place')}</p>
+            {/* Tab switcher */}
+            <div className="flex border-b border-slate-100">
+              <button
+                onClick={() => { setMode('signin'); setError('') }}
+                className={`flex-1 py-3.5 text-sm font-semibold transition-colors ${
+                  mode === 'signin'
+                    ? 'text-green-700 border-b-2 border-green-600 bg-green-50/40'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => { setMode('signup'); setError('') }}
+                className={`flex-1 py-3.5 text-sm font-semibold transition-colors ${
+                  mode === 'signup'
+                    ? 'text-green-700 border-b-2 border-green-600 bg-green-50/40'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                Create Account
+              </button>
             </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-green-600 font-bold">2</span>
+
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+
+              {/* Sign-up only fields */}
+              {mode === 'signup' && (
+                <>
+                  {/* Role picker */}
+                  <div>
+                    <p className="text-sm font-medium text-slate-700 mb-2">I am a:</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSignupRole('walker')}
+                        className={`flex flex-col items-center gap-1 py-3 rounded-xl border-2 transition-colors ${
+                          signupRole === 'walker'
+                            ? 'border-green-500 bg-green-50 text-green-700'
+                            : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                        }`}
+                      >
+                        <span className="text-2xl">🚶</span>
+                        <span className="text-sm font-medium">Walker</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSignupRole('farmer')}
+                        className={`flex flex-col items-center gap-1 py-3 rounded-xl border-2 transition-colors ${
+                          signupRole === 'farmer'
+                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                            : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                        }`}
+                      >
+                        <span className="text-2xl">🧑‍🌾</span>
+                        <span className="text-sm font-medium">Farmer</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="fullName" className="block text-sm font-medium text-slate-700 mb-1">
+                      Full Name
+                    </label>
+                    <input
+                      id="fullName"
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      required
+                      autoComplete="name"
+                      placeholder="Jane Smith"
+                      className={input}
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Email */}
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  className={input}
+                />
               </div>
-              <h4 className="font-semibold text-slate-800 mb-2">{t('home.step2Title', {}, 'Report')}</h4>
-              <p className="text-slate-600 text-sm">{t('home.step2Description', {}, 'Submit location and details through the app')}</p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-green-600 font-bold">3</span>
-              </div>
-              <h4 className="font-semibold text-slate-800 mb-2">{t('home.step3Title', {}, 'Reunite')}</h4>
-              <p className="text-slate-600 text-sm">{t('home.step3Description', {}, 'Farmer receives alert and recovers their sheep')}</p>
-            </div>
+
+              {/* Password */}
+              <PasswordInput
+                id="password"
+                label="Password"
+                value={password}
+                onChange={setPassword}
+                required
+                minLength={mode === 'signup' ? 6 : undefined}
+                autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                placeholder="••••••••"
+              />
+
+              {/* Forgot password */}
+              {mode === 'signin' && (
+                <div className="text-right -mt-1">
+                  <button
+                    type="button"
+                    onClick={() => router.push('/auth/forgot-password')}
+                    className="text-xs text-slate-400 hover:text-green-600 transition-colors"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+              )}
+
+              {/* Error */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+                  {error}
+                </div>
+              )}
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-4 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              >
+                {loading
+                  ? 'Please wait…'
+                  : mode === 'signin'
+                    ? 'Sign In →'
+                    : 'Create Account →'
+                }
+              </button>
+
+              {/* Sign-up helper */}
+              {mode === 'signup' && (
+                <p className="text-xs text-slate-400 text-center">
+                  Already have an account?{' '}
+                  <button
+                    type="button"
+                    onClick={() => { setMode('signin'); setError('') }}
+                    className="text-green-600 font-medium hover:underline"
+                  >
+                    Sign in
+                  </button>
+                </p>
+              )}
+            </form>
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="mt-8 grid grid-cols-3 gap-4 text-center">
-          <div className="bg-white rounded-xl p-4 shadow">
-            <div className="text-2xl font-bold text-green-600">33M</div>
-            <div className="text-sm text-slate-600">{t('home.stat1', {}, 'Sheep in UK')}</div>
-          </div>
-          <div className="bg-white rounded-xl p-4 shadow">
-            <div className="text-2xl font-bold text-green-600">£80M</div>
-            <div className="text-sm text-slate-600">{t('home.stat2', {}, 'Annual losses')}</div>
-          </div>
-          <div className="bg-white rounded-xl p-4 shadow">
-            <div className="text-2xl font-bold text-green-600">{t('home.stat3Value', {}, 'Free')}</div>
-            <div className="text-sm text-slate-600">{t('home.stat3Label', {}, '30-day trial')}</div>
+        {/* ── How it works ────────────────────────────────────── */}
+        <div className="mt-16 max-w-2xl mx-auto">
+          <h2 className="text-center text-xl font-bold text-slate-700 mb-8">How it works</h2>
+          <div className="grid grid-cols-3 gap-6 text-center">
+            {[
+              { n: '1', icon: '🚶', title: 'Spot', body: 'Walker sees lost sheep on their route' },
+              { n: '2', icon: '📍', title: 'Report', body: 'Pin location, add a photo and condition' },
+              { n: '3', icon: '🏡', title: 'Reunite', body: 'Farmer gets an alert and recovers the flock' },
+            ].map(({ n, icon, title, body }) => (
+              <div key={n} className="flex flex-col items-center gap-2">
+                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-xl">
+                  {icon}
+                </div>
+                <p className="font-semibold text-slate-800 text-sm">{title}</p>
+                <p className="text-xs text-slate-500 leading-snug">{body}</p>
+              </div>
+            ))}
           </div>
         </div>
+
+        {/* ── Stats ───────────────────────────────────────────── */}
+        <div className="mt-10 grid grid-cols-3 gap-3 max-w-sm mx-auto text-center">
+          {[
+            { value: '33M', label: 'Sheep in UK' },
+            { value: '£80M', label: 'Annual losses' },
+            { value: 'Free', label: '30-day trial' },
+          ].map(({ value, label }) => (
+            <div key={label} className="bg-white rounded-xl p-3 shadow-sm border border-slate-100">
+              <div className="text-xl font-bold text-green-600">{value}</div>
+              <div className="text-xs text-slate-500 mt-0.5">{label}</div>
+            </div>
+          ))}
+        </div>
+
       </div>
     </div>
   )
