@@ -115,6 +115,11 @@ export const englishTranslations: TranslationEntry[] = [
     value: 'Farmer Mode',
     namespace: 'navigation',
   },
+  {
+    key: 'header.changePassword',
+    value: 'Change Password',
+    namespace: 'navigation',
+  },
 
   // ==================== AUTHENTICATION ====================
   {
@@ -303,6 +308,12 @@ export const englishTranslations: TranslationEntry[] = [
     namespace: 'walker',
   },
   {
+    key: 'walker.myReportsWithCount',
+    value: 'My Reports ({count})',
+    namespace: 'walker',
+    context: '{count} is the number of reports',
+  },
+  {
     key: 'walker.recentAlerts',
     value: 'Recent Alerts',
     namespace: 'walker',
@@ -358,8 +369,13 @@ export const englishTranslations: TranslationEntry[] = [
     namespace: 'walker',
   },
   {
+    key: 'walker.conditionDead',
+    value: 'Dead',
+    namespace: 'walker',
+  },
+  {
     key: 'walker.conditionUnknown',
-    value: 'Unknown',
+    value: 'Not sure',
     namespace: 'walker',
   },
   {
@@ -384,7 +400,244 @@ export const englishTranslations: TranslationEntry[] = [
   },
   {
     key: 'walker.thankYou',
-    value: 'Thank you for helping reunite lost sheep!',
+    value: 'Thank You!',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.thankYouMessage',
+    value: "We'll send you a thank you message when the farmer claims your report and recovers the sheep!",
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.additionalDetails',
+    value: 'Additional details (optional)',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.back',
+    value: '← Back',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.cancel',
+    value: 'Cancel',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.continue',
+    value: 'Continue →',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.submitReport',
+    value: '✓ Submit Report',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.confirmReport',
+    value: 'Confirm your report',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.contact',
+    value: 'Contact',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.contactInstructionGuest',
+    value: "Leave your contact details to be notified when the sheep is successfully returned to the farmer!",
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.details',
+    value: 'Details',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.detailsPlaceholder',
+    value: 'e.g., Near the old stone wall, white sheep with black face, ear tag visible...',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.duplicateWarning',
+    value: 'A report for a missing sheep was reported in this vicinity within the past 12 hours. Do you still want to proceed?',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.email',
+    value: 'Email',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.emailPlaceholder',
+    value: 'your@email.com',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.existingReportNearby',
+    value: 'Existing Report Nearby',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.location',
+    value: 'Location',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.locationSelected',
+    value: 'Location selected',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.name',
+    value: 'Name',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.nameOptional',
+    value: 'Name (optional)',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.namePlaceholder',
+    value: 'Your name',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.nearbyReportsExist',
+    value: '{count} report(s) already exist within 100m of this location in the last 12 hours.',
+    namespace: 'walker',
+    context: '{count} is the number of nearby reports',
+  },
+  {
+    key: 'walker.nearbyReportsWarning',
+    value: '{count} sheep report(s) within 100m in the last 12 hours. Check if these match what you\'ve seen before submitting a new report.',
+    namespace: 'walker',
+    context: '{count} is the number of nearby reports',
+  },
+  {
+    key: 'walker.noReportsMessage',
+    value: 'Spot some sheep and submit a report to help farmers!',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.noReportsYet',
+    value: 'No reports yet',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.notifyConfirmLoggedIn',
+    value: "We'll use your profile details to notify you when the farmer claims your report.",
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.phone',
+    value: 'Phone',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.phonePlaceholder',
+    value: '+44 7700 900000',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.photoHelp',
+    value: 'Photos help farmers identify the sheep. Max 3 photos.',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.photos',
+    value: 'Photos (optional)',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.privacyNote',
+    value: 'Your contact info will only be used for notifications and may be shared with farmers in the area. Leave blank to report anonymously.',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.reportASheep',
+    value: 'Report a Sheep',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.reportedSheep12h',
+    value: 'Reported sheep (last 12h)',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.reportsNearYou',
+    value: 'Reports Near You',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.statusClaimed',
+    value: 'Claimed',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.statusReported',
+    value: 'Reported',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.statusResolved',
+    value: 'Resolved',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.tipsForReporting',
+    value: 'Tips for reporting',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.tip1',
+    value: 'Check the map for recent reports before submitting',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.tip2',
+    value: 'Be as accurate as possible with the location',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.tip3',
+    value: 'Note any markings or ear tags if visible',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.tip4',
+    value: 'Report injured sheep as priority',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.tip5',
+    value: "Don't approach aggressive animals",
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.updateContactDetails',
+    value: 'Update contact details',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.uploadingPhoto',
+    value: '⏳ Uploading photo…',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.wantNotified',
+    value: 'Want to be notified? 🔔',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.yesSubmitReport',
+    value: 'Yes, Submit New Report',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.yourLocation',
+    value: 'Your location',
     namespace: 'walker',
   },
 
@@ -405,8 +658,23 @@ export const englishTranslations: TranslationEntry[] = [
     namespace: 'farmer',
   },
   {
+    key: 'farmer.addFarmButton',
+    value: '+ Add Farm',
+    namespace: 'farmer',
+  },
+  {
     key: 'farmer.addField',
     value: 'Add Field',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.addFieldButton',
+    value: '+ Add Field',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.addYourFarmFields',
+    value: 'Add Your Farm Fields',
     namespace: 'farmer',
   },
   {
@@ -425,6 +693,28 @@ export const englishTranslations: TranslationEntry[] = [
     namespace: 'farmer',
   },
   {
+    key: 'farmer.alertBufferLabel',
+    value: 'Alert Buffer Zone: {buffer}m',
+    namespace: 'farmer',
+    context: '{buffer} is the distance in metres',
+  },
+  {
+    key: 'farmer.alertBufferZoneLabel',
+    value: 'Alert Buffer Zone: {buffer}m',
+    namespace: 'farmer',
+    context: '{buffer} is the distance in metres',
+  },
+  {
+    key: 'farmer.alertBufferInstruction',
+    value: "You'll be alerted when sheep are spotted within this distance OUTSIDE your field boundaries.",
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.alertBufferExplanation',
+    value: 'You will also be alerted when sheep are spotted within this distance outside your field boundaries.',
+    namespace: 'farmer',
+  },
+  {
     key: 'farmer.reports',
     value: 'Reports',
     namespace: 'farmer',
@@ -435,8 +725,18 @@ export const englishTranslations: TranslationEntry[] = [
     namespace: 'farmer',
   },
   {
+    key: 'farmer.claim',
+    value: 'Claim',
+    namespace: 'farmer',
+  },
+  {
     key: 'farmer.resolveReport',
     value: 'Mark as Resolved',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.markResolved',
+    value: 'Mark Resolved',
     namespace: 'farmer',
   },
   {
@@ -452,6 +752,566 @@ export const englishTranslations: TranslationEntry[] = [
   {
     key: 'farmer.sheepReunited',
     value: 'Sheep Reunited!',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.back',
+    value: 'Back',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.backToDashboard',
+    value: 'Back to Dashboard',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.continue',
+    value: 'Continue',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.manage',
+    value: 'Manage',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.delete',
+    value: 'Delete',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.on',
+    value: 'On',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.off',
+    value: 'Off',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.alertsOn',
+    value: 'Alerts On',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.alertsOff',
+    value: 'Off',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.alertsOnOff',
+    value: 'On',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.farm',
+    value: 'Farm',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.farmLabel',
+    value: 'Farm:',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.farmDetails',
+    value: 'Farm Details',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.farmSettings',
+    value: 'Farm Settings',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.farmLocation',
+    value: 'Farm Location',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.farmLocationInstruction',
+    value: "Tap the map to mark your farm's physical location.",
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.farmNameLabel',
+    value: 'Farm Name *',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.farmNameRequired',
+    value: 'Farm Name *',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.farmNamePlaceholder',
+    value: 'e.g., Green Valley Farm',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.farmNameExample',
+    value: 'e.g., North Field',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.fieldNameLabel',
+    value: 'Field Name *',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.fieldNamePlaceholder',
+    value: 'e.g., North Paddock',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.fieldsCount',
+    value: 'Fields ({count})',
+    namespace: 'farmer',
+    context: '{count} is the number of fields',
+  },
+  {
+    key: 'farmer.fieldCount',
+    value: '{fields} field(s) • Alert buffer: {buffer}m',
+    namespace: 'farmer',
+    context: '{fields} = number of fields, {buffer} = alert buffer in metres',
+  },
+  {
+    key: 'farmer.fencePostTip',
+    value: '🪵 Tap on the map to place fence posts around your field boundary.',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.fencePostsCount',
+    value: '{count} fence posts',
+    namespace: 'farmer',
+    context: '{count} is the number of fence posts placed',
+  },
+  {
+    key: 'farmer.placeFencePostsLabel',
+    value: 'Place Fence Posts ({count} placed, need {min}+)',
+    namespace: 'farmer',
+    context: '{count} = placed, {min} = minimum required',
+  },
+  {
+    key: 'farmer.postNumber',
+    value: 'Post {num}',
+    namespace: 'farmer',
+    context: '{num} is the post number',
+  },
+  {
+    key: 'farmer.saveField',
+    value: 'Save Field',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.createFarm',
+    value: 'Create Farm',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.createFarmButton',
+    value: 'Create Farm',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.deleteFarmButton',
+    value: 'Delete Farm',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.deleteFarmConfirm',
+    value: 'Delete this farm?',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.drawFieldsInstruction',
+    value: 'Draw your field boundaries to start receiving alerts.',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.noFieldsYet',
+    value: 'No fields yet. Add fields by placing fence posts.',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.noFieldsMapped',
+    value: 'Map your fields above to start receiving alerts.',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.noNewReports',
+    value: 'No new reports. All clear! 🎉',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.reportedSheep',
+    value: 'Reported Sheep ({count})',
+    namespace: 'farmer',
+    context: '{count} is the number of reported sheep alerts',
+  },
+  {
+    key: 'farmer.myClaimed',
+    value: 'My Claimed ({count})',
+    namespace: 'farmer',
+    context: '{count} is the number of claimed reports',
+  },
+  {
+    key: 'farmer.skipForNow',
+    value: "Skip for now — I'll add a farm later",
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.clearButton',
+    value: '🗑️ Clear',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.undoButton',
+    value: '↩️ Undo',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.locationSet',
+    value: '📍 Location set',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.notificationPreferences',
+    value: 'Notification Preferences',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.contactDetails',
+    value: 'Contact Details',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.contactLabel',
+    value: 'Contact:',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.emailDisplayLabel',
+    value: 'Email:',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.phoneDisplayLabel',
+    value: 'Phone:',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.currentStatus',
+    value: 'Current Status',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.reviewConfirm',
+    value: 'Review & Confirm',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.registrationStep',
+    value: 'Registration (Step {step}/{total})',
+    namespace: 'farmer',
+    context: '{step} = current step, {total} = total steps',
+  },
+
+  // ==================== FARMER: SUBSCRIPTION ====================
+  {
+    key: 'farmer.subscription',
+    value: 'Subscription',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.yourSubscription',
+    value: 'Your Subscription',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.subscriptionDetailsHeading',
+    value: 'Subscription Details:',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.freeTrialHeading',
+    value: '🎉 30-Day Free Trial',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.freeTrialActive',
+    value: 'Free Trial Active',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.startFreeTrial',
+    value: 'Start Free Trial',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.trialStarting',
+    value: '• 30-day free trial starting today',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.trialStartsToday',
+    value: '• Your trial starts today',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.trialEnds',
+    value: 'Trial ends: {date}',
+    namespace: 'farmer',
+    context: '{date} is a formatted date string',
+  },
+  {
+    key: 'farmer.trialChargeWarning',
+    value: 'Your card will be charged £29.99 on this date unless you cancel.',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.cancelAnytime',
+    value: '• Cancel anytime before trial ends',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.cancelFromDashboard',
+    value: '• Cancel anytime from your dashboard',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.priceAfterTrial',
+    value: '• £29.99/month after trial',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.firstCharge',
+    value: '• First charge: £29.99 on {date}',
+    namespace: 'farmer',
+    context: '{date} is a formatted date string',
+  },
+  {
+    key: 'farmer.nextBillingDate',
+    value: 'Next billing date: {date}',
+    namespace: 'farmer',
+    context: '{date} is a formatted date string',
+  },
+  {
+    key: 'farmer.basicPlanHeading',
+    value: 'Basic Plan - £29.99/month',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.planFeatureUnlimited',
+    value: '✓ Unlimited zone alerts',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.planFeatureMultiZones',
+    value: '✓ Multiple farm zones',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.planFeatureNotifications',
+    value: '✓ Email & SMS notifications',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.planFeatureHistory',
+    value: '✓ Report history & analytics',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.planFeatureSupport',
+    value: '✓ Priority support',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.statusActiveBadge',
+    value: 'Active',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.statusTrialBadge',
+    value: '30-Day Free Trial',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.statusCancelledBadge',
+    value: 'Cancelled',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.statusNoneBadge',
+    value: 'None',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.cancelSubscriptionHeading',
+    value: 'Cancel Subscription',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.cancelSubscriptionButton',
+    value: 'Cancel Subscription',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.cancelConfirm',
+    value: 'Are you sure you want to cancel your subscription? You will stop receiving alerts for sheep sightings in your zones.',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.cancelActiveWarning',
+    value: 'Cancel and your access will continue until the end of your billing period.',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.cancelTrialWarning',
+    value: 'Cancel now and you will not be charged. Your access will end immediately.',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.subscriptionCancelledMessage',
+    value: 'Your subscription has been cancelled. You will not be charged.',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.ends',
+    value: 'Ends {date}',
+    namespace: 'farmer',
+    context: '{date} is a formatted date string',
+  },
+
+  // ==================== FARMER: PAYMENT ====================
+  {
+    key: 'farmer.paymentSetup',
+    value: 'Payment Setup',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.paymentMethod',
+    value: 'Payment Method',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.paymentInstruction',
+    value: 'Your card will not be charged until after your 30-day free trial ends.',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.securePayment',
+    value: '🔒 Secure payment powered by Stripe',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.amount',
+    value: 'Amount: £29.99',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.cardholderNameLabel',
+    value: 'Cardholder Name *',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.cardholderNamePlaceholder',
+    value: 'Name on card',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.cardNumberLabel',
+    value: 'Card Number *',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.cardNumberPlaceholder',
+    value: '1234 5678 9012 3456',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.expiryLabel',
+    value: 'Expiry *',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.expiryPlaceholder',
+    value: 'MM/YY',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.cvcLabel',
+    value: 'CVC *',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.cvcPlaceholder',
+    value: '123',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.cardEnding',
+    value: '💳 Card ending in {last4}',
+    namespace: 'farmer',
+    context: '{last4} is the last 4 digits of the card number',
+  },
+  {
+    key: 'farmer.expires',
+    value: 'Expires {expiry}',
+    namespace: 'farmer',
+    context: '{expiry} is the card expiry date e.g. 12/27',
+  },
+
+  // ==================== FARMER: REGISTRATION FORM ====================
+  {
+    key: 'farmer.yourNameLabel',
+    value: 'Your Name *',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.emailLabel',
+    value: 'Email *',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.phoneLabel',
+    value: 'Phone',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.addressLine1Label',
+    value: 'Address Line 1 *',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.addressLine2Label',
+    value: 'Address Line 2',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.cityLabel',
+    value: 'City *',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.countyLabel',
+    value: 'County',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.postcodeLabel',
+    value: 'Postcode *',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.billingAddress',
+    value: 'Billing Address',
+    namespace: 'farmer',
+  },
+  {
+    key: 'farmer.billingAddressHeading',
+    value: 'Billing Address',
     namespace: 'farmer',
   },
 
