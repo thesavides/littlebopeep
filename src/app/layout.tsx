@@ -1,11 +1,30 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import ReportsLoader from '@/components/ReportsLoader'
 import { TranslationProvider } from '@/contexts/TranslationContext'
+import ServiceWorkerSetup from '@/components/ServiceWorkerSetup'
 
 export const metadata: Metadata = {
   title: 'Little Bo Peep - Helping sheep get home',
   description: 'Connect walkers who spot lost sheep with farmers who need to find them',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Little Bo Peep',
+  },
+  icons: {
+    icon: '/icon.svg',
+    apple: '/icon.svg',
+  },
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: '#16a34a',
 }
 
 export default function RootLayout({
@@ -25,6 +44,7 @@ export default function RootLayout({
       </head>
       <body className="bg-slate-50 min-h-screen">
         <TranslationProvider>
+          <ServiceWorkerSetup />
           <ReportsLoader />
           {children}
         </TranslationProvider>

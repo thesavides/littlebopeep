@@ -9,6 +9,10 @@ import Map from './Map'
 import LocationButton from './LocationButton'
 import PhotoUpload from './PhotoUpload'
 import PhotoGallery from './PhotoGallery'
+import BottomNav from './BottomNav'
+import ProfileDrawer from './ProfileDrawer'
+import Button from './Button'
+import { btn, input, label, card, text, badge as statusBadge } from '@/lib/ui'
 import { useTranslation } from '@/contexts/TranslationContext'
 
 type ViewState = 'dashboard' | 'reporting' | 'my-reports'
@@ -57,6 +61,8 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
 
   // Thank You messages from Supabase
   const [thankYouMessages, setThankYouMessages] = useState<any[]>([])
+
+  const [profileOpen, setProfileOpen] = useState(false)
 
   // Load reports and thank-you messages from Supabase on mount
   useEffect(() => {
@@ -129,7 +135,9 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
   const handleBack = () => {
     if (viewState === 'reporting') {
       if (currentReportStep > 1) {
-        setCurrentReportStep(currentReportStep - 1)
+        // Skip step 3 backwards for logged-in users
+        const prevStep = currentReportStep === 4 && currentUserId ? 2 : currentReportStep - 1
+        setCurrentReportStep(prevStep)
       } else {
         setViewState('dashboard')
         resetDraft()
@@ -168,7 +176,9 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
     }
 
     if (currentReportStep < 4) {
-      setCurrentReportStep(currentReportStep + 1)
+      // Skip step 3 (contact info) for logged-in users — their identity is known
+      const nextStep = currentReportStep === 2 && currentUserId ? 4 : currentReportStep + 1
+      setCurrentReportStep(nextStep)
     } else {
       try {
         await submitReport()
@@ -219,23 +229,25 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
   const getTitle = () => {
     if (viewState === 'reporting') {
       const catName = activeCategory ? activeCategory.name : 'Sheep'
-      return `Report ${catName} (Step ${currentReportStep}/4)`
+      const totalSteps = currentUserId ? 3 : 4
+      const displayStep = currentUserId && currentReportStep === 4 ? 3 : currentReportStep
+      return `Report ${catName} (${displayStep}/${totalSteps})`
     }
     if (viewState === 'my-reports') return t('walker.myReports', {}, 'My Reports')
     return ''
   }
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'reported':
-        return <span className="px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700">{t('walker.statusReported', {}, 'Reported')}</span>
-      case 'claimed':
-        return <span className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-700">{t('walker.statusClaimed', {}, 'Claimed')}</span>
-      case 'resolved':
-        return <span className="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700">{t('walker.statusResolved', {}, 'Resolved')}</span>
-      default:
-        return null
+    const cls = statusBadge[status as keyof typeof statusBadge]
+    if (!cls) return null
+    const labels: Record<string, string> = {
+      reported: t('walker.statusReported', {}, 'Reported'),
+      claimed:  t('walker.statusClaimed',  {}, 'Claimed'),
+      resolved: t('walker.statusResolved', {}, 'Resolved'),
+      complete: t('walker.statusComplete', {}, 'Complete'),
+      escalated: t('walker.statusEscalated', {}, 'Escalated'),
     }
+    return <span className={cls}>{labels[status] ?? status}</span>
   }
 
   return (
@@ -306,16 +318,21 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
       )}
 
       {/* Progress bar for reporting */}
-      {viewState === 'reporting' && (
-        <div className="h-1 bg-slate-200">
-          <div 
-            className="h-full bg-green-500 transition-all"
-            style={{ width: `${(currentReportStep / 4) * 100}%` }}
-          />
-        </div>
-      )}
+      {viewState === 'reporting' && (() => {
+        // Logged-in users skip step 3, so progress is over 3 steps not 4
+        const totalSteps = currentUserId ? 3 : 4
+        const displayStep = currentUserId && currentReportStep === 4 ? 3 : currentReportStep
+        return (
+          <div className="h-1 bg-slate-200">
+            <div
+              className="h-full bg-green-500 transition-all"
+              style={{ width: `${(displayStep / totalSteps) * 100}%` }}
+            />
+          </div>
+        )
+      })()}
 
-      <main className="max-w-4xl mx-auto px-4 py-6">
+      <main className="max-w-4xl mx-auto px-4 py-6 pb-28">
         {/* ===== DASHBOARD VIEW ===== */}
         {viewState === 'dashboard' && (
           <>
@@ -392,31 +409,16 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
               </div>
             )}
 
-            {/* Actions */}
-            <div className="space-y-3">
-              <button
-                onClick={() => handleStartReportWithCategory(null)}
-                className="w-full py-4 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow-lg"
-              >
-                <span className="text-xl">🐑</span>
-                {t('walker.reportASheep', {}, 'Report a Sheep')}
-              </button>
-
+            {/* Report Other — secondary action for custom categories */}
+            {reportCategories.filter(c => c.isActive).length > 0 && (
               <button
                 onClick={() => setShowCategoryPicker(true)}
-                className="w-full py-4 bg-slate-700 text-white rounded-xl font-semibold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+                className="w-full py-3 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200 transition-colors flex items-center justify-center gap-2 text-sm"
               >
-                <span className="text-xl">📋</span>
+                <span>📋</span>
                 Report Other
               </button>
-
-              <button
-                onClick={() => setViewState('my-reports')}
-                className="w-full py-4 bg-white text-slate-800 rounded-xl font-semibold hover:bg-slate-50 transition-colors border border-slate-200"
-              >
-                {t('walker.myReportsWithCount', { count: myReports.length }, `My Reports (${myReports.length})`)}
-              </button>
-            </div>
+            )}
 
             {/* Tips */}
             <div className="mt-8 bg-green-50 rounded-xl p-4">
@@ -445,11 +447,11 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                   Tap on the map to mark the location. Recent reports (last 12 hours) are shown as {activeCategory ? activeCategory.emoji : '🐑'} markers.
                 </p>
                 
-                {/* Location Button */}
-                <LocationButton 
-                  onLocationFound={(lat, lng) => {
-                    handleMapClick(lat, lng)
-                  }}
+                {/* Location — prominent auto-locate; tap map to refine */}
+                <LocationButton
+                  prominent
+                  autoLocate={!draftReport.location}
+                  onLocationFound={handleMapClick}
                   className="mb-4"
                 />
                 
@@ -517,7 +519,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                       min="1"
                       value={draftReport.sheepCount || 1}
                       onChange={(e) => updateDraftReport({ sheepCount: parseInt(e.target.value) || 1 })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-lg"
+                      className={`${input} text-lg`}
                     />
                   </div>
                   <div>
@@ -527,7 +529,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                     <select
                       value={draftReport.condition || ''}
                       onChange={(e) => updateDraftReport({ condition: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className={input}
                     >
                       {activeCategory ? (
                         <>
@@ -555,7 +557,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                       onChange={(e) => updateDraftReport({ description: e.target.value })}
                       placeholder={t('walker.detailsPlaceholder', {}, 'e.g., Near the old stone wall, white sheep with black face, ear tag visible...')}
                       rows={3}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className={input}
                     />
                   </div>
                   <div>
@@ -596,7 +598,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                       value={guestName}
                       onChange={(e) => setGuestName(e.target.value)}
                       placeholder={t('walker.namePlaceholder', {}, 'Your name')}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className={input}
                     />
                   </div>
                   <div>
@@ -608,7 +610,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                       value={guestEmail}
                       onChange={(e) => setGuestEmail(e.target.value)}
                       placeholder={t('walker.emailPlaceholder', {}, 'your@email.com')}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className={input}
                     />
                   </div>
                   <div>
@@ -620,7 +622,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                       value={guestPhone}
                       onChange={(e) => setGuestPhone(e.target.value)}
                       placeholder={t('walker.phonePlaceholder', {}, '+44 7700 900000')}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className={input}
                     />
                   </div>
                 </div>
@@ -682,19 +684,16 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
 
             {/* Navigation */}
             <div className="mt-6 space-y-3">
-              <button
+              <Button
+                variant="primary"
                 onClick={handleNextStep}
                 disabled={currentReportStep === 1 && !draftReport.location}
-                className="w-full py-4 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
               >
                 {currentReportStep === 4 ? t('walker.submitReport', {}, '✓ Submit Report') : t('walker.continue', {}, 'Continue →')}
-              </button>
-              <button
-                onClick={handleBack}
-                className="w-full py-3 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200 transition-colors"
-              >
+              </Button>
+              <Button variant="ghost" onClick={handleBack}>
                 {currentReportStep === 1 ? t('walker.cancel', {}, 'Cancel') : t('walker.back', {}, '← Back')}
-              </button>
+              </Button>
             </div>
           </>
         )}
@@ -785,6 +784,42 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
           </>
         )}
       </main>
+
+      {/* Bottom Navigation — hidden during active report flow */}
+      {viewState !== 'reporting' && (
+        <BottomNav
+          items={[
+            {
+              id: 'map',
+              label: 'Map',
+              icon: '🗺️',
+              active: viewState === 'dashboard',
+              onClick: () => setViewState('dashboard'),
+            },
+            {
+              id: 'reports',
+              label: 'My Reports',
+              icon: '📋',
+              active: viewState === 'my-reports',
+              badge: thankYouMessages.filter(m => !m.read_at).length,
+              onClick: () => setViewState('my-reports'),
+            },
+            {
+              id: 'profile',
+              label: 'Profile',
+              icon: '👤',
+              onClick: () => setProfileOpen(true),
+            },
+          ]}
+          fab={{
+            label: 'Report',
+            icon: <span className="text-2xl">🐑</span>,
+            onClick: () => handleStartReportWithCategory(null),
+          }}
+        />
+      )}
+
+      <ProfileDrawer open={profileOpen} onClose={() => setProfileOpen(false)} />
     </div>
   )
 }
