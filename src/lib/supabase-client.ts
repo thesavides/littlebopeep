@@ -348,6 +348,7 @@ export interface ReportCategoryDB {
   count_label: string
   is_active: boolean
   sort_order: number
+  image_url: string | null
   created_at: string
 }
 
@@ -374,6 +375,7 @@ export async function fetchReportCategories() {
     isActive: c.is_active,
     sortOrder: c.sort_order,
     subscriptionMode: (c as any).subscription_mode || 'default_on',
+    imageUrl: c.image_url || undefined,
     createdAt: new Date(c.created_at),
   }))
 }
@@ -390,6 +392,7 @@ export async function createReportCategory(category: Omit<import('@/store/appSto
       count_label: category.countLabel,
       is_active: category.isActive,
       sort_order: category.sortOrder,
+      image_url: category.imageUrl || null,
     }])
     .select()
     .single()
@@ -413,6 +416,7 @@ export async function updateReportCategoryDB(id: string, updates: any) {
       count_label: updates.countLabel,
       is_active: updates.isActive,
       sort_order: updates.sortOrder,
+      image_url: updates.imageUrl !== undefined ? (updates.imageUrl || null) : undefined,
     })
     .eq('id', id)
     .select()

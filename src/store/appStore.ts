@@ -249,6 +249,7 @@ export interface ReportCategory {
   isActive: boolean
   sortOrder: number
   subscriptionMode: CategorySubscriptionMode  // 'compulsory' | 'default_on' | 'default_off'
+  imageUrl?: string        // optional image URL (overrides emoji when set)
   createdAt: Date
 }
 

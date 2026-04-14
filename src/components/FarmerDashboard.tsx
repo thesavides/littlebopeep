@@ -1204,7 +1204,11 @@ export default function FarmerDashboard() {
                         return (
                           <div key={cat.id} className={`flex items-center justify-between p-3 rounded-lg ${isCompulsory ? 'bg-red-50 border border-red-100' : 'bg-slate-50 border border-slate-200'}`}>
                             <div className="flex items-center gap-2">
-                              <span className="text-xl">{cat.emoji}</span>
+                              {cat.imageUrl ? (
+                                <img src={cat.imageUrl} alt={cat.name} className="w-7 h-7 object-contain flex-shrink-0 rounded" />
+                              ) : (
+                                <span className="text-xl">{cat.emoji}</span>
+                              )}
                               <div>
                                 <div className="text-sm font-medium text-slate-700">{cat.name}</div>
                                 <div className="text-xs text-slate-500">

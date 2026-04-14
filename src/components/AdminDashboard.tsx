@@ -7,6 +7,7 @@ import Map from './Map'
 import AdminUserManagement from './AdminUserManagement'
 import WalkerDashboard from './WalkerDashboard'
 import ProfileDrawer from './ProfileDrawer'
+import CategoryImageUploader from './CategoryImageUploader'
 import { inviteUser, getAllUsers, adminResetUserPassword, updateUserProfile, deleteUser as deleteUserFromSupabase, suspendUser as suspendUserInSupabase, activateUser as activateUserInSupabase } from '@/lib/unified-auth'
 import { fetchAuditLogs } from '@/lib/audit'
 import { fetchNotificationsForReport, approveReportScreening } from '@/lib/supabase-client'
@@ -782,7 +783,7 @@ export default function AdminDashboard() {
                 onClick={() => setShowReportMode(true)}
                 className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
               >
-                🐑 Report Sheep
+                🐑 Report
               </button>
               <button
                 onClick={() => setProfileOpen(true)}
@@ -1388,7 +1389,11 @@ export default function AdminDashboard() {
               {[...reportCategories].sort((a, b) => a.sortOrder - b.sortOrder).map((cat) => (
                 <div key={cat.id} className="bg-white rounded-xl p-4 shadow flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="text-3xl">{cat.emoji}</span>
+                    {cat.imageUrl ? (
+                      <img src={cat.imageUrl} alt={cat.name} className="w-10 h-10 object-contain rounded flex-shrink-0" />
+                    ) : (
+                      <span className="text-3xl">{cat.emoji}</span>
+                    )}
                     <div>
                       <div className="font-semibold text-slate-800 flex items-center gap-2">
                         {cat.name}
@@ -2075,7 +2080,11 @@ function FarmDetailsModal({ farm, owner, onClose, onAddField, onEditField, onDel
                 return (
                   <div key={cat.id} className={`flex items-center justify-between p-3 rounded-lg ${isCompulsory ? 'bg-red-50 border border-red-100' : 'bg-slate-50 border border-slate-200'}`}>
                     <div className="flex items-center gap-2">
-                      <span className="text-xl">{cat.emoji}</span>
+                      {cat.imageUrl ? (
+                        <img src={cat.imageUrl} alt={cat.name} className="w-7 h-7 object-contain flex-shrink-0" />
+                      ) : (
+                        <span className="text-xl">{cat.emoji}</span>
+                      )}
                       <div>
                         <div className="text-sm font-medium text-slate-700">{cat.name}</div>
                         <div className="text-xs text-slate-500">
@@ -2394,6 +2403,7 @@ function CategoryFormModal({ category, onClose, onSave }: {
   const [isActive, setIsActive] = useState(category?.isActive ?? true)
   const [sortOrder, setSortOrder] = useState(category?.sortOrder ?? 0)
   const [subscriptionMode, setSubscriptionMode] = useState<'compulsory' | 'default_on' | 'default_off'>(category?.subscriptionMode || 'default_off')
+  const [imageUrl, setImageUrl] = useState<string>(category?.imageUrl || '')
 
   const addCondition = () => {
     const trimmed = newCondition.trim()
@@ -2408,7 +2418,7 @@ function CategoryFormModal({ category, onClose, onSave }: {
   const handleSave = () => {
     if (!name.trim()) { alert('Name is required'); return }
     if (conditions.length === 0) { alert('Add at least one condition option'); return }
-    onSave({ name: name.trim(), emoji, description: description.trim(), conditions, showCount, countLabel, isActive, sortOrder: Number(sortOrder), subscriptionMode })
+    onSave({ name: name.trim(), emoji, description: description.trim(), conditions, showCount, countLabel, isActive, sortOrder: Number(sortOrder), subscriptionMode, imageUrl: imageUrl || undefined })
   }
 
   return (
@@ -2422,29 +2432,38 @@ function CategoryFormModal({ category, onClose, onSave }: {
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Emoji</label>
-            <div className="flex items-center gap-2 mb-2">
-              <input
-                type="text"
-                value={emoji}
-                onChange={(e) => setEmoji(e.target.value)}
-                className="w-16 px-2 py-2 border border-slate-300 rounded-lg text-center text-2xl"
-                maxLength={2}
-              />
-              <span className="text-xs text-slate-500">Or pick one:</span>
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {['🐑','🐄','🐖','🐎','🐏','🐐','🐓','🦆','🦅','🦉','🐇','🦊','🦡','🐿️','🌾','🌿','🍀','🌱','🌲','🌳','🌴','🪨','🪵','🪹','🏡','🏠','🏚️','🚜','🚛','🛻','⛏️','🔨','🪚','🪛','⚙️','🪜','🧱','🪟','🚪','🔒','🔓','🪝','🧲','🪤','🌄','🌅','🌦️','🌧️','⛅','🌫️','🛤️','🛣️','🏞️','⛰️','🌁','🌊','💧','🍂','🍁','🌸','🌼','🌻','🥕','🌽','🍄','🌰','⚠️','🔴','🟡'].map(e => (
-                <button
-                  key={e}
-                  type="button"
-                  onClick={() => setEmoji(e)}
-                  className={`text-xl p-1 rounded hover:bg-slate-100 transition-colors ${emoji === e ? 'bg-green-100 ring-2 ring-green-400' : ''}`}
-                >
-                  {e}
-                </button>
-              ))}
-            </div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Category Icon</label>
+            <CategoryImageUploader
+              currentImageUrl={imageUrl || undefined}
+              onUploaded={(url) => setImageUrl(url)}
+              onClear={() => setImageUrl('')}
+            />
+            {!imageUrl && (
+              <div className="mt-3">
+                <p className="text-xs text-slate-500 mb-1.5">Or use an emoji instead:</p>
+                <div className="flex items-center gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={emoji}
+                    onChange={(e) => setEmoji(e.target.value)}
+                    className="w-16 px-2 py-2 border border-slate-300 rounded-lg text-center text-2xl"
+                    maxLength={2}
+                  />
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {['🐑','🐄','🐖','🐎','🐏','🐐','🐓','🦆','🦅','🦉','🐇','🦊','🦡','🐿️','🌾','🌿','🍀','🌱','🌲','🌳','🌴','🪨','🪵','🪹','🏡','🏠','🏚️','🚜','🚛','🛻','⛏️','🔨','🪚','🪛','⚙️','🪜','🧱','🪟','🚪','🔒','🔓','🪝','🧲','🪤','🌄','🌅','🌦️','🌧️','⛅','🌫️','🛤️','🛣️','🏞️','⛰️','🌁','🌊','💧','🍂','🍁','🌸','🌼','🌻','🥕','🌽','🍄','🌰','⚠️','🔴','🟡'].map(e => (
+                    <button
+                      key={e}
+                      type="button"
+                      onClick={() => setEmoji(e)}
+                      className={`text-xl p-1 rounded hover:bg-slate-100 transition-colors ${emoji === e ? 'bg-green-100 ring-2 ring-green-400' : ''}`}
+                    >
+                      {e}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <div className="flex gap-3">
             <div className="flex-1">

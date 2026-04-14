@@ -47,6 +47,10 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
   const [showNotification, setShowNotification] = useState(false)
   const [showCategoryPicker, setShowCategoryPicker] = useState(false)
   const [activeCategory, setActiveCategory] = useState<ReportCategory | null>(null)
+  const [preferredCategoryId, setPreferredCategoryId] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('lbp-preferred-category')
+    return null
+  })
 
   // Guest contact info (for walkers without accounts)
   const [guestName, setGuestName] = useState('')
@@ -226,6 +230,16 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
     setShowCategoryPicker(false)
   }
 
+  const setDefaultCategory = (categoryId: string | null) => {
+    setPreferredCategoryId(categoryId)
+    if (categoryId) localStorage.setItem('lbp-preferred-category', categoryId)
+    else localStorage.removeItem('lbp-preferred-category')
+  }
+
+  const preferredCategory = preferredCategoryId
+    ? reportCategories.find(c => c.id === preferredCategoryId) ?? null
+    : null
+
   const getTitle = () => {
     if (viewState === 'reporting') {
       const catName = activeCategory ? activeCategory.name : 'Sheep'
@@ -384,41 +398,75 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
 
             {/* Category Picker Modal */}
             {showCategoryPicker && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
-                  <div className="flex items-center justify-between mb-4">
+              <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50" onClick={() => setShowCategoryPicker(false)}>
+                <div className="bg-white rounded-t-2xl w-full max-w-lg shadow-xl animate-slide-up" onClick={e => e.stopPropagation()}>
+                  <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-100">
                     <h3 className="text-lg font-bold text-slate-800">What are you reporting?</h3>
                     <button onClick={() => setShowCategoryPicker(false)} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">×</button>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    {reportCategories.filter(c => c.isActive).sort((a, b) => a.sortOrder - b.sortOrder).map((cat) => (
-                      <button
-                        key={cat.id}
-                        onClick={() => handleStartReportWithCategory(cat)}
-                        className="flex flex-col items-center gap-2 p-4 bg-slate-50 hover:bg-green-50 border border-slate-200 hover:border-green-400 rounded-xl transition-colors"
-                      >
-                        <span className="text-3xl">{cat.emoji}</span>
-                        <span className="text-sm font-medium text-slate-700 text-center leading-tight">{cat.name}</span>
-                      </button>
-                    ))}
+                  <div className="p-4 space-y-2 max-h-[70vh] overflow-y-auto safe-area-pb">
+                    {/* Sheep — always first */}
+                    {(() => {
+                      const isSheepDefault = !preferredCategoryId
+                      return (
+                        <div className="flex items-center gap-3 p-3 rounded-xl border-2 border-green-200 bg-green-50">
+                          <button
+                            className="flex items-center gap-3 flex-1 text-left"
+                            onClick={() => handleStartReportWithCategory(null)}
+                          >
+                            <span className="text-3xl w-10 text-center flex-shrink-0">🐑</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-slate-800">Sheep</div>
+                              <div className="text-xs text-slate-500">Stray or loose sheep</div>
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setDefaultCategory(isSheepDefault ? null : null)}
+                            className={`text-lg flex-shrink-0 ${isSheepDefault ? 'text-yellow-400' : 'text-slate-300 hover:text-yellow-300'}`}
+                            title={isSheepDefault ? 'Your default' : 'Set as default'}
+                          >
+                            ★
+                          </button>
+                        </div>
+                      )
+                    })()}
+                    {/* Other active categories */}
+                    {reportCategories.filter(c => c.isActive).sort((a, b) => a.sortOrder - b.sortOrder).map((cat) => {
+                      const isDefault = preferredCategoryId === cat.id
+                      return (
+                        <div key={cat.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-colors ${isDefault ? 'border-green-200 bg-green-50' : 'border-slate-200 bg-slate-50 hover:border-green-300 hover:bg-white'}`}>
+                          <button
+                            className="flex items-center gap-3 flex-1 text-left"
+                            onClick={() => handleStartReportWithCategory(cat)}
+                          >
+                            {cat.imageUrl ? (
+                              <img src={cat.imageUrl} alt={cat.name} className="w-10 h-10 object-contain flex-shrink-0 rounded" />
+                            ) : (
+                              <span className="text-3xl w-10 text-center flex-shrink-0">{cat.emoji}</span>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-slate-800">{cat.name}</div>
+                              {cat.description && <div className="text-xs text-slate-500 truncate">{cat.description}</div>}
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setDefaultCategory(isDefault ? null : cat.id)}
+                            className={`text-lg flex-shrink-0 ${isDefault ? 'text-yellow-400' : 'text-slate-300 hover:text-yellow-300'}`}
+                            title={isDefault ? 'Your default' : 'Set as default'}
+                          >
+                            ★
+                          </button>
+                        </div>
+                      )
+                    })}
                     {reportCategories.filter(c => c.isActive).length === 0 && (
-                      <p className="col-span-2 text-center text-slate-500 text-sm py-4">No additional categories available yet.</p>
+                      <p className="text-center text-slate-500 text-sm py-4">Only sheep reporting is available.</p>
                     )}
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Report Other — secondary action for custom categories */}
-            {reportCategories.filter(c => c.isActive).length > 0 && (
-              <button
-                onClick={() => setShowCategoryPicker(true)}
-                className="w-full py-3 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200 transition-colors flex items-center justify-center gap-2 text-sm"
-              >
-                <span>📋</span>
-                Report Other
-              </button>
-            )}
 
             {/* Tips */}
             <div className="mt-8 bg-green-50 rounded-xl p-4">
@@ -813,8 +861,10 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
           ]}
           fab={{
             label: 'Report',
-            icon: <span className="text-2xl">🐑</span>,
-            onClick: () => handleStartReportWithCategory(null),
+            icon: preferredCategory?.imageUrl
+              ? <img src={preferredCategory.imageUrl} alt={preferredCategory.name} className="w-7 h-7 object-contain" />
+              : <span className="text-2xl">{preferredCategory?.emoji ?? '🐑'}</span>,
+            onClick: () => setShowCategoryPicker(true),
           }}
         />
       )}
