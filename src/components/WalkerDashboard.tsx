@@ -165,6 +165,14 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
   }
 
   const handleNextStep = async () => {
+    // On step 1 completion, store a map reference URL with the report
+    if (currentReportStep === 1 && draftReport.location) {
+      const { lat, lng } = draftReport.location
+      updateDraftReport({
+        mapSnapshotUrl: `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}&zoom=15`,
+      })
+    }
+
     // On step 1, check for duplicates before proceeding
     if (currentReportStep === 1 && draftReport.location) {
       const nearby = getNearbyReports(draftReport.location.lat, draftReport.location.lng, 100, 12)

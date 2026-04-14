@@ -111,6 +111,7 @@ export default function AdminDashboard() {
   const [editingDetailReport, setEditingDetailReport] = useState(false)
   const [detailEditFields, setDetailEditFields] = useState<{ description: string; sheepCount: number; conditions: string[]; photoUrls: string[] }>({ description: '', sheepCount: 1, conditions: [], photoUrls: [] })
   const [savingDetailEdit, setSavingDetailEdit] = useState(false)
+  const [exportLoading, setExportLoading] = useState(false)
   // Complete modal
   const [completeReportId, setCompleteReportId] = useState<string | null>(null)
   const [completeNotes, setCompleteNotes] = useState('')
@@ -377,6 +378,175 @@ export default function AdminDashboard() {
     }
     return <span className={`px-2 py-1 rounded text-xs font-medium ${colors[status]}`}>{status}</span>
   }
+
+  // ── Export helpers ────────────────────────────────────────────────────────
+  const loadScript = (src: string): Promise<void> =>
+    new Promise((resolve, reject) => {
+      if (document.querySelector(`script[src="${src}"]`)) { resolve(); return }
+      const s = document.createElement('script')
+      s.src = src; s.onload = () => resolve(); s.onerror = reject
+      document.head.appendChild(s)
+    })
+
+  const generateMapCanvas = async (lat: number, lng: number): Promise<string | null> => {
+    try {
+      const zoom = 15
+      const n = Math.pow(2, zoom)
+      const cx = Math.floor((lng + 180) / 360 * n)
+      const latRad = lat * Math.PI / 180
+      const cy = Math.floor((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n)
+      const canvas = document.createElement('canvas')
+      canvas.width = 512; canvas.height = 512
+      const ctx = canvas.getContext('2d')!
+      const subs = ['a', 'b', 'c']
+      const tilePx = 256
+      await Promise.all(
+        [-1, 0, 1].flatMap(dy =>
+          [-1, 0, 1].map(dx =>
+            new Promise<void>(res => {
+              const img = new Image(); img.crossOrigin = 'anonymous'
+              img.onload = () => { ctx.drawImage(img, (dx + 1) * tilePx - tilePx / 2, (dy + 1) * tilePx - tilePx / 2, tilePx, tilePx); res() }
+              img.onerror = () => res()
+              img.src = `https://${subs[((cx + dx + cy + dy) % 3 + 3) % 3]}.tile.openstreetmap.org/${zoom}/${cx + dx}/${cy + dy}.png`
+            })
+          )
+        )
+      )
+      ctx.beginPath(); ctx.arc(256, 256, 9, 0, Math.PI * 2)
+      ctx.fillStyle = '#ef4444'; ctx.fill()
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke()
+      return canvas.toDataURL('image/png')
+    } catch { return null }
+  }
+
+  const reportsToExport = selectedReports.length > 0
+    ? filteredReports.filter(r => selectedReports.includes(r.id))
+    : filteredReports
+
+  const handleExportCSV = () => {
+    const headers = ['ID', 'Date', 'Category', 'Status', 'Lat', 'Lng', 'Count', 'Conditions', 'Description', 'Reporter', 'Map URL', 'Photo 1', 'Photo 2', 'Photo 3']
+    const rows = reportsToExport.map(r => [
+      r.id,
+      new Date(r.timestamp).toISOString(),
+      `${r.categoryEmoji || ''} ${r.categoryName || 'Sheep'}`.trim(),
+      r.status,
+      r.location.lat,
+      r.location.lng,
+      r.sheepCount,
+      (r.conditions || []).join('; '),
+      r.description || '',
+      r.submittedByUserName || r.reporterContact || '',
+      r.mapSnapshotUrl || `https://www.openstreetmap.org/?mlat=${r.location.lat}&mlon=${r.location.lng}&zoom=15`,
+      r.photoUrls?.[0] || '',
+      r.photoUrls?.[1] || '',
+      r.photoUrls?.[2] || '',
+    ])
+    const csv = [headers, ...rows]
+      .map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
+      .join('\n')
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = `lbp-reports-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click(); URL.revokeObjectURL(url)
+  }
+
+  const handleExportXLSX = async () => {
+    setExportLoading(true)
+    try {
+      await loadScript('https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js')
+      const XLSX = (window as any).XLSX
+      const data = reportsToExport.map(r => ({
+        'ID': r.id,
+        'Date': new Date(r.timestamp).toLocaleString(),
+        'Category': `${r.categoryEmoji || ''} ${r.categoryName || 'Sheep'}`.trim(),
+        'Status': r.status,
+        'Latitude': r.location.lat,
+        'Longitude': r.location.lng,
+        'Count': r.sheepCount,
+        'Conditions': (r.conditions || []).join(', '),
+        'Description': r.description || '',
+        'Reporter': r.submittedByUserName || r.reporterContact || '',
+        'Map URL': r.mapSnapshotUrl || `https://www.openstreetmap.org/?mlat=${r.location.lat}&mlon=${r.location.lng}&zoom=15`,
+        'Photo 1': r.photoUrls?.[0] || '',
+        'Photo 2': r.photoUrls?.[1] || '',
+        'Photo 3': r.photoUrls?.[2] || '',
+      }))
+      const ws = XLSX.utils.json_to_sheet(data)
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, ws, 'Reports')
+      XLSX.writeFile(wb, `lbp-reports-${new Date().toISOString().slice(0, 10)}.xlsx`)
+    } catch (e) {
+      alert('Export failed — check your network connection and try again.')
+    } finally {
+      setExportLoading(false)
+    }
+  }
+
+  const handleExportPDF = async () => {
+    setExportLoading(true)
+    try {
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js')
+      const { jsPDF } = (window as any).jspdf
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+      doc.setFontSize(16)
+      doc.text('Little Bo Peep — Report Export', 14, 14)
+      doc.setFontSize(9)
+      doc.text(`Generated: ${new Date().toLocaleString()}  |  ${reportsToExport.length} reports`, 14, 21)
+      ;(doc as any).autoTable({
+        startY: 26,
+        head: [['ID', 'Date', 'Category', 'Status', 'Count', 'Lat / Lng', 'Description']],
+        body: reportsToExport.map(r => [
+          r.id.slice(0, 8) + '…',
+          new Date(r.timestamp).toLocaleDateString(),
+          `${r.categoryEmoji || ''} ${r.categoryName || 'Sheep'}`.trim(),
+          r.status,
+          r.sheepCount,
+          `${r.location.lat.toFixed(4)}, ${r.location.lng.toFixed(4)}`,
+          (r.description || '').slice(0, 50),
+        ]),
+        styles: { fontSize: 7 },
+        headStyles: { fillColor: [22, 163, 74] },
+      })
+      for (const r of reportsToExport.slice(0, 30)) {
+        doc.addPage()
+        let y = 14
+        doc.setFontSize(11); doc.text(`Report ${r.id.slice(0, 12)}…`, 14, y); y += 7
+        doc.setFontSize(8)
+        const lines = [
+          `Date: ${new Date(r.timestamp).toLocaleString()}`,
+          `Category: ${r.categoryEmoji || ''} ${r.categoryName || 'Sheep'}  |  Status: ${r.status}  |  Count: ${r.sheepCount}`,
+          `Location: ${r.location.lat.toFixed(5)}, ${r.location.lng.toFixed(5)}`,
+          ...(r.conditions?.length ? [`Conditions: ${r.conditions.join(', ')}`] : []),
+          ...(r.description ? [`Description: ${r.description}`] : []),
+          ...(r.submittedByUserName || r.reporterContact ? [`Reporter: ${r.submittedByUserName || r.reporterContact}`] : []),
+        ]
+        lines.forEach(l => { doc.text(l, 14, y); y += 5 })
+        y += 3
+        const mapImg = await generateMapCanvas(r.location.lat, r.location.lng)
+        if (mapImg) { doc.addImage(mapImg, 'PNG', 14, y, 80, 80) }
+        let photoX = 100
+        for (const photoUrl of (r.photoUrls || []).slice(0, 3)) {
+          try {
+            const resp = await fetch(photoUrl)
+            const blob = await resp.blob()
+            const dataUrl = await new Promise<string>(res => {
+              const fr = new FileReader(); fr.onloadend = () => res(fr.result as string); fr.readAsDataURL(blob)
+            })
+            doc.addImage(dataUrl, 'JPEG', photoX, y, 60, 60)
+            photoX += 65
+          } catch { /* skip */ }
+        }
+      }
+      doc.save(`lbp-reports-${new Date().toISOString().slice(0, 10)}.pdf`)
+    } catch (e) {
+      alert('Export failed — check your network connection and try again.')
+    } finally {
+      setExportLoading(false)
+    }
+  }
+  // ── End export helpers ────────────────────────────────────────────────────
 
   const NavButton = ({ view, label, count }: { view: AdminView; label: string; count?: number }) => (
     <button
@@ -1296,12 +1466,22 @@ export default function AdminDashboard() {
 
             {/* Reports List */}
             <div className="bg-white rounded-xl shadow">
-              <div className="p-4 border-b flex justify-between items-center">
-                <h2 className="font-semibold text-slate-800">Reports ({filteredReports.length})</h2>
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={selectedReports.length === filteredReports.length && filteredReports.length > 0} onChange={handleSelectAllReports} className="rounded" />
-                  Select All
-                </label>
+              <div className="p-4 border-b flex flex-wrap items-center gap-3 justify-between">
+                <div className="flex items-center gap-3">
+                  <h2 className="font-semibold text-slate-800">Reports ({filteredReports.length})</h2>
+                  <label className="flex items-center gap-2 text-sm text-slate-600">
+                    <input type="checkbox" checked={selectedReports.length === filteredReports.length && filteredReports.length > 0} onChange={handleSelectAllReports} className="rounded" />
+                    Select All
+                  </label>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-slate-500">
+                    Export {selectedReports.length > 0 ? `${selectedReports.length} selected` : `all ${filteredReports.length}`}:
+                  </span>
+                  <button onClick={handleExportCSV} disabled={exportLoading} className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-200 disabled:opacity-50">CSV</button>
+                  <button onClick={handleExportXLSX} disabled={exportLoading} className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-medium hover:bg-green-200 disabled:opacity-50">{exportLoading ? '…' : 'Excel'}</button>
+                  <button onClick={handleExportPDF} disabled={exportLoading} className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-200 disabled:opacity-50">{exportLoading ? '…' : 'PDF'}</button>
+                </div>
               </div>
               {filteredReports.length === 0 ? (
                 <div className="p-8 text-center text-slate-500">

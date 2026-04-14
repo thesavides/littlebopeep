@@ -47,6 +47,8 @@ export interface SheepReportDB {
   // WS14: screening
   screening_required?: boolean | null
   metadata_completeness_score?: number | null
+  // WS15: map snapshot
+  map_snapshot_url?: string | null
 }
 
 // Convert DB format to App format
@@ -87,6 +89,7 @@ export function dbToAppReport(dbReport: SheepReportDB) {
     flaggedAt: dbReport.flagged_at ? new Date(dbReport.flagged_at) : undefined,
     screeningRequired: dbReport.screening_required ?? false,
     metadataCompletenessScore: dbReport.metadata_completeness_score ?? undefined,
+    mapSnapshotUrl: dbReport.map_snapshot_url || undefined,
   }
 }
 
@@ -127,6 +130,7 @@ export function appToDbReport(appReport: any) {
     flagged_at: appReport.flaggedAt instanceof Date ? appReport.flaggedAt.toISOString() : (appReport.flaggedAt || null),
     screening_required: appReport.screeningRequired ?? null,
     metadata_completeness_score: appReport.metadataCompletenessScore ?? null,
+    map_snapshot_url: appReport.mapSnapshotUrl || null,
   }
   // Only include id if provided — omitting lets Supabase generate a UUID
   if (appReport.id !== undefined) {

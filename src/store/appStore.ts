@@ -193,6 +193,8 @@ export interface SheepReport {
   // WS14: screening
   screeningRequired?: boolean
   metadataCompletenessScore?: number
+  /** URL to OpenStreetMap viewer at the report location, stored at submit time */
+  mapSnapshotUrl?: string
 }
 
 // A field/paddock within a farm - defined by fence posts (polygon)
