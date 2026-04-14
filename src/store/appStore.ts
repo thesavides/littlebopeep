@@ -159,6 +159,7 @@ export interface SheepReport {
   photoUrls?: string[] // New: multiple photos (max 3)
   sheepCount: number
   condition: string
+  conditions?: string[]  // all selected conditions (multi-select)
   categoryId: string        // 'sheep' for default; custom category id otherwise
   categoryName: string      // 'Sheep' for default; custom category name otherwise
   categoryEmoji: string     // '🐑' for default; custom category emoji otherwise
@@ -310,6 +311,7 @@ interface AppState {
   markReportComplete: (reportId: string, notes?: string) => void
   escalateReport: (reportId: string) => void
   flagReportToAdmin: (reportId: string, note: string) => void
+  editOwnReport: (reportId: string, updates: Partial<Pick<SheepReport, 'description' | 'sheepCount' | 'condition' | 'conditions' | 'photoUrls'>>) => Promise<void>
   deleteReport: (id: string) => void
   archiveReport: (id: string) => void
   batchArchiveReports: (ids: string[]) => void
@@ -805,6 +807,22 @@ export const useAppStore = create<AppState>()(
         })
       },
       
+      editOwnReport: async (reportId, updates) => {
+        const conditions = updates.conditions?.length
+          ? updates.conditions
+          : updates.condition ? [updates.condition] : undefined
+        const condition = conditions?.[0] || updates.condition || ''
+        const merged = { ...updates, ...(conditions !== undefined ? { conditions } : {}), condition }
+        set(state => ({
+          reports: state.reports.map(r => r.id === reportId ? { ...r, ...merged } as SheepReport : r)
+        }))
+        import('@/lib/supabase-client').then(({ updateReport }) => {
+          updateReport(reportId, merged).catch(() => {
+            console.error('Failed to save report edits')
+          })
+        })
+      },
+
       deleteReport: (id) => set((state) => ({
         reports: state.reports.filter((r) => r.id !== id)
       })),

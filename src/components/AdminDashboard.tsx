@@ -10,7 +10,8 @@ import ProfileDrawer from './ProfileDrawer'
 import CategoryImageUploader from './CategoryImageUploader'
 import { inviteUser, getAllUsers, adminResetUserPassword, updateUserProfile, deleteUser as deleteUserFromSupabase, suspendUser as suspendUserInSupabase, activateUser as activateUserInSupabase } from '@/lib/unified-auth'
 import { fetchAuditLogs } from '@/lib/audit'
-import { fetchNotificationsForReport, approveReportScreening } from '@/lib/supabase-client'
+import { fetchNotificationsForReport, approveReportScreening, updateReport as updateReportInDB } from '@/lib/supabase-client'
+import PhotoUpload from './PhotoUpload'
 
 type AdminView = 'overview' | 'walkers' | 'farmers' | 'reports' | 'farms' | 'billing' | 'admins' | 'categories' | 'audit'
 type SortBy = 'date' | 'daysUnclaimed'
@@ -19,6 +20,7 @@ type FilterArchive = 'active' | 'archived' | 'all'
 
 export default function AdminDashboard() {
   const {
+    currentUserId,
     users,
     reports,
     farms,
@@ -106,6 +108,9 @@ export default function AdminDashboard() {
   const [detailNotifications, setDetailNotifications] = useState<any[]>([])
   const [detailAuditLogs, setDetailAuditLogs] = useState<any[]>([])
   const [loadingDetail, setLoadingDetail] = useState(false)
+  const [editingDetailReport, setEditingDetailReport] = useState(false)
+  const [detailEditFields, setDetailEditFields] = useState<{ description: string; sheepCount: number; conditions: string[]; photoUrls: string[] }>({ description: '', sheepCount: 1, conditions: [], photoUrls: [] })
+  const [savingDetailEdit, setSavingDetailEdit] = useState(false)
   // Complete modal
   const [completeReportId, setCompleteReportId] = useState<string | null>(null)
   const [completeNotes, setCompleteNotes] = useState('')
@@ -407,7 +412,7 @@ export default function AdminDashboard() {
             <div className="bg-white w-full max-w-xl h-full overflow-y-auto shadow-2xl flex flex-col">
               <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white z-10">
                 <h2 className="font-bold text-slate-800">Report Detail</h2>
-                <button onClick={() => setDetailReportId(null)} className="text-slate-500 hover:text-slate-700 text-2xl leading-none">×</button>
+                <button onClick={() => { setDetailReportId(null); setEditingDetailReport(false) }} className="text-slate-500 hover:text-slate-700 text-2xl leading-none">×</button>
               </div>
               <div className="p-4 space-y-5 flex-1">
                 {loadingDetail ? (
@@ -554,6 +559,113 @@ export default function AdminDashboard() {
                               <div className="text-slate-500 text-xs mt-0.5">{log.actor_email || log.actor_id}</div>
                             </div>
                           ))}
+                        </div>
+                      )}
+                    </section>
+
+                    {/* Admin Edit Report */}
+                    <section>
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Edit Report</h3>
+                        {!editingDetailReport && (
+                          <button
+                            onClick={() => {
+                              setEditingDetailReport(true)
+                              setDetailEditFields({
+                                description: report.description || '',
+                                sheepCount: report.sheepCount,
+                                conditions: report.conditions?.length ? report.conditions : report.condition ? [report.condition] : [],
+                                photoUrls: report.photoUrls || [],
+                              })
+                            }}
+                            className="text-xs px-3 py-1 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200"
+                          >
+                            ✏️ Edit
+                          </button>
+                        )}
+                      </div>
+                      {editingDetailReport && (
+                        <div className="bg-slate-50 rounded-xl p-4 space-y-4 border border-slate-200">
+                          {report.reporterId && report.reporterId !== currentUserId && (
+                            <div className="text-xs bg-amber-50 border border-amber-200 rounded-lg p-2 text-amber-700">
+                              ⚠️ You are editing a report submitted by another user. Changes will be logged in the audit trail.
+                            </div>
+                          )}
+                          <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Quantity</label>
+                            <div className="flex items-center gap-2">
+                              <button type="button" onClick={() => setDetailEditFields(f => ({ ...f, sheepCount: Math.max(1, f.sheepCount - 1) }))}
+                                className="w-9 h-9 rounded-lg bg-white border border-slate-300 font-bold text-lg flex items-center justify-center">−</button>
+                              <input type="number" min="1" value={detailEditFields.sheepCount}
+                                onChange={e => setDetailEditFields(f => ({ ...f, sheepCount: parseInt(e.target.value) || 1 }))}
+                                className="w-16 text-center px-2 py-1 border border-slate-300 rounded-lg text-base font-semibold" />
+                              <button type="button" onClick={() => setDetailEditFields(f => ({ ...f, sheepCount: f.sheepCount + 1 }))}
+                                className="w-9 h-9 rounded-lg bg-white border border-slate-300 font-bold text-lg flex items-center justify-center">+</button>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Conditions</label>
+                            <div className="flex flex-wrap gap-2">
+                              {(reportCategories.find(c => c.id === report.categoryId)?.conditions || ['Healthy','Injured','Dead','In road','Lost / straying','Not sure']).map(opt => {
+                                const sel = detailEditFields.conditions.includes(opt)
+                                return (
+                                  <button key={opt} type="button"
+                                    onClick={() => setDetailEditFields(f => ({
+                                      ...f,
+                                      conditions: sel ? f.conditions.filter(c => c !== opt) : [...f.conditions, opt]
+                                    }))}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-medium border-2 transition-colors ${sel ? 'bg-green-600 text-white border-green-600' : 'bg-white text-slate-700 border-slate-300'}`}
+                                  >{opt}</button>
+                                )
+                              })}
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Details</label>
+                            <textarea value={detailEditFields.description}
+                              onChange={e => setDetailEditFields(f => ({ ...f, description: e.target.value }))}
+                              rows={3}
+                              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Add Photos</label>
+                            <PhotoUpload
+                              reportId={report.id}
+                              onPhotosUploaded={(urls) => setDetailEditFields(f => ({ ...f, photoUrls: [...new Set([...f.photoUrls, ...urls])] }))}
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={async () => {
+                                setSavingDetailEdit(true)
+                                try {
+                                  const conditions = detailEditFields.conditions
+                                  const condition = conditions[0] || ''
+                                  await updateReportInDB(report.id, {
+                                    description: detailEditFields.description,
+                                    sheepCount: detailEditFields.sheepCount,
+                                    conditions,
+                                    condition,
+                                    photoUrls: detailEditFields.photoUrls,
+                                  })
+                                  await loadReports()
+                                  setEditingDetailReport(false)
+                                } finally {
+                                  setSavingDetailEdit(false)
+                                }
+                              }}
+                              disabled={savingDetailEdit}
+                              className="flex-1 py-2 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 disabled:opacity-50"
+                            >
+                              {savingDetailEdit ? 'Saving…' : 'Save Changes'}
+                            </button>
+                            <button
+                              onClick={() => setEditingDetailReport(false)}
+                              className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm hover:bg-slate-200"
+                            >
+                              Cancel
+                            </button>
+                          </div>
                         </div>
                       )}
                     </section>
@@ -1197,56 +1309,81 @@ export default function AdminDashboard() {
                 </div>
               ) : (
                 <div className="divide-y">
-                  {filteredReports.map((report) => (
-                    <div key={report.id} className={`p-4 flex items-center justify-between ${report.archived ? 'bg-slate-50' : ''}`}>
-                      <div className="flex items-center gap-3">
-                        <input type="checkbox" checked={selectedReports.includes(report.id)} onChange={() => handleSelectReport(report.id)} className="rounded" />
-                        <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">{report.categoryEmoji || '🐑'}</div>
-                        <div>
-                          <div className="font-medium text-slate-800">{report.sheepCount} {report.categoryName || 'sheep'} • {report.condition}</div>
-                          <div className="text-sm text-slate-500">{new Date(report.timestamp).toLocaleString()}</div>
-                          {report.description && <div className="text-xs text-slate-400 truncate max-w-xs">{report.description}</div>}
+                  {filteredReports.map((report) => {
+                    const cat = reportCategories.find(c => c.id === report.categoryId)
+                    const conditions = report.conditions?.length ? report.conditions : report.condition ? [report.condition] : []
+                    const btnBase = 'px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors'
+                    return (
+                    <div key={report.id} className={`p-4 flex items-start gap-3 ${report.archived ? 'bg-slate-50' : ''}`}>
+                      <input type="checkbox" checked={selectedReports.includes(report.id)} onChange={() => handleSelectReport(report.id)} className="rounded mt-1 flex-shrink-0" />
+                      {/* Clickable category icon */}
+                      <button
+                        onClick={() => openReportDetail(report.id)}
+                        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 hover:ring-2 hover:ring-indigo-400 transition-all bg-yellow-100"
+                        title="View report detail"
+                      >
+                        {cat?.imageUrl
+                          ? <img src={cat.imageUrl} alt={cat.name} className="w-8 h-8 object-contain rounded-full" />
+                          : <span className="text-xl">{report.categoryEmoji || '🐑'}</span>
+                        }
+                      </button>
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <button onClick={() => openReportDetail(report.id)} className="text-left w-full hover:text-indigo-700 transition-colors">
+                          <div className="font-medium text-slate-800">{report.sheepCount} {report.categoryName || 'Sheep'}</div>
+                        </button>
+                        <div className="text-xs text-slate-500 mt-0.5">
+                          {report.submittedByUserName || report.reporterContact || <span className="italic text-slate-400">Anonymous</span>}
+                          {' · '}{new Date(report.timestamp).toLocaleString()}
                         </div>
+                        {conditions.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {conditions.map(c => <span key={c} className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">{c}</span>)}
+                          </div>
+                        )}
+                        {report.description && <div className="text-xs text-slate-400 mt-1 truncate">{report.description}</div>}
                       </div>
-                      <div className="flex items-center gap-2 flex-wrap justify-end">
+                      {/* Actions */}
+                      <div className="flex items-center gap-1.5 flex-wrap justify-end flex-shrink-0">
                         {getDaysUnclaimedBadge(report)}
                         {report.screeningRequired && !report.archived && (
-                          <span className="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700">⚠️ Review</span>
+                          <span className="px-2 py-1.5 rounded-lg text-xs font-medium bg-red-100 text-red-700">⚠️ Review</span>
                         )}
                         {report.flaggedByFarmer && report.status !== 'complete' && (
-                          <span className="px-2 py-1 rounded text-xs font-medium bg-amber-100 text-amber-700">🚩 Flagged</span>
+                          <span className="px-2 py-1.5 rounded-lg text-xs font-medium bg-amber-100 text-amber-700">🚩</span>
                         )}
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        <span className={`px-2 py-1.5 rounded-lg text-xs font-medium ${
                           report.status === 'complete' ? 'bg-slate-200 text-slate-700' :
                           report.status === 'escalated' ? 'bg-orange-100 text-orange-700' :
                           report.status === 'resolved' ? 'bg-green-100 text-green-700' :
                           report.status === 'claimed' ? 'bg-blue-100 text-blue-700' :
                           'bg-yellow-100 text-yellow-700'
                         }`}>{report.status}</span>
-                        {report.archived && <span className="px-2 py-1 rounded text-xs bg-slate-200 text-slate-600">Archived</span>}
-                        <button onClick={() => openReportDetail(report.id)} className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded text-sm hover:bg-indigo-200">View</button>
+                        {report.archived && <span className={`${btnBase} bg-slate-200 text-slate-600`}>Archived</span>}
+                        <button onClick={() => openReportDetail(report.id)} className={`${btnBase} bg-indigo-100 text-indigo-700 hover:bg-indigo-200`}>View</button>
                         {!report.archived && report.screeningRequired && (
-                          <button onClick={() => approveReportScreening(report.id)} className="px-3 py-1 bg-teal-100 text-teal-700 rounded text-sm hover:bg-teal-200">Approve</button>
+                          <button onClick={() => approveReportScreening(report.id)} className={`${btnBase} bg-teal-100 text-teal-700 hover:bg-teal-200`}>Approve</button>
                         )}
                         {!report.archived && report.status === 'reported' && !report.screeningRequired && (
-                          <button onClick={() => setShowClaimReportModal(report.id)} className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200">Claim for Farmer</button>
+                          <button onClick={() => setShowClaimReportModal(report.id)} className={`${btnBase} bg-green-100 text-green-700 hover:bg-green-200`}>Claim</button>
                         )}
                         {!report.archived && report.status === 'claimed' && (
-                          <button onClick={() => resolveReport(report.id)} className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200">Resolve</button>
+                          <button onClick={() => resolveReport(report.id)} className={`${btnBase} bg-blue-100 text-blue-700 hover:bg-blue-200`}>Resolve</button>
                         )}
                         {!report.archived && (report.status === 'resolved' || report.status === 'escalated') && (
-                          <button onClick={() => escalateReport(report.id)} className="px-3 py-1 bg-orange-100 text-orange-700 rounded text-sm hover:bg-orange-200">Escalate</button>
+                          <button onClick={() => escalateReport(report.id)} className={`${btnBase} bg-orange-100 text-orange-700 hover:bg-orange-200`}>Escalate</button>
                         )}
                         {!report.archived && (report.status === 'resolved' || report.status === 'escalated') && (
-                          <button onClick={() => { setCompleteReportId(report.id); setCompleteNotes('') }} className="px-3 py-1 bg-slate-700 text-white rounded text-sm hover:bg-slate-800">Complete</button>
+                          <button onClick={() => { setCompleteReportId(report.id); setCompleteNotes('') }} className={`${btnBase} bg-slate-700 text-white hover:bg-slate-800`}>Complete</button>
                         )}
                         {!report.archived && (
-                          <button onClick={() => archiveReport(report.id)} className="px-3 py-1 bg-slate-100 text-slate-600 rounded text-sm hover:bg-slate-200">Archive</button>
+                          <button onClick={() => archiveReport(report.id)} className={`${btnBase} bg-slate-100 text-slate-600 hover:bg-slate-200`}>Archive</button>
                         )}
-                        <button onClick={() => confirmDelete(report.id, 'report')} className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200">Delete</button>
+                        <button onClick={() => confirmDelete(report.id, 'report')} className={`${btnBase} bg-red-100 text-red-700 hover:bg-red-200`}>Delete</button>
                       </div>
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>

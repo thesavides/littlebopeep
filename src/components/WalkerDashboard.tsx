@@ -38,6 +38,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
     markNotificationRead,
     reportCategories,
     loadReports,
+    editOwnReport,
   } = useAppStore()
   
   const [viewState, setViewState] = useState<ViewState>('dashboard')
@@ -67,6 +68,9 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
   const [thankYouMessages, setThankYouMessages] = useState<any[]>([])
 
   const [profileOpen, setProfileOpen] = useState(false)
+  const [editingReportId, setEditingReportId] = useState<string | null>(null)
+  const [editFields, setEditFields] = useState<{ description: string; sheepCount: number; conditions: string[]; photoUrls: string[] }>({ description: '', sheepCount: 1, conditions: [], photoUrls: [] })
+  const [savingEdit, setSavingEdit] = useState(false)
 
   // Load reports and thank-you messages from Supabase on mount
   useEffect(() => {
@@ -804,29 +808,133 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
               </div>
             ) : (
               <div className="space-y-4">
-                {myReports.map((report) => (
-                  <div key={report.id} className="bg-white rounded-xl p-4 shadow border border-slate-200">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <div className="font-semibold text-slate-800 flex items-center gap-2">
-                          🐑 {t('walker.sheepSpotted', { count: report.sheepCount }, `${report.sheepCount} sheep spotted`)}
+                {myReports.map((report) => {
+                  const isEditing = editingReportId === report.id
+                  const displayConditions = report.conditions?.length
+                    ? report.conditions
+                    : report.condition ? [report.condition] : []
+                  return (
+                    <div key={report.id} className="bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
+                      <div className="p-4">
+                        <div className="flex justify-between items-start mb-1">
+                          <div>
+                            <div className="font-semibold text-slate-800">
+                              {report.categoryEmoji || '🐑'} {report.sheepCount} {report.categoryName || 'sheep'}
+                            </div>
+                            <div className="text-sm text-slate-500">
+                              <span className="font-mono text-slate-400 mr-1">#{report.id.slice(-6).toUpperCase()}</span>
+                              · {new Date(report.timestamp).toLocaleString()}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {getStatusBadge(report.status)}
+                            {(report.status === 'reported' || report.status === 'claimed') && (
+                              <button
+                                onClick={() => {
+                                  if (isEditing) {
+                                    setEditingReportId(null)
+                                  } else {
+                                    setEditingReportId(report.id)
+                                    setEditFields({
+                                      description: report.description || '',
+                                      sheepCount: report.sheepCount,
+                                      conditions: report.conditions?.length ? report.conditions : report.condition ? [report.condition] : [],
+                                      photoUrls: report.photoUrls || [],
+                                    })
+                                  }
+                                }}
+                                className="px-2 py-1 text-xs bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200"
+                              >
+                                {isEditing ? 'Cancel' : 'Edit'}
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-sm text-slate-500">
-                          {new Date(report.timestamp).toLocaleString()}
-                        </div>
+                        {displayConditions.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {displayConditions.map(c => (
+                              <span key={c} className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs">{c}</span>
+                            ))}
+                          </div>
+                        )}
+                        {report.description && (
+                          <p className="text-sm text-slate-600 mt-2">{report.description}</p>
+                        )}
+                        {report.photoUrls && report.photoUrls.length > 0 && (
+                          <div className="mt-3">
+                            <PhotoGallery photos={report.photoUrls} className="max-w-xs" />
+                          </div>
+                        )}
                       </div>
-                      {getStatusBadge(report.status)}
+
+                      {isEditing && (
+                        <div className="border-t border-slate-200 bg-slate-50 p-4 space-y-4">
+                          <h4 className="font-semibold text-slate-700 text-sm">Edit Report</h4>
+
+                          <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Quantity</label>
+                            <div className="flex items-center gap-2">
+                              <button type="button" onClick={() => setEditFields(f => ({ ...f, sheepCount: Math.max(1, f.sheepCount - 1) }))}
+                                className="w-9 h-9 rounded-lg bg-white border border-slate-300 font-bold text-lg flex items-center justify-center">−</button>
+                              <input type="number" min="1" value={editFields.sheepCount}
+                                onChange={e => setEditFields(f => ({ ...f, sheepCount: parseInt(e.target.value) || 1 }))}
+                                className="w-16 text-center px-2 py-1 border border-slate-300 rounded-lg text-base font-semibold" />
+                              <button type="button" onClick={() => setEditFields(f => ({ ...f, sheepCount: f.sheepCount + 1 }))}
+                                className="w-9 h-9 rounded-lg bg-white border border-slate-300 font-bold text-lg flex items-center justify-center">+</button>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Conditions</label>
+                            <div className="flex flex-wrap gap-2">
+                              {['Healthy','Injured','Dead','In road','Lost / straying','Not sure'].map(opt => {
+                                const sel = editFields.conditions.includes(opt)
+                                return (
+                                  <button key={opt} type="button"
+                                    onClick={() => setEditFields(f => ({
+                                      ...f,
+                                      conditions: sel ? f.conditions.filter(c => c !== opt) : [...f.conditions, opt]
+                                    }))}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-medium border-2 transition-colors ${sel ? 'bg-green-600 text-white border-green-600' : 'bg-white text-slate-700 border-slate-300'}`}
+                                  >{opt}</button>
+                                )
+                              })}
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Details</label>
+                            <textarea value={editFields.description}
+                              onChange={e => setEditFields(f => ({ ...f, description: e.target.value }))}
+                              rows={2}
+                              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500" />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Photos</label>
+                            <PhotoUpload
+                              reportId={report.id}
+                              onPhotosUploaded={(urls) => setEditFields(f => ({ ...f, photoUrls: [...new Set([...f.photoUrls, ...urls])] }))}
+                            />
+                          </div>
+
+                          <button
+                            onClick={async () => {
+                              setSavingEdit(true)
+                              await editOwnReport(report.id, editFields)
+                              setSavingEdit(false)
+                              setEditingReportId(null)
+                            }}
+                            disabled={savingEdit}
+                            className="w-full py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 disabled:opacity-50"
+                          >
+                            {savingEdit ? 'Saving…' : 'Save Changes'}
+                          </button>
+                        </div>
+                      )}
                     </div>
-                    {report.description && (
-                      <p className="text-sm text-slate-600 mt-2">{report.description}</p>
-                    )}
-                    {report.photoUrls && report.photoUrls.length > 0 && (
-                      <div className="mt-3">
-                        <PhotoGallery photos={report.photoUrls} className="max-w-xs" />
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </>
