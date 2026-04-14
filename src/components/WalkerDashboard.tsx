@@ -398,13 +398,13 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
 
             {/* Category Picker Modal */}
             {showCategoryPicker && (
-              <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50" onClick={() => setShowCategoryPicker(false)}>
-                <div className="bg-white rounded-t-2xl w-full max-w-lg shadow-xl animate-slide-up" onClick={e => e.stopPropagation()}>
+              <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4" onClick={() => setShowCategoryPicker(false)}>
+                <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg shadow-xl animate-slide-up sm:animate-none" onClick={e => e.stopPropagation()}>
                   <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-100">
                     <h3 className="text-lg font-bold text-slate-800">What are you reporting?</h3>
                     <button onClick={() => setShowCategoryPicker(false)} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">×</button>
                   </div>
-                  <div className="p-4 space-y-2 max-h-[70vh] overflow-y-auto safe-area-pb">
+                  <div className="p-4 space-y-2 max-h-[70vh] sm:max-h-[80vh] overflow-y-auto safe-area-pb">
                     {/* Sheep — always first */}
                     {(() => {
                       const isSheepDefault = !preferredCategoryId
