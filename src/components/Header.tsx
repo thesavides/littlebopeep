@@ -7,9 +7,10 @@ interface HeaderProps {
   showBackButton?: boolean
   onBack?: () => void
   title?: string
+  onTitleClick?: () => void
 }
 
-export default function Header({ showBackButton = false, onBack, title }: HeaderProps) {
+export default function Header({ showBackButton = false, onBack, title, onTitleClick }: HeaderProps) {
   const { t } = useTranslation()
   const { isAdmin, setShowHomePage, setRole, setAdmin } = useAppStore()
 
@@ -55,9 +56,18 @@ export default function Header({ showBackButton = false, onBack, title }: Header
 
         {/* Page title */}
         {title && (
-          <span className={`font-semibold ${isAdmin ? 'text-white' : 'text-slate-800'}`}>
-            {title}
-          </span>
+          onTitleClick ? (
+            <button
+              onClick={onTitleClick}
+              className={`font-semibold hover:opacity-70 transition-opacity ${isAdmin ? 'text-white' : 'text-slate-800'}`}
+            >
+              {title}
+            </button>
+          ) : (
+            <span className={`font-semibold ${isAdmin ? 'text-white' : 'text-slate-800'}`}>
+              {title}
+            </span>
+          )
         )}
       </div>
     </header>

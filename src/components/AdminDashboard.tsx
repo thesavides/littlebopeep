@@ -394,7 +394,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-100">
-      <Header title="Admin Dashboard" />
+      <Header title="Admin Dashboard" onTitleClick={() => setCurrentView('overview')} />
 
       {/* Report Detail Panel — Workstream 5 */}
       {detailReportId && (() => {
@@ -770,7 +770,6 @@ export default function AdminDashboard() {
       <div className="bg-white border-b sticky top-16 z-40">
         <div className="max-w-6xl mx-auto px-4 py-3">
           <div className="flex items-center gap-2 overflow-x-auto">
-            <NavButton view="overview" label="Overview" />
             <NavButton view="walkers" label="Walkers" count={walkers.length} />
             <NavButton view="farmers" label="Farmers" count={farmers.length} />
             <NavButton view="reports" label="Reports" count={reports.filter(r => !r.archived).length} />
