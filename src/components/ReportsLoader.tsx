@@ -10,18 +10,20 @@ import { useAppStore } from '@/store/appStore'
  */
 export default function ReportsLoader() {
   const loadReports = useAppStore((state) => state.loadReports)
+  const loadCategories = useAppStore((state) => state.loadCategories)
 
   useEffect(() => {
-    // Load reports on mount
+    // Load reports and categories on mount
     loadReports()
+    loadCategories()
 
-    // Reload every 30 seconds to stay fresh
+    // Reload reports every 30 seconds to stay fresh
     const interval = setInterval(() => {
       loadReports()
     }, 30000)
 
     return () => clearInterval(interval)
-  }, [loadReports])
+  }, [loadReports, loadCategories])
 
   return null // This component doesn't render anything
 }

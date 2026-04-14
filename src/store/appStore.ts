@@ -13,6 +13,7 @@ import {
   updateFieldInFarm,
   deleteFieldFromFarm,
   createNotificationsForFarmers,
+  fetchReportCategories,
 } from '@/lib/supabase-client'
 
 // Map configuration
@@ -329,6 +330,7 @@ interface AppState {
   // Supabase sync
   loadReports: () => Promise<void>
   loadFarms: () => Promise<void>
+  loadCategories: () => Promise<void>
 
   // Report category actions
   reportCategories: ReportCategory[]
@@ -908,6 +910,17 @@ export const useAppStore = create<AppState>()(
           }
         } catch (err) {
           console.error('Failed to load farms from Supabase:', err)
+        }
+      },
+
+      loadCategories: async () => {
+        try {
+          const categories = await fetchReportCategories()
+          if (categories.length > 0) {
+            set({ reportCategories: categories })
+          }
+        } catch (err) {
+          console.error('Failed to load categories from Supabase:', err)
         }
       },
 

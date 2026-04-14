@@ -6,6 +6,7 @@ import Header from './Header'
 import Map from './Map'
 import AdminUserManagement from './AdminUserManagement'
 import WalkerDashboard from './WalkerDashboard'
+import ProfileDrawer from './ProfileDrawer'
 import { inviteUser, getAllUsers, adminResetUserPassword, updateUserProfile, deleteUser as deleteUserFromSupabase, suspendUser as suspendUserInSupabase, activateUser as activateUserInSupabase } from '@/lib/unified-auth'
 import { fetchAuditLogs } from '@/lib/audit'
 import { fetchNotificationsForReport, approveReportScreening } from '@/lib/supabase-client'
@@ -53,6 +54,7 @@ export default function AdminDashboard() {
 
   const [currentView, setCurrentView] = useState<AdminView>('overview')
   const [showReportMode, setShowReportMode] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
   const [deleteType, setDeleteType] = useState<'user' | 'report' | 'farm' | 'field'>('user')
   const [realUsers, setRealUsers] = useState<any[]>([]) // Users from Supabase
@@ -775,12 +777,21 @@ export default function AdminDashboard() {
             <NavButton view="billing" label="Billing" />
             <NavButton view="admins" label="Admin Users" />
             <NavButton view="categories" label="Categories" count={reportCategories.length} />
-            <div className="ml-auto flex-shrink-0">
+            <div className="ml-auto flex-shrink-0 flex items-center gap-2">
               <button
                 onClick={() => setShowReportMode(true)}
                 className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
               >
                 🐑 Report Sheep
+              </button>
+              <button
+                onClick={() => setProfileOpen(true)}
+                title="Account settings"
+                className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
               </button>
             </div>
           </div>
@@ -1488,6 +1499,8 @@ export default function AdminDashboard() {
           <p>Little Bo Peep Admin Panel • Version 3.0.0</p>
         </div>
       </main>
+
+      <ProfileDrawer open={profileOpen} onClose={() => setProfileOpen(false)} />
     </div>
   )
 }

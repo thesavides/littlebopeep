@@ -373,6 +373,7 @@ export async function fetchReportCategories() {
     countLabel: c.count_label,
     isActive: c.is_active,
     sortOrder: c.sort_order,
+    subscriptionMode: (c as any).subscription_mode || 'default_on',
     createdAt: new Date(c.created_at),
   }))
 }

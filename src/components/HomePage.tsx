@@ -9,12 +9,15 @@ import LanguageSelector from './LanguageSelector'
 import PasswordInput from './PasswordInput'
 import { input } from '@/lib/ui'
 
+// Intentional: HomePage is the sign-in/sign-up entry point.
+// We use t() for all user-visible strings so language switching works.
+
 type AuthMode = 'signin' | 'signup'
 type SignupRole = 'walker' | 'farmer'
 
 export default function HomePage() {
   const router = useRouter()
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const {
     setRole,
     setAdmin,
@@ -90,13 +93,13 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50" key={language}>
 
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-3 max-w-5xl mx-auto">
         <div className="flex items-center gap-2">
           <span className="text-2xl">🐑</span>
-          <span className="font-bold text-green-800 text-lg">Little Bo Peep</span>
+          <span className="font-bold text-green-800 text-lg">{t('header.appName', {}, 'Little Bo Peep')}</span>
         </div>
         <div className="flex items-center gap-3">
           <LanguageSelector />
@@ -114,10 +117,10 @@ export default function HomePage() {
         {/* ── Hero ────────────────────────────────────────────── */}
         <div className="text-center pt-8 pb-10">
           <h1 className="text-4xl sm:text-5xl font-bold text-slate-800 mb-3">
-            Helping sheep<br className="sm:hidden" /> get home
+            {t('home.tagline', {}, 'Helping sheep get home')}
           </h1>
           <p className="text-slate-500 text-lg max-w-md mx-auto">
-            Connect countryside walkers with farmers to recover lost livestock — fast.
+            {t('home.description', {}, 'Connect countryside walkers with farmers to recover lost livestock — fast.')}
           </p>
           <p className="text-xs text-slate-400 mt-2 tracking-wide">littlebopeep.app</p>
         </div>
@@ -136,7 +139,7 @@ export default function HomePage() {
                     : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
-                Sign In
+                {t('auth.signIn', {}, 'Sign In')}
               </button>
               <button
                 onClick={() => { setMode('signup'); setError('') }}
@@ -146,7 +149,7 @@ export default function HomePage() {
                     : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
-                Create Account
+                {t('auth.signUp', {}, 'Create Account')}
               </button>
             </div>
 
@@ -157,7 +160,7 @@ export default function HomePage() {
                 <>
                   {/* Role picker */}
                   <div>
-                    <p className="text-sm font-medium text-slate-700 mb-2">I am a:</p>
+                    <p className="text-sm font-medium text-slate-700 mb-2">{t('auth.iAmA', {}, 'I am a:')}</p>
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         type="button"
@@ -169,7 +172,7 @@ export default function HomePage() {
                         }`}
                       >
                         <span className="text-2xl">🚶</span>
-                        <span className="text-sm font-medium">Walker</span>
+                        <span className="text-sm font-medium">{t('auth.walker', {}, 'Walker')}</span>
                       </button>
                       <button
                         type="button"
@@ -181,14 +184,14 @@ export default function HomePage() {
                         }`}
                       >
                         <span className="text-2xl">🧑‍🌾</span>
-                        <span className="text-sm font-medium">Farmer</span>
+                        <span className="text-sm font-medium">{t('auth.farmer', {}, 'Farmer')}</span>
                       </button>
                     </div>
                   </div>
 
                   <div>
                     <label htmlFor="fullName" className="block text-sm font-medium text-slate-700 mb-1">
-                      Full Name
+                      {t('auth.fullName', {}, 'Full Name')}
                     </label>
                     <input
                       id="fullName"
@@ -197,7 +200,7 @@ export default function HomePage() {
                       onChange={(e) => setFullName(e.target.value)}
                       required
                       autoComplete="name"
-                      placeholder="Jane Smith"
+                      placeholder={t('auth.fullNamePlaceholder', {}, 'Jane Smith')}
                       className={input}
                     />
                   </div>
@@ -207,7 +210,7 @@ export default function HomePage() {
               {/* Email */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
-                  Email
+                  {t('auth.email', {}, 'Email')}
                 </label>
                 <input
                   id="email"
@@ -216,7 +219,7 @@ export default function HomePage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="email"
-                  placeholder="you@example.com"
+                  placeholder={t('auth.emailPlaceholder', {}, 'you@example.com')}
                   className={input}
                 />
               </div>
@@ -224,7 +227,7 @@ export default function HomePage() {
               {/* Password */}
               <PasswordInput
                 id="password"
-                label="Password"
+                label={t('auth.password', {}, 'Password')}
                 value={password}
                 onChange={setPassword}
                 required
@@ -241,7 +244,7 @@ export default function HomePage() {
                     onClick={() => router.push('/auth/forgot-password')}
                     className="text-xs text-slate-400 hover:text-green-600 transition-colors"
                   >
-                    Forgot password?
+                    {t('auth.forgotPassword', {}, 'Forgot password?')}
                   </button>
                 </div>
               )}
@@ -260,23 +263,23 @@ export default function HomePage() {
                 className="w-full py-4 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               >
                 {loading
-                  ? 'Please wait…'
+                  ? t('common.pleaseWait', {}, 'Please wait…')
                   : mode === 'signin'
-                    ? 'Sign In →'
-                    : 'Create Account →'
+                    ? t('auth.signIn', {}, 'Sign In') + ' →'
+                    : t('auth.signUp', {}, 'Create Account') + ' →'
                 }
               </button>
 
               {/* Sign-up helper */}
               {mode === 'signup' && (
                 <p className="text-xs text-slate-400 text-center">
-                  Already have an account?{' '}
+                  {t('auth.alreadyHaveAccount', {}, 'Already have an account?')}{' '}
                   <button
                     type="button"
                     onClick={() => { setMode('signin'); setError('') }}
                     className="text-green-600 font-medium hover:underline"
                   >
-                    Sign in
+                    {t('auth.signIn', {}, 'Sign in')}
                   </button>
                 </p>
               )}
@@ -286,12 +289,12 @@ export default function HomePage() {
 
         {/* ── How it works ────────────────────────────────────── */}
         <div className="mt-16 max-w-2xl mx-auto">
-          <h2 className="text-center text-xl font-bold text-slate-700 mb-8">How it works</h2>
+          <h2 className="text-center text-xl font-bold text-slate-700 mb-8">{t('home.howItWorks', {}, 'How it works')}</h2>
           <div className="grid grid-cols-3 gap-6 text-center">
             {[
-              { n: '1', icon: '🚶', title: 'Spot', body: 'Walker sees lost sheep on their route' },
-              { n: '2', icon: '📍', title: 'Report', body: 'Pin location, add a photo and condition' },
-              { n: '3', icon: '🏡', title: 'Reunite', body: 'Farmer gets an alert and recovers the flock' },
+              { n: '1', icon: '🚶', title: t('home.step1Title', {}, 'Spot'), body: t('home.step1Description', {}, 'Walker sees lost sheep on their route') },
+              { n: '2', icon: '📍', title: t('home.step2Title', {}, 'Report'), body: t('home.step2Description', {}, 'Pin location, add a photo and condition') },
+              { n: '3', icon: '🏡', title: t('home.step3Title', {}, 'Reunite'), body: t('home.step3Description', {}, 'Farmer gets an alert and recovers the flock') },
             ].map(({ n, icon, title, body }) => (
               <div key={n} className="flex flex-col items-center gap-2">
                 <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-xl">
@@ -307,9 +310,9 @@ export default function HomePage() {
         {/* ── Stats ───────────────────────────────────────────── */}
         <div className="mt-10 grid grid-cols-3 gap-3 max-w-sm mx-auto text-center">
           {[
-            { value: '33M', label: 'Sheep in UK' },
-            { value: '£80M', label: 'Annual losses' },
-            { value: 'Free', label: '30-day trial' },
+            { value: '33M', label: t('home.stat1', {}, 'Sheep in UK') },
+            { value: '£80M', label: t('home.stat2', {}, 'Annual losses') },
+            { value: t('home.stat3Value', {}, 'Free'), label: t('home.stat3Label', {}, '30-day trial') },
           ].map(({ value, label }) => (
             <div key={label} className="bg-white rounded-xl p-3 shadow-sm border border-slate-100">
               <div className="text-xl font-bold text-green-600">{value}</div>
