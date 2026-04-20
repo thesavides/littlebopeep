@@ -561,24 +561,26 @@ export const useAppStore = create<AppState>()(
       })),
       
       submitReport: async () => {
-        const { draftReport, reports, currentUserId, farms, currentRole } = get()
+        const { draftReport, reports, currentUserId, farms, currentRole, users } = get()
 
-        // Fetch submitter name from Supabase profile (Workstream 2: fix attribution)
-        let submittedByUserName: string | undefined
+        // Resolve submitter name: prefer loaded store user, fall back to auth email
+        const storeUser = users.find(u => u.id === currentUserId)
+        let submittedByUserName: string | undefined = storeUser?.name || undefined
         let roleOfSubmitter: string | undefined = currentRole || undefined
         try {
           const { data: { user } } = await supabase.auth.getUser()
           if (user) {
+            if (!submittedByUserName) submittedByUserName = user.email || undefined
             const { data: profile } = await supabase
               .from('user_profiles')
               .select('full_name, role')
               .eq('id', user.id)
               .single()
-            submittedByUserName = profile?.full_name || user.email || undefined
+            if (profile?.full_name) submittedByUserName = profile.full_name
             if (profile?.role) roleOfSubmitter = profile.role
           }
         } catch {
-          // Non-fatal — report submits without attribution if profile fetch fails
+          // Non-fatal — name from store is already set above
         }
 
         // Compute affected farms/farmers from geo-proximity (Workstream 3)

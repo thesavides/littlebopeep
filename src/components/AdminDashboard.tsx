@@ -629,6 +629,7 @@ export default function AdminDashboard() {
                     <section>
                       <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Report</h3>
                       <div className="bg-slate-50 rounded-lg p-3 text-sm space-y-1">
+                        <div><span className="text-slate-500">Report ID:</span> <span className="font-mono text-xs text-slate-600">{report.id.length > 8 ? report.id.slice(0, 8).toUpperCase() : report.id}</span></div>
                         <div className="text-2xl">{report.categoryEmoji} <span className="text-base font-medium">{report.categoryName}</span></div>
                         <div><span className="text-slate-500">Count:</span> {report.sheepCount}</div>
                         <div><span className="text-slate-500">Condition:</span> {report.condition}</div>
@@ -1571,7 +1572,8 @@ export default function AdminDashboard() {
                           <div className="font-medium text-slate-800">{report.sheepCount} {report.categoryName || 'Sheep'}</div>
                         </button>
                         <div className="text-xs text-slate-500 mt-0.5">
-                          {report.submittedByUserName || report.reporterContact || <span className="italic text-slate-400">Anonymous</span>}
+                          <span className="font-mono text-slate-400">{report.id.length > 8 ? report.id.slice(0, 8).toUpperCase() : report.id}</span>
+                          {' · '}{report.submittedByUserName || report.reporterContact || <span className="italic text-slate-400">Anonymous</span>}
                           {' · '}{new Date(report.timestamp).toLocaleString()}
                         </div>
                         {conditions.length > 0 && (
