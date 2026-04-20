@@ -14,7 +14,7 @@ type SignupRole = 'walker' | 'farmer'
 
 export default function HomePage() {
   const router = useRouter()
-  const { language } = useTranslation()
+  const { t, language } = useTranslation()
   const { setRole, setCurrentUserId } = useAppStore()
 
   // Auth modal
@@ -60,13 +60,13 @@ export default function HomePage() {
     try {
       if (authMode === 'signup') {
         if (!fullName.trim()) {
-          setError('Please enter your full name')
+          setError(t('auth.nameRequired', {}, 'Please enter your full name'))
           setLoading(false)
           return
         }
         const { success, user, error: err } = await signUp(email, password, fullName.trim(), signupRole)
         if (!success || !user) {
-          setError(err || 'Sign up failed. Please try again.')
+          setError(err || t('auth.signupFailed', {}, 'Sign up failed. Please try again.'))
           setLoading(false)
           return
         }
@@ -78,7 +78,7 @@ export default function HomePage() {
 
       const { success, user, error: err } = await signIn(email, password)
       if (!success || !user) {
-        setError(err || 'Incorrect email or password')
+        setError(err || t('auth.authenticationFailed', {}, 'Incorrect email or password'))
         setLoading(false)
         return
       }
@@ -90,11 +90,25 @@ export default function HomePage() {
       }
       router.push('/')
     } catch (err: any) {
-      setError(err.message || 'Authentication failed')
+      setError(err.message || t('auth.authenticationFailed', {}, 'Authentication failed'))
     } finally {
       setLoading(false)
     }
   }
+
+  // Translated action cards — built inside render so t() is in scope
+  const actionCards = [
+    { icon: '👀', label: t('home.landing.seeIt',     {}, 'See it') },
+    { icon: '📍', label: t('home.landing.reportIt',  {}, 'Report it') },
+    { icon: '✅', label: t('home.landing.getSorted', {}, 'Get it sorted') },
+  ]
+
+  const steps = [
+    { n: 1, icon: '👀', label: t('home.landing.step1', {}, 'You see it') },
+    { n: 2, icon: '📍', label: t('home.landing.step2', {}, 'You report it') },
+    { n: 3, icon: '🔔', label: t('home.landing.step3', {}, 'Farmer is alerted') },
+    { n: 4, icon: '✅', label: t('home.landing.step4', {}, 'It gets resolved') },
+  ]
 
   return (
     <div className="min-h-screen bg-stone-50" key={language}>
@@ -114,7 +128,7 @@ export default function HomePage() {
               onClick={() => openAuth('signin')}
               className="text-sm font-medium text-stone-600 hover:text-green-700 transition-colors px-3 py-1.5"
             >
-              Sign in
+              {t('auth.signIn', {}, 'Sign in')}
             </button>
           </div>
         </div>
@@ -126,25 +140,21 @@ export default function HomePage() {
       <section className="px-4 pt-10 pb-8 max-w-lg mx-auto text-center">
 
         <p className="text-xs font-bold tracking-widest text-green-600 uppercase mb-4">
-          Real-time countryside reporting
+          {t('home.landing.eyebrow', {}, 'Real-time countryside reporting')}
         </p>
 
         <h1 className="text-4xl sm:text-5xl font-extrabold text-stone-900 leading-[1.1] mb-4">
           Little Bo Peep<br />
-          <span className="text-green-700">has lost her sheep.</span>
+          <span className="text-green-700">{t('home.landing.headlinePart2', {}, 'has lost her sheep.')}</span>
         </h1>
 
-        <p className="text-stone-500 text-lg leading-relaxed mb-8 max-w-sm mx-auto">
-          Help her find it &amp; report anything else along the way.
+        <p className="text-stone-500 text-sm font-medium mb-8 max-w-sm mx-auto whitespace-nowrap overflow-hidden text-ellipsis">
+          {t('home.landing.subheadline', {}, 'Help find it & report anything else along the way.')}
         </p>
 
         {/* ── Action Cards ── */}
         <div className="grid grid-cols-3 gap-3 mb-6">
-          {[
-            { icon: '👀', label: 'See it' },
-            { icon: '📍', label: 'Report it' },
-            { icon: '✅', label: 'Get it sorted' },
-          ].map(({ icon, label }) => (
+          {actionCards.map(({ icon, label }) => (
             <button
               key={label}
               onClick={() => openAuth('signup', 'walker')}
@@ -156,12 +166,12 @@ export default function HomePage() {
           ))}
         </div>
 
-        {/* ── Secondary CTA (farmer) ── */}
+        {/* ── Farmer CTA ── */}
         <button
           onClick={() => openAuth('signup', 'farmer')}
           className="w-full py-3.5 bg-white text-stone-600 text-sm font-semibold rounded-2xl border border-stone-200 hover:border-amber-300 hover:text-amber-700 transition-colors"
         >
-          🧑‍🌾 Farmer? Sign up to get alerts
+          🧑‍🌾 {t('home.landing.farmerCta', {}, 'Farmer? Sign up to get alerts')}
         </button>
       </section>
 
@@ -170,16 +180,13 @@ export default function HomePage() {
       ═══════════════════════════════════════ */}
       <section className="py-12 bg-white border-y border-stone-100">
         <div className="max-w-2xl mx-auto px-4">
-          <h2 className="text-center text-xl font-bold text-stone-800 mb-8">How it works</h2>
+          <h2 className="text-center text-xl font-bold text-stone-800 mb-8">
+            {t('home.howItWorks', {}, 'How it works')}
+          </h2>
 
           {/* 2×2 grid on mobile, 4-col on sm+ */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {[
-              { n: 1, icon: '👀', label: 'You see it' },
-              { n: 2, icon: '📍', label: 'You report it' },
-              { n: 3, icon: '🔔', label: 'Farmer is alerted' },
-              { n: 4, icon: '✅', label: 'It gets resolved' },
-            ].map(({ n, icon, label }) => (
+            {steps.map(({ n, icon, label }) => (
               <div key={n} className="flex flex-col items-center text-center">
                 <div className="relative mb-3">
                   <div className="w-14 h-14 rounded-full bg-green-50 border-2 border-green-200 flex items-center justify-center text-2xl">
@@ -202,16 +209,20 @@ export default function HomePage() {
       <section className="py-10 px-4">
         <div className="max-w-sm mx-auto text-center">
           <p className="text-sm text-stone-500 mb-6">
-            Unreported issues cost time, money, and livestock.
+            {t('home.landing.trustText', {}, 'Unreported issues cost time, money, and livestock.')}
           </p>
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-5">
               <div className="text-3xl font-extrabold text-green-700">33M</div>
-              <div className="text-xs text-stone-500 mt-1 font-medium">Sheep in the UK</div>
+              <div className="text-xs text-stone-500 mt-1 font-medium">
+                {t('home.landing.stat1Label', {}, 'Sheep in the UK')}
+              </div>
             </div>
             <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-5">
               <div className="text-3xl font-extrabold text-green-700">£80M</div>
-              <div className="text-xs text-stone-500 mt-1 font-medium">Lost annually</div>
+              <div className="text-xs text-stone-500 mt-1 font-medium">
+                {t('home.landing.stat2Label', {}, 'Lost annually')}
+              </div>
             </div>
           </div>
         </div>
@@ -223,15 +234,17 @@ export default function HomePage() {
       <section className="px-4 pb-12 max-w-lg mx-auto">
         <div className="bg-amber-50 rounded-2xl border border-amber-100 p-6 text-center">
           <span className="text-4xl mb-3 block" role="img" aria-label="farmer">🧑‍🌾</span>
-          <h3 className="text-xl font-bold text-stone-800 mb-2">Own land or livestock?</h3>
+          <h3 className="text-xl font-bold text-stone-800 mb-2">
+            {t('home.landing.farmerHeadline', {}, 'Own land or livestock?')}
+          </h3>
           <p className="text-stone-500 text-sm mb-5 leading-relaxed">
-            Get notified the moment something is reported near your land.
+            {t('home.landing.farmerBody', {}, 'Get notified the moment something is reported near your land.')}
           </p>
           <button
             onClick={() => openAuth('signup', 'farmer')}
             className="w-full py-3.5 bg-amber-500 text-white font-bold rounded-xl hover:bg-amber-600 active:scale-[0.98] transition-all shadow-sm"
           >
-            Get notified when something's reported
+            {t('home.landing.farmerButton', {}, "Get notified when something's reported")}
           </button>
         </div>
       </section>
@@ -248,7 +261,7 @@ export default function HomePage() {
           className="w-full max-w-lg mx-auto flex items-center justify-center gap-2 py-4 bg-green-600 text-white text-base font-bold rounded-2xl shadow-2xl pointer-events-auto active:scale-[0.98] transition-transform hover:bg-green-700"
         >
           <span>📍</span>
-          <span>Report something</span>
+          <span>{t('home.landing.reportCta', {}, 'Report something')}</span>
         </button>
       </div>
 
@@ -261,13 +274,9 @@ export default function HomePage() {
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
           role="dialog"
           aria-modal="true"
-          aria-label={authMode === 'signup' ? 'Create account' : 'Sign in'}
         >
           {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setShowAuth(false)}
-          />
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowAuth(false)} />
 
           {/* Sheet / card */}
           <div className="relative w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden max-h-[95vh] overflow-y-auto">
@@ -280,7 +289,9 @@ export default function HomePage() {
             {/* Header */}
             <div className="flex items-center justify-between px-6 pt-5 pb-0">
               <h2 className="text-lg font-bold text-stone-900">
-                {authMode === 'signup' ? 'Create your account' : 'Welcome back'}
+                {authMode === 'signup'
+                  ? t('home.landing.createAccountTitle', {}, 'Create your account')
+                  : t('home.landing.welcomeBack', {}, 'Welcome back')}
               </h2>
               <button
                 onClick={() => setShowAuth(false)}
@@ -301,7 +312,7 @@ export default function HomePage() {
                     : 'border-transparent text-stone-400 hover:text-stone-600'
                 }`}
               >
-                Create account
+                {t('home.landing.createAccountTab', {}, 'Create account')}
               </button>
               <button
                 onClick={() => { setAuthMode('signin'); setError('') }}
@@ -311,7 +322,7 @@ export default function HomePage() {
                     : 'border-transparent text-stone-400 hover:text-stone-600'
                 }`}
               >
-                Sign in
+                {t('auth.signIn', {}, 'Sign in')}
               </button>
             </div>
 
@@ -321,7 +332,9 @@ export default function HomePage() {
               {authMode === 'signup' && (
                 <>
                   <div>
-                    <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-2">I am a:</p>
+                    <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-2">
+                      {t('auth.iAmA', {}, 'I am a:')}
+                    </p>
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         type="button"
@@ -333,7 +346,7 @@ export default function HomePage() {
                         }`}
                       >
                         <span className="text-xl">🚶</span>
-                        <span className="text-sm font-bold">Walker</span>
+                        <span className="text-sm font-bold">{t('auth.walker', {}, 'Walker')}</span>
                       </button>
                       <button
                         type="button"
@@ -345,14 +358,14 @@ export default function HomePage() {
                         }`}
                       >
                         <span className="text-xl">🧑‍🌾</span>
-                        <span className="text-sm font-bold">Farmer</span>
+                        <span className="text-sm font-bold">{t('auth.farmer', {}, 'Farmer')}</span>
                       </button>
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold text-stone-500 uppercase tracking-wide mb-1.5">
-                      Full name
+                      {t('home.landing.fullName', {}, 'Full name')}
                     </label>
                     <input
                       type="text"
@@ -369,7 +382,7 @@ export default function HomePage() {
 
               <div>
                 <label className="block text-xs font-bold text-stone-500 uppercase tracking-wide mb-1.5">
-                  Email
+                  {t('auth.email', {}, 'Email')}
                 </label>
                 <input
                   type="email"
@@ -377,14 +390,14 @@ export default function HomePage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="email"
-                  placeholder="you@example.com"
+                  placeholder={t('auth.emailPlaceholder', {}, 'you@example.com')}
                   className={input}
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-stone-500 uppercase tracking-wide mb-1.5">
-                  Password
+                  {t('auth.password', {}, 'Password')}
                 </label>
                 <PasswordInput
                   id="modal-password"
@@ -405,7 +418,7 @@ export default function HomePage() {
                     onClick={() => { setShowAuth(false); router.push('/auth/forgot-password') }}
                     className="text-xs text-stone-400 hover:text-green-600 transition-colors"
                   >
-                    Forgot password?
+                    {t('home.landing.forgotPassword', {}, 'Forgot password?')}
                   </button>
                 </div>
               )}
@@ -422,23 +435,24 @@ export default function HomePage() {
                 className="w-full py-4 bg-green-600 text-white rounded-xl font-bold text-base hover:bg-green-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               >
                 {loading
-                  ? 'Please wait…'
+                  ? t('common.pleaseWait', {}, 'Please wait…')
                   : authMode === 'signup'
-                    ? 'Create account →'
-                    : 'Sign in →'
+                    ? t('home.landing.createAccountBtn', {}, 'Create account →')
+                    : t('home.landing.signInBtn', {}, 'Sign in →')
                 }
               </button>
 
               {authMode === 'signup' && (
                 <p className="text-xs text-stone-400 text-center leading-relaxed">
-                  By creating an account you agree to our terms. <br />
-                  Already have an account?{' '}
+                  {t('home.landing.terms', {}, 'By creating an account you agree to our terms.')}{' '}
+                  <br />
+                  {t('auth.alreadyHaveAccount', {}, 'Already have an account?')}{' '}
                   <button
                     type="button"
                     onClick={() => { setAuthMode('signin'); setError('') }}
                     className="text-green-600 font-semibold hover:underline"
                   >
-                    Sign in
+                    {t('auth.signIn', {}, 'Sign in')}
                   </button>
                 </p>
               )}
