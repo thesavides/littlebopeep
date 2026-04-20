@@ -574,10 +574,8 @@ export const useAppStore = create<AppState>()(
               .select('full_name, role')
               .eq('id', user.id)
               .single()
-            if (profile) {
-              submittedByUserName = profile.full_name || undefined
-              roleOfSubmitter = profile.role || roleOfSubmitter
-            }
+            submittedByUserName = profile?.full_name || user.email || undefined
+            if (profile?.role) roleOfSubmitter = profile.role
           }
         } catch {
           // Non-fatal — report submits without attribution if profile fetch fails
