@@ -1,1 +1,0 @@
-export { handler } from "./.claude/worktrees/wonderful-shirley/index.mjs";
