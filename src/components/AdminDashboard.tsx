@@ -107,7 +107,7 @@ export default function AdminDashboard() {
   const [filterKeyword, setFilterKeyword] = useState<string>('')
   const [selectedReports, setSelectedReports] = useState<string[]>([])
   const [mapBounds, setMapBounds] = useState<{north: number, south: number, east: number, west: number} | null>(null)
-  const [reportsPerPage, setReportsPerPage] = useState<number>(25)
+  const [reportsPerPage, setReportsPerPage] = useState<number>(10)
   const [reportsPage, setReportsPage] = useState<number>(1)
   const [detailReportId, setDetailReportId] = useState<string | null>(null)
   const [detailNotifications, setDetailNotifications] = useState<any[]>([])
@@ -1558,6 +1558,7 @@ export default function AdminDashboard() {
                   <div className="flex items-center gap-1">
                     <span className="text-xs text-slate-500">Per page:</span>
                     <select value={reportsPerPage} onChange={(e) => { setReportsPerPage(Number(e.target.value)); setReportsPage(1) }} className="px-2 py-1 border rounded-lg text-xs">
+                      <option value={10}>10</option>
                       <option value={25}>25</option>
                       <option value={50}>50</option>
                       <option value={100}>100</option>
