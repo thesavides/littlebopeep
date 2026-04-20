@@ -60,6 +60,7 @@ export default function AdminDashboard() {
   const [currentView, setCurrentView] = useState<AdminView>('overview')
   const [showReportMode, setShowReportMode] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
   const [deleteType, setDeleteType] = useState<'user' | 'report' | 'farm' | 'field'>('user')
   const [realUsers, setRealUsers] = useState<any[]>([]) // Users from Supabase
@@ -1121,7 +1122,8 @@ export default function AdminDashboard() {
       {/* Navigation */}
       <div className="bg-white border-b sticky top-16 z-40">
         <div className="max-w-6xl mx-auto px-4 py-3">
-          <div className="flex items-center gap-2 overflow-x-auto">
+          {/* Desktop nav */}
+          <div className="hidden md:flex items-center gap-2 overflow-x-auto">
             <NavButton view="walkers" label="Walkers" count={walkers.length} />
             <NavButton view="farmers" label="Farmers" count={farmers.length} />
             <NavButton view="reports" label="Reports" count={reports.filter(r => !r.archived).length} />
@@ -1132,7 +1134,7 @@ export default function AdminDashboard() {
             <div className="ml-auto flex-shrink-0 flex items-center gap-2">
               <button
                 onClick={() => setShowReportMode(true)}
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors whitespace-nowrap"
               >
                 Report
               </button>
@@ -1147,10 +1149,76 @@ export default function AdminDashboard() {
               </button>
             </div>
           </div>
+
+          {/* Mobile nav — hamburger */}
+          <div className="flex md:hidden items-center justify-between">
+            <span className="font-semibold text-slate-700 capitalize">{currentView}</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setProfileOpen(true)}
+                title="Account settings"
+                className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setShowMobileMenu(v => !v)}
+                aria-label="Menu"
+                className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+              >
+                {showMobileMenu ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
+
+        {/* Mobile dropdown menu */}
+        {showMobileMenu && (
+          <div className="md:hidden border-t border-slate-100 bg-white px-4 py-2 flex flex-col gap-1">
+            {([
+              { view: 'walkers' as AdminView, label: 'Walkers', count: walkers.length },
+              { view: 'farmers' as AdminView, label: 'Farmers', count: farmers.length },
+              { view: 'reports' as AdminView, label: 'Reports', count: reports.filter(r => !r.archived).length },
+              { view: 'farms' as AdminView, label: 'Farms', count: farms.length },
+              { view: 'billing' as AdminView, label: 'Billing' },
+              { view: 'admins' as AdminView, label: 'Admin Users' },
+              { view: 'categories' as AdminView, label: 'Categories', count: reportCategories.length },
+            ] as { view: AdminView; label: string; count?: number }[]).map(({ view, label, count }) => (
+              <button
+                key={view}
+                onClick={() => { setCurrentView(view); setShowMobileMenu(false) }}
+                className={`w-full text-left px-3 py-2.5 rounded-lg font-medium transition-colors ${
+                  currentView === view ? 'bg-slate-800 text-white' : 'text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                {label}{count !== undefined && <span className="ml-1.5 text-sm opacity-60">({count})</span>}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      <main className="max-w-6xl mx-auto px-4 py-6">
+      {/* Mobile fixed Report button */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white border-t border-slate-200 px-4 py-3 safe-area-pb">
+        <button
+          onClick={() => setShowReportMode(true)}
+          className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition-colors"
+        >
+          Report
+        </button>
+      </div>
+
+      <main className="max-w-6xl mx-auto px-4 py-6 pb-28 md:pb-6">
         {/* ===== OVERVIEW ===== */}
         {currentView === 'overview' && (
           <>
