@@ -1228,14 +1228,18 @@ export default function AdminDashboard() {
                       popup: '📍 Your location',
                       type: 'user-location' as const,
                     }] : []),
-                    ...reports.filter(r => !r.archived).map((r) => ({
-                      id: r.id,
-                      position: [r.location.lat, r.location.lng] as [number, number],
-                      popup: `${r.categoryEmoji || '🐑'} ${r.sheepCount} ${r.categoryName || 'sheep'} - ${r.status}`,
-                      type: 'sheep' as const,
-                      status: r.status as 'reported' | 'claimed' | 'resolved',
-                      emoji: r.categoryEmoji || '🐑',
-                    }))
+                    ...reports.filter(r => !r.archived).map((r) => {
+                      const cat = reportCategories.find(c => c.id === r.categoryId)
+                      return {
+                        id: r.id,
+                        position: [r.location.lat, r.location.lng] as [number, number],
+                        popup: `${cat?.emoji || r.categoryEmoji || '🐑'} ${r.sheepCount} ${cat?.name || r.categoryName || 'sheep'} - ${r.status}`,
+                        type: 'sheep' as const,
+                        status: r.status as 'reported' | 'claimed' | 'resolved',
+                        emoji: cat?.emoji || r.categoryEmoji || '🐑',
+                        imageUrl: cat?.imageUrl || r.categoryImageUrl,
+                      }
+                    })
                   ]}
                   polygons={allFieldPolygons}
                 />

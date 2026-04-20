@@ -393,15 +393,18 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                     type: 'walker-location' as const
                   }] : []),
                   // Recent reports
-                  ...getRecentAlerts().map((r) => ({
-                    id: r.id,
-                    position: [r.location.lat, r.location.lng] as [number, number],
-                    popup: `${r.categoryEmoji || '🐑'} ${r.sheepCount} ${r.categoryName || 'sheep'} - ${r.status}`,
-                    type: 'sheep' as const,
-                    status: r.status as 'reported' | 'claimed' | 'resolved',
-                    emoji: r.categoryEmoji || '🐑',
-                    imageUrl: r.categoryImageUrl,
-                  }))
+                  ...getRecentAlerts().map((r) => {
+                    const cat = reportCategories.find(c => c.id === r.categoryId)
+                    return {
+                      id: r.id,
+                      position: [r.location.lat, r.location.lng] as [number, number],
+                      popup: `${cat?.emoji || r.categoryEmoji || '🐑'} ${r.sheepCount} ${cat?.name || r.categoryName || 'sheep'} - ${r.status}`,
+                      type: 'sheep' as const,
+                      status: r.status as 'reported' | 'claimed' | 'resolved',
+                      emoji: cat?.emoji || r.categoryEmoji || '🐑',
+                      imageUrl: cat?.imageUrl || r.categoryImageUrl,
+                    }
+                  })
                 ]}
               />
             </div>
@@ -537,15 +540,18 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                         type: 'walker-location' as const,
                       }] : []),
                       // Show existing recent reports
-                      ...getRecentAlerts().map(r => ({
-                        id: r.id,
-                        position: [r.location.lat, r.location.lng] as [number, number],
-                        popup: `${r.categoryEmoji || '🐑'} ${r.sheepCount} ${r.categoryName || 'sheep'} reported ${new Date(r.timestamp).toLocaleTimeString()}`,
-                        type: 'sheep' as const,
-                        status: r.status as 'reported' | 'claimed' | 'resolved',
-                        emoji: r.categoryEmoji || '🐑',
-                        imageUrl: r.categoryImageUrl,
-                      })),
+                      ...getRecentAlerts().map(r => {
+                        const cat = reportCategories.find(c => c.id === r.categoryId)
+                        return {
+                          id: r.id,
+                          position: [r.location.lat, r.location.lng] as [number, number],
+                          popup: `${cat?.emoji || r.categoryEmoji || '🐑'} ${r.sheepCount} ${cat?.name || r.categoryName || 'sheep'} reported ${new Date(r.timestamp).toLocaleTimeString()}`,
+                          type: 'sheep' as const,
+                          status: r.status as 'reported' | 'claimed' | 'resolved',
+                          emoji: cat?.emoji || r.categoryEmoji || '🐑',
+                          imageUrl: cat?.imageUrl || r.categoryImageUrl,
+                        }
+                      }),
                       // Show selected location with category image or emoji
                       ...(draftReport.location ? [{
                         id: 'selected',
