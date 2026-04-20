@@ -68,6 +68,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
   const [thankYouMessages, setThankYouMessages] = useState<any[]>([])
 
   const [profileOpen, setProfileOpen] = useState(false)
+  const [showUserMenu, setShowUserMenu] = useState(false)
   const [editingReportId, setEditingReportId] = useState<string | null>(null)
   const [editFields, setEditFields] = useState<{ description: string; sheepCount: number; conditions: string[]; photoUrls: string[] }>({ description: '', sheepCount: 1, conditions: [], photoUrls: [] })
   const [savingEdit, setSavingEdit] = useState(false)
@@ -300,6 +301,50 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
         showBackButton={viewState !== 'dashboard'}
         onBack={handleBack}
         title={getTitle()}
+        rightSlot={currentUserId && viewState !== 'reporting' ? (
+          <div className="relative">
+            <button
+              onClick={() => setShowUserMenu(v => !v)}
+              aria-label="User menu"
+              className="relative w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              {thankYouMessages.filter(m => !m.read_at).length > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                  {thankYouMessages.filter(m => !m.read_at).length > 99 ? '99+' : thankYouMessages.filter(m => !m.read_at).length}
+                </span>
+              )}
+            </button>
+            {showUserMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
+                <div className="absolute right-0 top-11 z-50 bg-white rounded-xl shadow-lg border border-slate-200 min-w-[160px] py-1 overflow-hidden">
+                  <button
+                    onClick={() => { setViewState('my-reports'); setShowUserMenu(false) }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <span className="text-base">📋</span>
+                    <span>My Reports</span>
+                    {thankYouMessages.filter(m => !m.read_at).length > 0 && (
+                      <span className="ml-auto min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                        {thankYouMessages.filter(m => !m.read_at).length}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => { setProfileOpen(true); setShowUserMenu(false) }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <span className="text-base">👤</span>
+                    <span>Profile</span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        ) : undefined}
       />
 
       {/* Thank You Notification Banner */}
@@ -569,13 +614,6 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                     📍 {t('walker.locationSelected', {}, 'Location selected')}
                   </p>
                 )}
-                {nearbyReports.length > 0 && draftReport.location && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
-                    <p className="text-amber-800 text-sm">
-                      ⚠️ {nearbyReports.length} {draftReport.categoryName || activeCategory?.name || 'sheep'} report{nearbyReports.length > 1 ? 's' : ''} already {nearbyReports.length > 1 ? 'exist' : 'exists'} within 100m in the last 12 hours.
-                    </p>
-                  </div>
-                )}
               </div>
             )}
 
@@ -809,18 +847,29 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
             )}
 
             {/* Navigation */}
-            <div className="mt-6 space-y-3">
-              <Button
-                variant="primary"
-                onClick={handleNextStep}
-                disabled={currentReportStep === 1 && !draftReport.location}
-              >
-                {currentReportStep === 4 ? t('walker.submitReport', {}, '✓ Submit Report') : t('walker.continue', {}, 'Continue →')}
-              </Button>
-              <Button variant="ghost" onClick={handleBack}>
-                {currentReportStep === 1 ? t('walker.cancel', {}, 'Cancel') : t('walker.back', {}, '← Back')}
-              </Button>
-            </div>
+            {currentReportStep === 2 ? (
+              <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3 flex gap-3 z-40 safe-area-pb">
+                <Button variant="ghost" onClick={handleBack} className="flex-1">
+                  {t('walker.back', {}, '← Back')}
+                </Button>
+                <Button variant="primary" onClick={handleNextStep} className="flex-1">
+                  {t('walker.continue', {}, 'Continue →')}
+                </Button>
+              </div>
+            ) : (
+              <div className="mt-6 space-y-3">
+                <Button
+                  variant="primary"
+                  onClick={handleNextStep}
+                  disabled={currentReportStep === 1 && !draftReport.location}
+                >
+                  {currentReportStep === 4 ? t('walker.submitReport', {}, '✓ Submit Report') : t('walker.continue', {}, 'Continue →')}
+                </Button>
+                <Button variant="ghost" onClick={handleBack}>
+                  {currentReportStep === 1 ? t('walker.cancel', {}, 'Cancel') : t('walker.back', {}, '← Back')}
+                </Button>
+              </div>
+            )}
           </>
         )}
 
@@ -1017,38 +1066,56 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
 
       {/* Bottom Navigation — hidden during active report flow */}
       {viewState !== 'reporting' && (
-        <BottomNav
-          items={[
-            {
-              id: 'map',
-              label: 'Map',
-              icon: '🗺️',
-              active: viewState === 'dashboard',
-              onClick: () => setViewState('dashboard'),
-            },
-            {
-              id: 'reports',
-              label: 'My Reports',
-              icon: '📋',
-              active: viewState === 'my-reports',
-              badge: thankYouMessages.filter(m => !m.read_at).length,
-              onClick: () => setViewState('my-reports'),
-            },
-            {
-              id: 'profile',
-              label: 'Profile',
-              icon: '👤',
-              onClick: () => setProfileOpen(true),
-            },
-          ]}
-          fab={{
-            label: 'Report',
-            icon: preferredCategory?.imageUrl
-              ? <img src={preferredCategory.imageUrl} alt={preferredCategory.name} className="w-7 h-7 object-contain" />
-              : <span className="text-2xl">{preferredCategory?.emoji ?? '🐑'}</span>,
-            onClick: () => setShowCategoryPicker(true),
-          }}
-        />
+        currentUserId ? (
+          <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 safe-area-pb flex justify-center py-3">
+            <div className="flex flex-col items-center">
+              <button
+                onClick={() => setShowCategoryPicker(true)}
+                aria-label="Report"
+                className="w-16 h-16 rounded-full bg-green-600 text-white shadow-lg flex items-center justify-center hover:bg-green-700 active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+              >
+                {preferredCategory?.imageUrl
+                  ? <img src={preferredCategory.imageUrl} alt={preferredCategory.name} className="w-7 h-7 object-contain" />
+                  : <span className="text-2xl">{preferredCategory?.emoji ?? '🐑'}</span>
+                }
+              </button>
+              <span className="text-[10px] text-slate-500 mt-1">Report</span>
+            </div>
+          </nav>
+        ) : (
+          <BottomNav
+            items={[
+              {
+                id: 'map',
+                label: 'Map',
+                icon: '🗺️',
+                active: viewState === 'dashboard',
+                onClick: () => setViewState('dashboard'),
+              },
+              {
+                id: 'reports',
+                label: 'My Reports',
+                icon: '📋',
+                active: viewState === 'my-reports',
+                badge: thankYouMessages.filter(m => !m.read_at).length,
+                onClick: () => setViewState('my-reports'),
+              },
+              {
+                id: 'profile',
+                label: 'Profile',
+                icon: '👤',
+                onClick: () => setProfileOpen(true),
+              },
+            ]}
+            fab={{
+              label: 'Report',
+              icon: preferredCategory?.imageUrl
+                ? <img src={preferredCategory.imageUrl} alt={preferredCategory.name} className="w-7 h-7 object-contain" />
+                : <span className="text-2xl">{preferredCategory?.emoji ?? '🐑'}</span>,
+              onClick: () => setShowCategoryPicker(true),
+            }}
+          />
+        )
       )}
 
       <ProfileDrawer open={profileOpen} onClose={() => setProfileOpen(false)} />

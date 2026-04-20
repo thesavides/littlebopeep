@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { useAppStore } from '@/store/appStore'
 import { useTranslation } from '@/contexts/TranslationContext'
 
@@ -8,9 +9,10 @@ interface HeaderProps {
   onBack?: () => void
   title?: string
   onTitleClick?: () => void
+  rightSlot?: ReactNode
 }
 
-export default function Header({ showBackButton = false, onBack, title, onTitleClick }: HeaderProps) {
+export default function Header({ showBackButton = false, onBack, title, onTitleClick, rightSlot }: HeaderProps) {
   const { t } = useTranslation()
   const { isAdmin, setShowHomePage, setRole, setAdmin } = useAppStore()
 
@@ -69,6 +71,8 @@ export default function Header({ showBackButton = false, onBack, title, onTitleC
             </span>
           )
         )}
+
+        {rightSlot && <div className="ml-auto">{rightSlot}</div>}
       </div>
     </header>
   )
