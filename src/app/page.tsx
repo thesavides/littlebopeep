@@ -117,7 +117,7 @@ function LandingPage() {
 
             {/* Sign in */}
             <Link
-              href="/auth/signin"
+              href="/auth"
               className="rounded-full px-4 py-1.5 text-xs font-semibold transition-opacity hover:opacity-80"
               style={{ backgroundColor: '#2D6A4F', color: '#F8F5EE' }}
             >
@@ -176,14 +176,14 @@ function LandingPage() {
       {/* ── CTAs ─────────────────────────────────────────────────────────── */}
       <section className="mx-auto max-w-5xl px-5 pb-10 flex flex-col items-center gap-4">
         <Link
-          href="/auth/signup"
+          href="/auth?mode=signup"
           className="rounded-full px-8 py-4 text-base font-semibold text-center transition-opacity hover:opacity-90 w-full sm:w-auto sm:min-w-[280px]"
           style={{ backgroundColor: '#2D6A4F', color: '#F8F5EE' }}
         >
           {t('home.landing.ctaPrimary', {}, 'Sign up & report')}
         </Link>
         <Link
-          href="/auth/signup?role=farmer"
+          href="/auth?mode=signup&role=farmer"
           className="rounded-full px-8 py-3.5 text-sm font-medium text-center border transition-colors hover:opacity-80 w-full sm:w-auto sm:min-w-[280px]"
           style={{ borderColor: '#2D6A4F', color: '#2D6A4F' }}
         >
@@ -274,7 +274,7 @@ function LandingPage() {
               { label: t('home.landing.privacyPolicy', {}, 'Privacy policy'), href: '/privacy' },
               { label: t('home.landing.termsConditions', {}, 'Terms & conditions'), href: '/terms' },
               { label: t('auth.signIn', {}, 'Sign in'), href: '/auth/signin' },
-              { label: t('home.landing.farmerSignup', {}, 'Farmer sign-up'), href: '/auth/signup?role=farmer' },
+              { label: t('home.landing.farmerSignup', {}, 'Farmer sign-up'), href: '/auth?mode=signup&role=farmer' },
             ].map((link) => (
               <Link
                 key={link.href}
