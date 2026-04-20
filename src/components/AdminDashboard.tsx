@@ -1624,7 +1624,7 @@ export default function AdminDashboard() {
                         {report.flaggedByFarmer && report.status !== 'complete' && (
                           <span className="px-2 py-1.5 rounded-lg text-xs font-medium bg-amber-100 text-amber-700">🚩</span>
                         )}
-                        <span className={`px-2 py-1.5 rounded-lg text-xs font-medium ${
+                        <span className={`px-2 py-1.5 rounded-lg text-xs font-medium capitalize ${
                           report.status === 'complete' ? 'bg-slate-200 text-slate-700' :
                           report.status === 'escalated' ? 'bg-orange-100 text-orange-700' :
                           report.status === 'resolved' ? 'bg-green-100 text-green-700' :
