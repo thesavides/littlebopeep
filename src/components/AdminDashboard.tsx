@@ -96,8 +96,8 @@ export default function AdminDashboard() {
     }
   }, [])
 
-  // Report filters and sorting
-  const [sortBy, setSortBy] = useState<SortBy>('daysUnclaimed')
+  // Report filters, sorting, and pagination
+  const [sortBy, setSortBy] = useState<SortBy>('date')
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all')
   const [filterArchive, setFilterArchive] = useState<FilterArchive>('active')
   const [filterFarmerId, setFilterFarmerId] = useState<string>('all')
@@ -107,6 +107,8 @@ export default function AdminDashboard() {
   const [filterKeyword, setFilterKeyword] = useState<string>('')
   const [selectedReports, setSelectedReports] = useState<string[]>([])
   const [mapBounds, setMapBounds] = useState<{north: number, south: number, east: number, west: number} | null>(null)
+  const [reportsPerPage, setReportsPerPage] = useState<number>(25)
+  const [reportsPage, setReportsPage] = useState<number>(1)
   const [detailReportId, setDetailReportId] = useState<string | null>(null)
   const [detailNotifications, setDetailNotifications] = useState<any[]>([])
   const [detailAuditLogs, setDetailAuditLogs] = useState<any[]>([])
@@ -291,6 +293,13 @@ export default function AdminDashboard() {
     return result
   }, [reports, filterStatus, filterArchive, sortBy, mapBounds, filterFarmerId, filterFarmId, farms, filterDateFrom, filterDateTo, filterKeyword])
 
+  // Reset to page 1 whenever filters change
+  useEffect(() => { setReportsPage(1) }, [filterStatus, filterArchive, sortBy, mapBounds, filterFarmerId, filterFarmId, filterDateFrom, filterDateTo, filterKeyword])
+
+  // Pagination
+  const totalReportPages = reportsPerPage === 0 ? 1 : Math.max(1, Math.ceil(filteredReports.length / reportsPerPage))
+  const paginatedReports = reportsPerPage === 0 ? filteredReports : filteredReports.slice((reportsPage - 1) * reportsPerPage, reportsPage * reportsPerPage)
+
   const handleDelete = async () => {
     if (!showDeleteConfirm) return
     if (deleteType === 'user') {
@@ -361,10 +370,12 @@ export default function AdminDashboard() {
   }
 
   const handleSelectAllReports = () => {
-    if (selectedReports.length === filteredReports.length) {
-      setSelectedReports([])
+    const pageIds = paginatedReports.map(r => r.id)
+    const allPageSelected = pageIds.every(id => selectedReports.includes(id))
+    if (allPageSelected) {
+      setSelectedReports(prev => prev.filter(id => !pageIds.includes(id)))
     } else {
-      setSelectedReports(filteredReports.map(r => r.id))
+      setSelectedReports(prev => [...new Set([...prev, ...pageIds])])
     }
   }
 
@@ -1435,8 +1446,8 @@ export default function AdminDashboard() {
                     <option value="all">All</option>
                   </select>
                   <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortBy)} className="px-3 py-2 border rounded-lg text-sm">
-                    <option value="daysUnclaimed">Sort: Days Unclaimed</option>
-                    <option value="date">Sort: Date</option>
+                    <option value="date">Latest first</option>
+                    <option value="daysUnclaimed">Longest unclaimed</option>
                   </select>
                   <select
                     value={filterFarmerId}
@@ -1529,7 +1540,7 @@ export default function AdminDashboard() {
                 />
               </div>
               <div className="p-2 text-center text-xs text-slate-500">
-                Showing {filteredReports.length} reports {mapBounds ? 'in selected area' : ''}
+                {filteredReports.length} report{filteredReports.length !== 1 ? 's' : ''} {mapBounds ? 'in selected area' : 'total'}
               </div>
             </div>
 
@@ -1539,17 +1550,28 @@ export default function AdminDashboard() {
                 <div className="flex items-center gap-3">
                   <h2 className="font-semibold text-slate-800">Reports ({filteredReports.length})</h2>
                   <label className="flex items-center gap-2 text-sm text-slate-600">
-                    <input type="checkbox" checked={selectedReports.length === filteredReports.length && filteredReports.length > 0} onChange={handleSelectAllReports} className="rounded" />
-                    Select All
+                    <input type="checkbox" checked={selectedReports.length === paginatedReports.length && paginatedReports.length > 0} onChange={handleSelectAllReports} className="rounded" />
+                    Select all on page
                   </label>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-slate-500">
-                    Export {selectedReports.length > 0 ? `${selectedReports.length} selected` : `all ${filteredReports.length}`}:
-                  </span>
-                  <button onClick={handleExportCSV} disabled={exportLoading} className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-200 disabled:opacity-50">CSV</button>
-                  <button onClick={handleExportXLSX} disabled={exportLoading} className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-medium hover:bg-green-200 disabled:opacity-50">{exportLoading ? '…' : 'Excel'}</button>
-                  <button onClick={handleExportPDF} disabled={exportLoading} className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-200 disabled:opacity-50">{exportLoading ? '…' : 'PDF'}</button>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-slate-500">Per page:</span>
+                    <select value={reportsPerPage} onChange={(e) => { setReportsPerPage(Number(e.target.value)); setReportsPage(1) }} className="px-2 py-1 border rounded-lg text-xs">
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                      <option value={0}>All</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-slate-500">
+                      Export {selectedReports.length > 0 ? `${selectedReports.length} selected` : `all ${filteredReports.length}`}:
+                    </span>
+                    <button onClick={handleExportCSV} disabled={exportLoading} className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-200 disabled:opacity-50">CSV</button>
+                    <button onClick={handleExportXLSX} disabled={exportLoading} className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-medium hover:bg-green-200 disabled:opacity-50">{exportLoading ? '…' : 'Excel'}</button>
+                    <button onClick={handleExportPDF} disabled={exportLoading} className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-200 disabled:opacity-50">{exportLoading ? '…' : 'PDF'}</button>
+                  </div>
                 </div>
               </div>
               {filteredReports.length === 0 ? (
@@ -1558,7 +1580,7 @@ export default function AdminDashboard() {
                 </div>
               ) : (
                 <div className="divide-y">
-                  {filteredReports.map((report) => {
+                  {paginatedReports.map((report) => {
                     const cat = reportCategories.find(c => c.id === report.categoryId)
                     const conditions = report.conditions?.length ? report.conditions : report.condition ? [report.condition] : []
                     const btnBase = 'px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors'
@@ -1633,6 +1655,21 @@ export default function AdminDashboard() {
                     </div>
                     )
                   })}
+                </div>
+              )}
+              {/* Pagination */}
+              {reportsPerPage > 0 && filteredReports.length > reportsPerPage && (
+                <div className="p-3 border-t flex flex-wrap items-center justify-between gap-3">
+                  <span className="text-sm text-slate-500">
+                    Showing {Math.min((reportsPage - 1) * reportsPerPage + 1, filteredReports.length)}–{Math.min(reportsPage * reportsPerPage, filteredReports.length)} of {filteredReports.length}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => setReportsPage(1)} disabled={reportsPage === 1} className="px-2.5 py-1.5 rounded-lg text-xs border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed">First</button>
+                    <button onClick={() => setReportsPage(p => Math.max(1, p - 1))} disabled={reportsPage === 1} className="px-2.5 py-1.5 rounded-lg text-xs border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed">Prev</button>
+                    <span className="px-3 py-1.5 text-xs text-slate-700 font-medium">Page {reportsPage} of {totalReportPages}</span>
+                    <button onClick={() => setReportsPage(p => Math.min(totalReportPages, p + 1))} disabled={reportsPage === totalReportPages} className="px-2.5 py-1.5 rounded-lg text-xs border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed">Next</button>
+                    <button onClick={() => setReportsPage(totalReportPages)} disabled={reportsPage === totalReportPages} className="px-2.5 py-1.5 rounded-lg text-xs border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed">Last</button>
+                  </div>
                 </div>
               )}
             </div>
