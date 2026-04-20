@@ -116,12 +116,6 @@ export default function HomePage() {
             >
               Sign in
             </button>
-            <button
-              onClick={() => router.push('/admin-login')}
-              className="text-xs text-stone-400 hover:text-stone-600 px-2 py-1"
-            >
-              Admin
-            </button>
           </div>
         </div>
       </header>
@@ -132,7 +126,7 @@ export default function HomePage() {
       <section className="px-4 pt-10 pb-8 max-w-lg mx-auto text-center">
 
         <p className="text-xs font-bold tracking-widest text-green-600 uppercase mb-4">
-          Real-world countryside reporting
+          Real-time countryside reporting
         </p>
 
         <h1 className="text-4xl sm:text-5xl font-extrabold text-stone-900 leading-[1.1] mb-4">
@@ -178,35 +172,26 @@ export default function HomePage() {
         <div className="max-w-2xl mx-auto px-4">
           <h2 className="text-center text-xl font-bold text-stone-800 mb-8">How it works</h2>
 
-          {/* Horizontal scroll on mobile, 4-col grid on sm+ */}
-          <div className="overflow-x-auto -mx-4 px-4 pb-2">
-            <div className="flex gap-2 min-w-max sm:min-w-0 sm:grid sm:grid-cols-4 sm:gap-4">
-              {[
-                { n: 1, icon: '👀', label: 'You see it' },
-                { n: 2, icon: '📍', label: 'You report it' },
-                { n: 3, icon: '🔔', label: 'Farmer is alerted' },
-                { n: 4, icon: '✅', label: 'It gets resolved' },
-              ].map(({ n, icon, label }, i) => (
-                <div key={n} className="flex flex-col items-center text-center min-w-[90px] sm:min-w-0">
-                  {/* Step bubble */}
-                  <div className="relative mb-3">
-                    <div className="w-14 h-14 rounded-full bg-green-50 border-2 border-green-200 flex items-center justify-center text-2xl">
-                      {icon}
-                    </div>
-                    <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-green-600 text-white text-[10px] font-bold flex items-center justify-center">
-                      {n}
-                    </span>
+          {/* 2×2 grid on mobile, 4-col on sm+ */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[
+              { n: 1, icon: '👀', label: 'You see it' },
+              { n: 2, icon: '📍', label: 'You report it' },
+              { n: 3, icon: '🔔', label: 'Farmer is alerted' },
+              { n: 4, icon: '✅', label: 'It gets resolved' },
+            ].map(({ n, icon, label }) => (
+              <div key={n} className="flex flex-col items-center text-center">
+                <div className="relative mb-3">
+                  <div className="w-14 h-14 rounded-full bg-green-50 border-2 border-green-200 flex items-center justify-center text-2xl">
+                    {icon}
                   </div>
-                  <p className="text-xs font-bold text-stone-700 leading-tight">{label}</p>
-                  {/* Arrow connector — only on sm+, between steps */}
-                  {i < 3 && (
-                    <div className="hidden sm:flex absolute mt-5 items-center text-stone-300 text-lg select-none pointer-events-none translate-x-[calc(100%_+_0.5rem)]">
-                      {/* visual handled by grid gap */}
-                    </div>
-                  )}
+                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-green-600 text-white text-[10px] font-bold flex items-center justify-center">
+                    {n}
+                  </span>
                 </div>
-              ))}
-            </div>
+                <p className="text-xs font-bold text-stone-700 leading-tight">{label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
