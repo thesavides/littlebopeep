@@ -106,7 +106,6 @@ export default function AdminDashboard() {
   const [filterDateTo, setFilterDateTo] = useState<string>('')
   const [filterKeyword, setFilterKeyword] = useState<string>('')
   const [selectedReports, setSelectedReports] = useState<string[]>([])
-  const [mapBounds, setMapBounds] = useState<{north: number, south: number, east: number, west: number} | null>(null)
   const [reportsPerPage, setReportsPerPage] = useState<number>(10)
   const [reportsPage, setReportsPage] = useState<number>(1)
   const [detailReportId, setDetailReportId] = useState<string | null>(null)
@@ -269,16 +268,6 @@ export default function AdminDashboard() {
       )
     }
 
-    // Filter by map bounds if set
-    if (mapBounds) {
-      result = result.filter(r =>
-        r.location.lat >= mapBounds.south &&
-        r.location.lat <= mapBounds.north &&
-        r.location.lng >= mapBounds.west &&
-        r.location.lng <= mapBounds.east
-      )
-    }
-
     // Sort
     if (sortBy === 'daysUnclaimed') {
       result.sort((a, b) => {
@@ -291,10 +280,10 @@ export default function AdminDashboard() {
     }
 
     return result
-  }, [reports, filterStatus, filterArchive, sortBy, mapBounds, filterFarmerId, filterFarmId, farms, filterDateFrom, filterDateTo, filterKeyword])
+  }, [reports, filterStatus, filterArchive, sortBy, filterFarmerId, filterFarmId, farms, filterDateFrom, filterDateTo, filterKeyword])
 
   // Reset to page 1 whenever filters change
-  useEffect(() => { setReportsPage(1) }, [filterStatus, filterArchive, sortBy, mapBounds, filterFarmerId, filterFarmId, filterDateFrom, filterDateTo, filterKeyword])
+  useEffect(() => { setReportsPage(1) }, [filterStatus, filterArchive, sortBy, filterFarmerId, filterFarmId, filterDateFrom, filterDateTo, filterKeyword])
 
   // Pagination
   const totalReportPages = reportsPerPage === 0 ? 1 : Math.max(1, Math.ceil(filteredReports.length / reportsPerPage))
@@ -1514,33 +1503,6 @@ export default function AdminDashboard() {
                     </>
                   )}
                 </div>
-              </div>
-            </div>
-
-            {/* Map Search */}
-            <div className="bg-white rounded-xl shadow mb-4">
-              <div className="p-4 border-b flex justify-between items-center">
-                <h3 className="font-medium text-slate-800">Map Search</h3>
-                {mapBounds && (
-                  <button onClick={() => setMapBounds(null)} className="text-sm text-blue-600 hover:underline">Clear filter</button>
-                )}
-              </div>
-              <div className="h-48">
-                <Map
-                  center={[54.5, -2]}
-                  zoom={MAP_CONFIG.STANDARD_ZOOM_5KM}
-                  markers={filteredReports.map((r) => ({
-                    id: r.id,
-                    position: [r.location.lat, r.location.lng] as [number, number],
-                    popup: `${r.categoryEmoji || '🐑'} ${r.sheepCount} ${r.categoryName || ''} - ${r.status}`,
-                    type: 'sheep' as const,
-                    status: r.status as 'reported' | 'claimed' | 'resolved',
-                    emoji: r.categoryEmoji || '🐑',
-                  }))}
-                />
-              </div>
-              <div className="p-2 text-center text-xs text-slate-500">
-                {filteredReports.length} report{filteredReports.length !== 1 ? 's' : ''} {mapBounds ? 'in selected area' : 'total'}
               </div>
             </div>
 
