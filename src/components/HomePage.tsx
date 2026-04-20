@@ -141,7 +141,7 @@ export default function HomePage() {
         </h1>
 
         <p className="text-stone-500 text-lg leading-relaxed mb-8 max-w-sm mx-auto">
-          Help her find it — and report anything else along the way.
+          Help her find it &amp; report anything else along the way.
         </p>
 
         {/* ── Action Cards ── */}
@@ -161,14 +161,6 @@ export default function HomePage() {
             </button>
           ))}
         </div>
-
-        {/* ── Primary CTA ── */}
-        <button
-          onClick={() => openAuth('signup', 'walker')}
-          className="w-full py-4 bg-green-600 text-white text-lg font-bold rounded-2xl shadow-lg active:scale-[0.98] transition-transform hover:bg-green-700 mb-3"
-        >
-          Start reporting →
-        </button>
 
         {/* ── Secondary CTA (farmer) ── */}
         <button
