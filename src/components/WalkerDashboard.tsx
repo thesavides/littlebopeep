@@ -219,6 +219,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
 
   const handleStartReport = () => {
     resetDraft()
+    setActiveCategory(null)
     setCurrentReportStep(1)
     setViewState('reporting')
   }
@@ -551,8 +552,8 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                         position: [draftReport.location.lat, draftReport.location.lng] as [number, number],
                         popup: 'Your report location',
                         type: 'selected' as const,
-                        emoji: activeCategory?.emoji || '🐑',
-                        imageUrl: activeCategory?.imageUrl,
+                        emoji: draftReport.categoryEmoji || activeCategory?.emoji || '🐑',
+                        imageUrl: draftReport.categoryImageUrl || activeCategory?.imageUrl,
                       }] : [])
                     ]}
                   />
@@ -565,7 +566,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                 {nearbyReports.length > 0 && draftReport.location && (
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
                     <p className="text-amber-800 text-sm">
-                      ⚠️ {nearbyReports.length} {activeCategory?.name || 'sheep'} report{nearbyReports.length > 1 ? 's' : ''} already {nearbyReports.length > 1 ? 'exist' : 'exists'} within 100m in the last 12 hours.
+                      ⚠️ {nearbyReports.length} {draftReport.categoryName || activeCategory?.name || 'sheep'} report{nearbyReports.length > 1 ? 's' : ''} already {nearbyReports.length > 1 ? 'exist' : 'exists'} within 100m in the last 12 hours.
                     </p>
                   </div>
                 )}
