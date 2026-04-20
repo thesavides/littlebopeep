@@ -139,7 +139,7 @@ function LandingPage() {
 
         {/* Headline — four-line nursery rhyme */}
         <h1
-          className="font-serif text-4xl sm:text-5xl leading-snug mb-6 max-w-2xl mx-auto"
+          className="font-serif text-3xl sm:text-4xl leading-snug mb-5 max-w-2xl mx-auto"
           style={{ color: '#2D6A4F' }}
         >
           {t('home.landing.heroLine1', {}, 'Little Bo Peep')}<br />
