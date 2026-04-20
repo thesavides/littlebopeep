@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { signIn, signUp } from '@/lib/unified-auth'
 import { useAppStore } from '@/store/appStore'
 import { useTranslation } from '@/contexts/TranslationContext'
@@ -9,7 +9,6 @@ import PasswordInput from '@/components/PasswordInput'
 
 export default function AuthPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const { setRole, setCurrentUserId } = useAppStore()
   const { t } = useTranslation()
 
@@ -21,11 +20,10 @@ export default function AuthPage() {
 
   // Pre-select mode and role from query params (e.g. ?mode=signup&role=farmer)
   useEffect(() => {
-    const modeParam = searchParams.get('mode')
-    const roleParam = searchParams.get('role')
-    if (modeParam === 'signup') setMode('signup')
-    if (roleParam === 'farmer') setRoleSelection('farmer')
-  }, [searchParams])
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('mode') === 'signup') setMode('signup')
+    if (params.get('role') === 'farmer') setRoleSelection('farmer')
+  }, [])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 

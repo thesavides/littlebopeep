@@ -273,7 +273,7 @@ function LandingPage() {
             {[
               { label: t('home.landing.privacyPolicy', {}, 'Privacy policy'), href: '/privacy' },
               { label: t('home.landing.termsConditions', {}, 'Terms & conditions'), href: '/terms' },
-              { label: t('auth.signIn', {}, 'Sign in'), href: '/auth/signin' },
+              { label: t('auth.signIn', {}, 'Sign in'), href: '/auth' },
               { label: t('home.landing.farmerSignup', {}, 'Farmer sign-up'), href: '/auth?mode=signup&role=farmer' },
             ].map((link) => (
               <Link
