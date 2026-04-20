@@ -1,7 +1,7 @@
 # Little Bo Peep — Functionality Reference
 
-**Version**: v3.0.0
-**Last Updated**: April 2026
+**Version**: v3.1.0
+**Last Updated**: 20 April 2026
 **Production**: https://littlebopeep.chris-bee.workers.dev
 **Platform**: Next.js 16.2.2 + Cloudflare Workers + Supabase
 
@@ -179,7 +179,10 @@ When a sheep or other animal is reported near your farm:
 
 ```
 Reported  →  Claimed (by farmer)  →  Resolved
+         ↘  Escalated (admin)     →  Complete
 ```
+
+Reports can also be flagged by farmers or placed in an admin screening queue.
 
 Archived reports are hidden from the active map but remain in history.
 
@@ -306,26 +309,30 @@ Configure custom report categories beyond the default Sheep category.
 
 **Adding a Category**
 1. Tap **+ New Category**
-2. Click the emoji button to open the emoji picker (grouped by Animals, Infrastructure, Nature, Hazards, General) or type/paste a custom emoji
-3. Enter a name (e.g. "Damaged Fence", "Road Hazard")
+2. Upload an image icon from your device (recommended — appears on map markers and category pickers), or use an emoji fallback from the picker grid
+3. Enter a name in English (required). Optionally provide translations for each enabled language (e.g. Welsh, Irish) — English is used as fallback if no translation is provided
 4. Optionally add a description shown to walkers
 5. Add **condition options** (e.g. "Minor", "Severe", "Collapsed") — walkers choose from this list when reporting
 6. Toggle **Ask for quantity** and set the quantity label (e.g. "Number of sections")
 7. Set **Active** to make it visible to walkers immediately
 8. Set **Sort order** to control position in the walker's category picker
+9. Set **Farmer Notification Mode**: Optional (farmers opt in), Default On (farmers opt out), or Compulsory (all farmers always notified)
+
+**Reordering**
+- Use the **Reorder** button to drag categories into a custom display order
 
 **Editing / Deleting**
 - Edit any category at any time — changes take effect immediately
 - Deleting a category does not delete historical reports that used it
 - Deactivating (unchecking Active) hides it from walkers without deleting it
 
-> The **Report Other** button on the Walker Dashboard only appears when at least one active custom category exists.
+> The **Report** FAB on the Walker Dashboard always shows. It opens the category picker. A ★ button on each category sets it as the default — the FAB icon reflects the default category's image or emoji.
 
 ---
 
-### 6.9 Report Sheep Button
+### 6.9 Report Button (Admin)
 
-Admins and super admins are also walkers. The green **🐑 Report Sheep** button in the top navigation bar opens the full walker report flow in an overlay, allowing admins to submit reports without leaving the admin dashboard.
+Admins and super admins are also walkers. The **Report** button in the top navigation bar opens the full walker report flow in an overlay, allowing admins to submit reports without leaving the admin dashboard.
 
 ---
 
@@ -690,6 +697,7 @@ Migrations are in `supabase/migrations/`. Run manually via the Supabase SQL Edit
 
 | Version | Date | Key Changes |
 |---|---|---|
+| v3.1.0 | Apr 2026 | Category image upload, mobile FAB + default category, map icons per category, category name translations, report export (CSV/Excel/PDF), report editing, admin comments, drag-to-reorder categories, step 2 quantity picker + multi-condition chips |
 | v3.0.0 | Apr 2026 | PWA + offline capture, custom report categories, role hierarchy overhaul, admin user management overhaul, farmer/walker role unification |
 | v2.x | Feb–Mar 2026 | Dead animal condition, photo upload, admin overview map geolocation, user detail modals, clickable walker/farmer reports, password reset for all roles |
 | v1.8.0 | Jan 2026 | Google Cloud Secret Manager migration (prior deployment on Cloud Run) |
