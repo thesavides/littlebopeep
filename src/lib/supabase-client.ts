@@ -357,6 +357,8 @@ export interface ReportCategoryDB {
   sort_order: number
   image_url: string | null
   name_translations: Record<string, string> | null
+  description_translations: Record<string, string> | null
+  condition_translations: Record<string, Record<string, string>> | null
   created_at: string
 }
 
@@ -385,6 +387,8 @@ export async function fetchReportCategories() {
     subscriptionMode: (c as any).subscription_mode || 'default_on',
     imageUrl: c.image_url || undefined,
     nameTranslations: c.name_translations || undefined,
+    descriptionTranslations: c.description_translations || undefined,
+    conditionTranslations: c.condition_translations || undefined,
     createdAt: new Date(c.created_at),
   }))
 }
@@ -403,6 +407,8 @@ export async function createReportCategory(category: Omit<import('@/store/appSto
       sort_order: category.sortOrder,
       image_url: category.imageUrl || null,
       name_translations: category.nameTranslations || null,
+      description_translations: (category as any).descriptionTranslations || null,
+      condition_translations: (category as any).conditionTranslations || null,
     }])
     .select()
     .single()
@@ -428,6 +434,8 @@ export async function updateReportCategoryDB(id: string, updates: any) {
       sort_order: updates.sortOrder,
       image_url: updates.imageUrl !== undefined ? (updates.imageUrl || null) : undefined,
       name_translations: updates.nameTranslations !== undefined ? (updates.nameTranslations || null) : undefined,
+      description_translations: updates.descriptionTranslations !== undefined ? (updates.descriptionTranslations || null) : undefined,
+      condition_translations: updates.conditionTranslations !== undefined ? (updates.conditionTranslations || null) : undefined,
     })
     .eq('id', id)
     .select()

@@ -268,7 +268,9 @@ export interface ReportCategory {
   sortOrder: number
   subscriptionMode: CategorySubscriptionMode  // 'compulsory' | 'default_on' | 'default_off'
   imageUrl?: string        // optional image URL (overrides emoji when set)
-  nameTranslations?: Record<string, string>  // translations keyed by language code, e.g. { cy: 'Defaid', ga: 'Caoire' }
+  nameTranslations?: Record<string, string>  // e.g. { cy: 'Defaid', ga: 'Caoire' }
+  descriptionTranslations?: Record<string, string>  // translations of description text
+  conditionTranslations?: Record<string, Record<string, string>>  // { cy: { 'Healthy': 'Iach', 'Injured': 'Anafus' } }
   createdAt: Date
 }
 

@@ -158,10 +158,11 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
 
   const handleMapClick = (lat: number, lng: number) => {
     updateDraftReport({ location: { lat, lng } })
-    
-    // Check for nearby reports at clicked location
-    const nearby = getNearbyReports(lat, lng, 100, 12)
-    setNearbyReports(nearby)
+
+    // Check for nearby reports of the same category at clicked location
+    const allNearby = getNearbyReports(lat, lng, 100, 12)
+    const sameCategoryNearby = allNearby.filter(r => r.categoryId === (draftReport.categoryId || 'sheep'))
+    setNearbyReports(sameCategoryNearby)
   }
 
   const handleNextStep = async () => {
@@ -173,11 +174,12 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
       })
     }
 
-    // On step 1, check for duplicates before proceeding
+    // On step 1, check for same-category duplicates before proceeding
     if (currentReportStep === 1 && draftReport.location) {
-      const nearby = getNearbyReports(draftReport.location.lat, draftReport.location.lng, 100, 12)
-      if (nearby.length > 0) {
-        setNearbyReports(nearby)
+      const allNearby = getNearbyReports(draftReport.location.lat, draftReport.location.lng, 100, 12)
+      const sameCategoryNearby = allNearby.filter(r => r.categoryId === (draftReport.categoryId || 'sheep'))
+      if (sameCategoryNearby.length > 0) {
+        setNearbyReports(sameCategoryNearby)
         setShowDuplicateWarning(true)
         return
       }
@@ -560,7 +562,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                 {nearbyReports.length > 0 && draftReport.location && (
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
                     <p className="text-amber-800 text-sm">
-                      ⚠️ {t('walker.nearbyReportsExist', { count: nearbyReports.length }, `${nearbyReports.length} report(s) already exist within 100m of this location in the last 12 hours.`)}
+                      ⚠️ {nearbyReports.length} {activeCategory?.name || 'sheep'} report{nearbyReports.length > 1 ? 's' : ''} already {nearbyReports.length > 1 ? 'exist' : 'exists'} within 100m in the last 12 hours.
                     </p>
                   </div>
                 )}

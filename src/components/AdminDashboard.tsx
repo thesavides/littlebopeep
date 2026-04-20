@@ -2819,6 +2819,9 @@ function CategoryFormModal({ category, onClose, onSave }: {
   const [sortOrder, setSortOrder] = useState(category?.sortOrder ?? 0)
   const [subscriptionMode, setSubscriptionMode] = useState<'compulsory' | 'default_on' | 'default_off'>(category?.subscriptionMode || 'default_off')
   const [imageUrl, setImageUrl] = useState<string>(category?.imageUrl || '')
+  const [descriptionTranslations, setDescriptionTranslations] = useState<Record<string, string>>(category?.descriptionTranslations || {})
+  const [conditionTranslations, setConditionTranslations] = useState<Record<string, Record<string, string>>>(category?.conditionTranslations || {})
+  const [showTranslations, setShowTranslations] = useState(false)
   // Other (non-English) languages for translation fields
   const otherLanguages = languages.filter(l => l.enabled && l.code !== 'en')
 
@@ -2835,7 +2838,14 @@ function CategoryFormModal({ category, onClose, onSave }: {
   const handleSave = () => {
     if (!name.trim()) { alert('Name is required'); return }
     if (conditions.length === 0) { alert('Add at least one condition option'); return }
-    onSave({ name: name.trim(), emoji, description: description.trim(), conditions, showCount, countLabel, isActive, sortOrder: Number(sortOrder), subscriptionMode, imageUrl: imageUrl || undefined, nameTranslations: Object.keys(nameTranslations).length > 0 ? nameTranslations : undefined })
+    onSave({
+      name: name.trim(), emoji, description: description.trim(), conditions,
+      showCount, countLabel, isActive, sortOrder: Number(sortOrder), subscriptionMode,
+      imageUrl: imageUrl || undefined,
+      nameTranslations: Object.keys(nameTranslations).length > 0 ? nameTranslations : undefined,
+      descriptionTranslations: Object.keys(descriptionTranslations).length > 0 ? descriptionTranslations : undefined,
+      conditionTranslations: Object.keys(conditionTranslations).length > 0 ? conditionTranslations : undefined,
+    })
   }
 
   return (
@@ -2896,32 +2906,90 @@ function CategoryFormModal({ category, onClose, onSave }: {
           </div>
 
           {otherLanguages.length > 0 && (
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Name translations <span className="text-slate-400 font-normal">(optional — English used as fallback)</span></label>
-              <div className="space-y-2">
-                {otherLanguages.map(lang => (
-                  <div key={lang.code} className="flex items-center gap-2">
-                    <span className="text-sm text-slate-500 w-28 flex-shrink-0">{lang.flag_emoji} {lang.name_native}</span>
-                    <input
-                      type="text"
-                      value={nameTranslations[lang.code] || ''}
-                      onChange={(e) => setNameTranslations(prev => {
-                        const next = { ...prev }
-                        if (e.target.value.trim()) next[lang.code] = e.target.value
-                        else delete next[lang.code]
-                        return next
-                      })}
-                      placeholder={name || 'Translation…'}
-                      className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    />
-                  </div>
-                ))}
-              </div>
+            <div className="border border-slate-200 rounded-xl overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setShowTranslations(v => !v)}
+                className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 text-sm font-medium text-slate-700 transition-colors"
+              >
+                <span>🌐 Translations <span className="text-slate-400 font-normal">(English is always the fallback)</span></span>
+                <span className="text-slate-400 text-lg leading-none">{showTranslations ? '−' : '+'}</span>
+              </button>
+              {showTranslations && (
+                <div className="p-4 space-y-5">
+                  {otherLanguages.map(lang => (
+                    <div key={lang.code}>
+                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">{lang.flag_emoji} {lang.name_native} ({lang.code})</div>
+                      {/* Name */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs text-slate-500 w-20 flex-shrink-0">Name</span>
+                        <input
+                          type="text"
+                          value={nameTranslations[lang.code] || ''}
+                          onChange={(e) => setNameTranslations(prev => {
+                            const next = { ...prev }
+                            if (e.target.value.trim()) next[lang.code] = e.target.value
+                            else delete next[lang.code]
+                            return next
+                          })}
+                          placeholder={name || 'Translation…'}
+                          className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        />
+                      </div>
+                      {/* Description */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs text-slate-500 w-20 flex-shrink-0">Description</span>
+                        <input
+                          type="text"
+                          value={descriptionTranslations[lang.code] || ''}
+                          onChange={(e) => setDescriptionTranslations(prev => {
+                            const next = { ...prev }
+                            if (e.target.value.trim()) next[lang.code] = e.target.value
+                            else delete next[lang.code]
+                            return next
+                          })}
+                          placeholder={description || 'Translation…'}
+                          className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        />
+                      </div>
+                      {/* Conditions */}
+                      {conditions.length > 0 && (
+                        <div>
+                          <span className="text-xs text-slate-500 block mb-1.5">Conditions</span>
+                          <div className="space-y-1.5 pl-0">
+                            {conditions.map(cond => (
+                              <div key={cond} className="flex items-center gap-2">
+                                <span className="text-xs text-slate-400 w-20 flex-shrink-0 truncate" title={cond}>{cond}</span>
+                                <input
+                                  type="text"
+                                  value={conditionTranslations[lang.code]?.[cond] || ''}
+                                  onChange={(e) => setConditionTranslations(prev => {
+                                    const next = { ...prev }
+                                    if (!next[lang.code]) next[lang.code] = {}
+                                    if (e.target.value.trim()) next[lang.code][cond] = e.target.value
+                                    else {
+                                      delete next[lang.code][cond]
+                                      if (Object.keys(next[lang.code]).length === 0) delete next[lang.code]
+                                    }
+                                    return next
+                                  })}
+                                  placeholder={cond}
+                                  className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Description (optional)</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Description (optional, English)</label>
             <input
               type="text"
               value={description}
