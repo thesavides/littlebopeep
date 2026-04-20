@@ -68,7 +68,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
   const [thankYouMessages, setThankYouMessages] = useState<any[]>([])
 
   const [profileOpen, setProfileOpen] = useState(false)
-  const [showUserMenu, setShowUserMenu] = useState(false)
+  const [showSubmitSuccess, setShowSubmitSuccess] = useState(false)
   const [editingReportId, setEditingReportId] = useState<string | null>(null)
   const [editFields, setEditFields] = useState<{ description: string; sheepCount: number; conditions: string[]; photoUrls: string[] }>({ description: '', sheepCount: 1, conditions: [], photoUrls: [] })
   const [savingEdit, setSavingEdit] = useState(false)
@@ -206,6 +206,8 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
         setGuestEmail('')
         setGuestPhone('')
         setViewState('dashboard')
+        setShowSubmitSuccess(true)
+        setTimeout(() => setShowSubmitSuccess(false), 3000)
       } catch (error) {
         console.error('Failed to submit report:', error)
         alert('Failed to submit report. Please try again.')
@@ -302,47 +304,30 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
         onBack={handleBack}
         title={getTitle()}
         rightSlot={currentUserId && viewState !== 'reporting' ? (
-          <div className="relative">
+          <div className="flex items-center gap-2">
+            {/* My Reports */}
             <button
-              onClick={() => setShowUserMenu(v => !v)}
-              aria-label="User menu"
+              onClick={() => setViewState('my-reports')}
+              aria-label="My Reports"
               className="relative w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
+              <span className="text-base leading-none">📋</span>
               {thankYouMessages.filter(m => !m.read_at).length > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
                   {thankYouMessages.filter(m => !m.read_at).length > 99 ? '99+' : thankYouMessages.filter(m => !m.read_at).length}
                 </span>
               )}
             </button>
-            {showUserMenu && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
-                <div className="absolute right-0 top-11 z-50 bg-white rounded-xl shadow-lg border border-slate-200 min-w-[160px] py-1 overflow-hidden">
-                  <button
-                    onClick={() => { setViewState('my-reports'); setShowUserMenu(false) }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50"
-                  >
-                    <span className="text-base">📋</span>
-                    <span>My Reports</span>
-                    {thankYouMessages.filter(m => !m.read_at).length > 0 && (
-                      <span className="ml-auto min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
-                        {thankYouMessages.filter(m => !m.read_at).length}
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => { setProfileOpen(true); setShowUserMenu(false) }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50"
-                  >
-                    <span className="text-base">👤</span>
-                    <span>Profile</span>
-                  </button>
-                </div>
-              </>
-            )}
+            {/* Profile */}
+            <button
+              onClick={() => setProfileOpen(true)}
+              aria-label="Profile"
+              className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </button>
           </div>
         ) : undefined}
       />
@@ -359,6 +344,21 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
               </div>
             </div>
             <button onClick={handleDismissNotification} className="text-green-600 hover:text-green-800 text-xl">×</button>
+          </div>
+        </div>
+      )}
+
+      {/* Submit Success Overlay */}
+      {showSubmitSuccess && (
+        <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-white/95 pointer-events-none">
+          <div className="flex flex-col items-center gap-4 animate-pulse-once">
+            <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
+              <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-bold text-slate-800">Report Submitted!</h2>
+            <p className="text-slate-500 text-sm">Thank you for helping local farmers.</p>
           </div>
         </div>
       )}
