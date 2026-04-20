@@ -24,6 +24,7 @@ export interface SheepReportDB {
   category_id?: string
   category_name?: string
   category_emoji?: string
+  category_image_url?: string | null
   created_at?: string
   updated_at?: string
   // Attribution + metadata
@@ -47,6 +48,8 @@ export interface SheepReportDB {
   // WS14: screening
   screening_required?: boolean | null
   metadata_completeness_score?: number | null
+  // WS15: map snapshot
+  map_snapshot_url?: string | null
 }
 
 // Convert DB format to App format
@@ -68,6 +71,7 @@ export function dbToAppReport(dbReport: SheepReportDB) {
     categoryId: dbReport.category_id || 'sheep',
     categoryName: dbReport.category_name || 'Sheep',
     categoryEmoji: dbReport.category_emoji || '🐑',
+    categoryImageUrl: dbReport.category_image_url || undefined,
     submittedByUserName: dbReport.submitted_by_user_name || undefined,
     roleOfSubmitter: dbReport.role_of_submitter || undefined,
     affectedFarmIds: dbReport.affected_farm_ids || [],
@@ -87,6 +91,7 @@ export function dbToAppReport(dbReport: SheepReportDB) {
     flaggedAt: dbReport.flagged_at ? new Date(dbReport.flagged_at) : undefined,
     screeningRequired: dbReport.screening_required ?? false,
     metadataCompletenessScore: dbReport.metadata_completeness_score ?? undefined,
+    mapSnapshotUrl: dbReport.map_snapshot_url || undefined,
   }
 }
 
@@ -108,6 +113,7 @@ export function appToDbReport(appReport: any) {
     category_id: appReport.categoryId || 'sheep',
     category_name: appReport.categoryName || 'Sheep',
     category_emoji: appReport.categoryEmoji || '🐑',
+    category_image_url: appReport.categoryImageUrl || null,
     submitted_by_user_name: appReport.submittedByUserName || null,
     role_of_submitter: appReport.roleOfSubmitter || null,
     affected_farm_ids: appReport.affectedFarmIds || [],
@@ -127,6 +133,7 @@ export function appToDbReport(appReport: any) {
     flagged_at: appReport.flaggedAt instanceof Date ? appReport.flaggedAt.toISOString() : (appReport.flaggedAt || null),
     screening_required: appReport.screeningRequired ?? null,
     metadata_completeness_score: appReport.metadataCompletenessScore ?? null,
+    map_snapshot_url: appReport.mapSnapshotUrl || null,
   }
   // Only include id if provided — omitting lets Supabase generate a UUID
   if (appReport.id !== undefined) {
@@ -348,6 +355,10 @@ export interface ReportCategoryDB {
   count_label: string
   is_active: boolean
   sort_order: number
+  image_url: string | null
+  name_translations: Record<string, string> | null
+  description_translations: Record<string, string> | null
+  condition_translations: Record<string, Record<string, string>> | null
   created_at: string
 }
 
@@ -373,6 +384,11 @@ export async function fetchReportCategories() {
     countLabel: c.count_label,
     isActive: c.is_active,
     sortOrder: c.sort_order,
+    subscriptionMode: (c as any).subscription_mode || 'default_on',
+    imageUrl: c.image_url || undefined,
+    nameTranslations: c.name_translations || undefined,
+    descriptionTranslations: c.description_translations || undefined,
+    conditionTranslations: c.condition_translations || undefined,
     createdAt: new Date(c.created_at),
   }))
 }
@@ -389,6 +405,10 @@ export async function createReportCategory(category: Omit<import('@/store/appSto
       count_label: category.countLabel,
       is_active: category.isActive,
       sort_order: category.sortOrder,
+      image_url: category.imageUrl || null,
+      name_translations: category.nameTranslations || null,
+      description_translations: (category as any).descriptionTranslations || null,
+      condition_translations: (category as any).conditionTranslations || null,
     }])
     .select()
     .single()
@@ -412,6 +432,10 @@ export async function updateReportCategoryDB(id: string, updates: any) {
       count_label: updates.countLabel,
       is_active: updates.isActive,
       sort_order: updates.sortOrder,
+      image_url: updates.imageUrl !== undefined ? (updates.imageUrl || null) : undefined,
+      name_translations: updates.nameTranslations !== undefined ? (updates.nameTranslations || null) : undefined,
+      description_translations: updates.descriptionTranslations !== undefined ? (updates.descriptionTranslations || null) : undefined,
+      condition_translations: updates.conditionTranslations !== undefined ? (updates.conditionTranslations || null) : undefined,
     })
     .eq('id', id)
     .select()
@@ -622,6 +646,72 @@ export async function approveReportScreening(reportId: string): Promise<void> {
   if (error) {
     console.error('Error approving report screening:', error)
     throw error
+  }
+}
+
+// ==================== REPORT COMMENTS ====================
+
+export interface ReportComment {
+  id: string
+  reportId: string
+  commentType: 'manual' | 'system'
+  body: string
+  authorId?: string
+  authorEmail?: string
+  createdAt: Date
+}
+
+export async function fetchReportComments(reportId: string): Promise<ReportComment[]> {
+  const { data, error } = await supabase
+    .from('report_comments')
+    .select('*')
+    .eq('report_id', reportId)
+    .order('created_at', { ascending: true })
+  if (error) {
+    console.error('Error fetching report comments:', error)
+    return []
+  }
+  return (data || []).map((c: any) => ({
+    id: c.id,
+    reportId: c.report_id,
+    commentType: c.comment_type,
+    body: c.body,
+    authorId: c.author_id || undefined,
+    authorEmail: c.author_email || undefined,
+    createdAt: new Date(c.created_at),
+  }))
+}
+
+export async function addReportComment(params: {
+  reportId: string
+  commentType: 'manual' | 'system'
+  body: string
+  authorId?: string | null
+  authorEmail?: string | null
+}): Promise<ReportComment> {
+  const { data, error } = await supabase
+    .from('report_comments')
+    .insert([{
+      report_id: params.reportId,
+      comment_type: params.commentType,
+      body: params.body,
+      author_id: params.authorId || null,
+      author_email: params.authorEmail || null,
+    }])
+    .select()
+    .single()
+  if (error) {
+    console.error('Error adding report comment:', error)
+    throw error
+  }
+  return {
+    id: data.id,
+    reportId: data.report_id,
+    commentType: data.comment_type,
+    body: data.body,
+    authorId: data.author_id || undefined,
+    authorEmail: data.author_email || undefined,
+    createdAt: new Date(data.created_at),
   }
 }
 

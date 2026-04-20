@@ -1,49 +1,18 @@
 'use client'
 
 import { useAppStore } from '@/store/appStore'
-import { signOut, getCurrentUser } from '@/lib/unified-auth'
-import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
-import LanguageSelector from './LanguageSelector'
 import { useTranslation } from '@/contexts/TranslationContext'
-import ChangePasswordModal from './ChangePasswordModal'
 
 interface HeaderProps {
   showBackButton?: boolean
   onBack?: () => void
   title?: string
+  onTitleClick?: () => void
 }
 
-export default function Header({ showBackButton = false, onBack, title }: HeaderProps) {
-  const router = useRouter()
-  const { t, language } = useTranslation() // Added language to trigger re-renders
-  const { currentRole, isAdmin, setShowHomePage, setRole, setAdmin, setCurrentUserId } = useAppStore()
-  const [userEmail, setUserEmail] = useState<string>('')
-  const [userPrimaryRole, setUserPrimaryRole] = useState<'walker' | 'farmer' | 'admin' | 'super_admin' | null>(null)
-  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false)
-
-  // CRITICAL FIX: Force component re-render when language changes
-  const [renderTrigger, setRenderTrigger] = useState(0)
-
-  useEffect(() => {
-    console.log('📋 Header language changed to:', language, '- forcing re-render')
-    setRenderTrigger(prev => prev + 1)
-  }, [language])
-
-  useEffect(() => {
-    const loadUser = async () => {
-      const user = await getCurrentUser()
-      if (user) {
-        setUserEmail(user.email)
-        setUserPrimaryRole(user.role)
-        // Set current role to user's primary role if not set
-        if (!currentRole) {
-          setRole(user.role)
-        }
-      }
-    }
-    loadUser()
-  }, [currentRole])
+export default function Header({ showBackButton = false, onBack, title, onTitleClick }: HeaderProps) {
+  const { t } = useTranslation()
+  const { isAdmin, setShowHomePage, setRole, setAdmin } = useAppStore()
 
   const handleLogoClick = () => {
     setAdmin(false)
@@ -51,209 +20,56 @@ export default function Header({ showBackButton = false, onBack, title }: Header
     setShowHomePage(true)
   }
 
-  const handleRoleSwitch = (role: 'walker' | 'farmer') => {
-    // Only allow role switching for farmers (farmers can access walker mode)
-    if (userPrimaryRole === 'farmer') {
-      setAdmin(false)
-      setRole(role)
-    }
-  }
-
-  const handleLogout = async () => {
-    await signOut()
-    setCurrentUserId(null)
-    setRole(null)
-    setAdmin(false)
-    setShowHomePage(true)
-    setUserEmail('')
-    setUserPrimaryRole(null)
-    router.push('/')
-  }
-
-  const getRoleLabel = () => {
-    if (isAdmin) return t('header.admin', {}, 'Admin')
-    if (currentRole === 'walker') return t('auth.walker', {}, 'Walker')
-    if (currentRole === 'farmer') return t('auth.farmer', {}, 'Farmer')
-    return ''
-  }
-
-  const getRoleEmoji = () => {
-    if (isAdmin) return '🛡️'
-    if (currentRole === 'walker') return '🚶'
-    if (currentRole === 'farmer') return '🧑‍🌾'
-    return '🐑'
-  }
-
   return (
-    <header className={`shadow-sm sticky top-0 z-50 ${isAdmin ? 'bg-slate-800' : 'bg-white'}`} key={language}>
-      <div className="max-w-6xl mx-auto px-4 py-3">
-        <div className="flex items-center justify-between">
-          {/* Left side - Logo and back button */}
-          <div className="flex items-center gap-3">
-            {showBackButton && onBack && (
-              <button
-                onClick={onBack}
-                className={`${isAdmin ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-slate-800'}`}
-              >
-                ←
-              </button>
-            )}
+    <header className={`shadow-sm sticky top-0 z-40 ${isAdmin ? 'bg-slate-800' : 'bg-white'}`}>
+      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
+        {/* Back button */}
+        {showBackButton && onBack && (
+          <button
+            onClick={onBack}
+            aria-label="Go back"
+            className={`p-1.5 rounded-lg transition-colors ${
+              isAdmin
+                ? 'text-slate-300 hover:text-white hover:bg-slate-700'
+                : 'text-slate-600 hover:text-slate-800 hover:bg-slate-100'
+            }`}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        )}
+
+        {/* Logo — tap to go home */}
+        <button
+          onClick={handleLogoClick}
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          aria-label="Go to home"
+        >
+          <span className="text-2xl" aria-hidden="true">🐑</span>
+          {!title && (
+            <span className={`font-bold ${isAdmin ? 'text-white' : 'text-green-800'}`}>
+              {t('header.appName', {}, 'Little Bo Peep')}
+            </span>
+          )}
+        </button>
+
+        {/* Page title */}
+        {title && (
+          onTitleClick ? (
             <button
-              onClick={handleLogoClick}
-              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              onClick={onTitleClick}
+              className={`font-semibold hover:opacity-70 transition-opacity ${isAdmin ? 'text-white' : 'text-slate-800'}`}
             >
-              <span className="text-2xl">🐑</span>
-              <span className={`font-bold ${isAdmin ? 'text-white' : 'text-green-800'}`}>
-                {t('header.appName', {}, 'Little Bo Peep')}
-              </span>
+              {title}
             </button>
-            {title && (
-              <>
-                <span className={`${isAdmin ? 'text-slate-500' : 'text-slate-300'}`}>|</span>
-                <span className={`font-medium ${isAdmin ? 'text-white' : 'text-slate-700'}`}>
-                  {title}
-                </span>
-              </>
-            )}
-          </div>
-
-          {/* Right side - User info and controls */}
-          <div className="flex items-center gap-3">
-            {/* Language Selector */}
-            <LanguageSelector />
-
-            {/* User email (if logged in) */}
-            {userEmail && (
-              <span className={`text-sm ${isAdmin ? 'text-slate-300' : 'text-slate-600'}`}>
-                {userEmail}
-              </span>
-            )}
-
-            {/* Current role badge */}
-            {currentRole && (
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                isAdmin
-                  ? 'bg-slate-700 text-slate-200'
-                  : currentRole === 'walker'
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-blue-100 text-blue-700'
-              }`}>
-                {getRoleEmoji()} {getRoleLabel()}
-              </span>
-            )}
-
-            {/* Role switcher dropdown (only for farmers - they can access both roles) */}
-            {!isAdmin && currentRole && userPrimaryRole === 'farmer' && (
-              <div className="relative group">
-                <button className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
-                  <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                </button>
-                <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-slate-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[9999]">
-                  <div className="p-2">
-                    <button
-                      onClick={() => handleRoleSwitch('walker')}
-                      className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 ${
-                        currentRole === 'walker' ? 'bg-green-50 text-green-700' : 'hover:bg-slate-50'
-                      }`}
-                    >
-                      <span>🚶</span> {t('header.walkerMode', {}, 'Walker Mode')}
-                    </button>
-                    <button
-                      onClick={() => handleRoleSwitch('farmer')}
-                      className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 ${
-                        currentRole === 'farmer' ? 'bg-blue-50 text-blue-700' : 'hover:bg-slate-50'
-                      }`}
-                    >
-                      <span>🧑‍🌾</span> {t('header.farmerMode', {}, 'Farmer Mode')}
-                    </button>
-                    <div className="border-t border-slate-200 my-1"></div>
-                    <button
-                      onClick={() => setShowChangePasswordModal(true)}
-                      className="w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 hover:bg-slate-50"
-                    >
-                      <span>🔑</span> {t('header.changePassword', {}, 'Change Password')}
-                    </button>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 hover:bg-red-50 text-red-600"
-                    >
-                      <span>🚪</span> {t('header.logout', {}, 'Logout')}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Settings menu for walkers */}
-            {!isAdmin && currentRole && userPrimaryRole === 'walker' && (
-              <div className="relative group">
-                <button className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
-                  <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                </button>
-                <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-slate-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[9999]">
-                  <div className="p-2">
-                    <button
-                      onClick={() => setShowChangePasswordModal(true)}
-                      className="w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 hover:bg-slate-50"
-                    >
-                      <span>🔑</span> {t('header.changePassword', {}, 'Change Password')}
-                    </button>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 hover:bg-red-50 text-red-600"
-                    >
-                      <span>🚪</span> {t('header.logout', {}, 'Logout')}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Admin/super_admin settings dropdown */}
-            {(isAdmin || currentRole === 'admin' || currentRole === 'super_admin') && (
-              <div className="relative group">
-                <button className="p-2 rounded-lg hover:bg-slate-700 transition-colors">
-                  <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                </button>
-                <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-slate-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[9999]">
-                  <div className="p-2">
-                    <button
-                      onClick={() => setShowChangePasswordModal(true)}
-                      className="w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 hover:bg-slate-50"
-                    >
-                      <span>🔑</span> {t('header.changePassword', {}, 'Change Password')}
-                    </button>
-                    <div className="border-t border-slate-200 my-1"></div>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 hover:bg-red-50 text-red-600"
-                    >
-                      <span>🚪</span> {t('header.logout', {}, 'Logout')}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+          ) : (
+            <span className={`font-semibold ${isAdmin ? 'text-white' : 'text-slate-800'}`}>
+              {title}
+            </span>
+          )
+        )}
       </div>
-
-      {/* Change Password Modal */}
-      {showChangePasswordModal && (
-        <ChangePasswordModal
-          onClose={() => setShowChangePasswordModal(false)}
-          onPasswordChanged={() => {
-            alert('Password changed successfully! Please log in again with your new password.')
-            handleLogout()
-          }}
-        />
-      )}
     </header>
   )
 }

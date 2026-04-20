@@ -6,6 +6,10 @@ import { supabase, fetchUserNotifications, markAllNotificationsRead, markReportN
 import { useTranslation } from '@/contexts/TranslationContext'
 import Header from './Header'
 import Map from './Map'
+import BottomNav from './BottomNav'
+import ProfileDrawer from './ProfileDrawer'
+import Button from './Button'
+import { btn, input, label as labelCls, card, badge as statusBadge } from '@/lib/ui'
 
 type ViewState = 'dashboard' | 'register' | 'create-farm' | 'add-field' | 'view-farm' | 'subscription' | 'notifications'
 type RegistrationStep = 1 | 2 | 3 | 4 | 5
@@ -51,6 +55,8 @@ export default function FarmerDashboard() {
   const [thankYouText, setThankYouText] = useState('')
   const [thankYouSent, setThankYouSent] = useState<Set<string>>(new Set())
   const [sendingThankYou, setSendingThankYou] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
+
   // Resolve reason state
   const [resolveOpen, setResolveOpen] = useState<string | null>(null)
   const [resolveReason, setResolveReason] = useState('resolved')
@@ -333,7 +339,7 @@ export default function FarmerDashboard() {
         title={getTitle()}
       />
 
-      <main className="max-w-4xl mx-auto px-4 py-6">
+      <main className="max-w-4xl mx-auto px-4 py-6 pb-28">
         {/* ===== REGISTRATION ===== */}
         {viewState === 'register' && (
           <div className="max-w-md mx-auto">
@@ -349,22 +355,22 @@ export default function FarmerDashboard() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('farmer.farmNameLabel', {}, 'Farm Name *')}</label>
-                    <input type="text" value={formData.farmName} onChange={(e) => setFormData({...formData, farmName: e.target.value})} placeholder={t('farmer.farmNamePlaceholder', {}, 'e.g., Green Valley Farm')} className="w-full px-4 py-3 border rounded-lg" />
+                    <input type="text" value={formData.farmName} onChange={(e) => setFormData({...formData, farmName: e.target.value})} placeholder={t('farmer.farmNamePlaceholder', {}, 'e.g., Green Valley Farm')} className={input} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('farmer.yourNameLabel', {}, 'Your Name *')}</label>
-                    <input type="text" value={formData.contactName} onChange={(e) => setFormData({...formData, contactName: e.target.value})} className="w-full px-4 py-3 border rounded-lg" />
+                    <input type="text" value={formData.contactName} onChange={(e) => setFormData({...formData, contactName: e.target.value})} className={input} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('farmer.emailLabel', {}, 'Email *')}</label>
-                    <input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full px-4 py-3 border rounded-lg" />
+                    <input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className={input} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('farmer.phoneLabel', {}, 'Phone')}</label>
-                    <input type="tel" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="w-full px-4 py-3 border rounded-lg" />
+                    <input type="tel" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className={input} />
                   </div>
                 </div>
-                <button onClick={handleRegistrationNext} disabled={!formData.farmName || !formData.email} className="w-full mt-6 py-3 bg-blue-600 text-white rounded-xl font-semibold disabled:bg-slate-300">{t('farmer.continue', {}, 'Continue')}</button>
+                <Button variant="secondary" onClick={handleRegistrationNext} disabled={!formData.farmName || !formData.email} className="mt-6">{t('farmer.continue', {}, 'Continue')}</Button>
                 <button
                   onClick={() => setViewState('dashboard')}
                   className="w-full mt-3 py-2 text-sm text-slate-500 hover:text-slate-700"
@@ -406,25 +412,25 @@ export default function FarmerDashboard() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('farmer.addressLine1Label', {}, 'Address Line 1 *')}</label>
-                    <input type="text" value={formData.billingLine1} onChange={(e) => setFormData({...formData, billingLine1: e.target.value})} className="w-full px-4 py-3 border rounded-lg" />
+                    <input type="text" value={formData.billingLine1} onChange={(e) => setFormData({...formData, billingLine1: e.target.value})} className={input} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('farmer.addressLine2Label', {}, 'Address Line 2')}</label>
-                    <input type="text" value={formData.billingLine2} onChange={(e) => setFormData({...formData, billingLine2: e.target.value})} className="w-full px-4 py-3 border rounded-lg" />
+                    <input type="text" value={formData.billingLine2} onChange={(e) => setFormData({...formData, billingLine2: e.target.value})} className={input} />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1">{t('farmer.cityLabel', {}, 'City *')}</label>
-                      <input type="text" value={formData.billingCity} onChange={(e) => setFormData({...formData, billingCity: e.target.value})} className="w-full px-4 py-3 border rounded-lg" />
+                      <input type="text" value={formData.billingCity} onChange={(e) => setFormData({...formData, billingCity: e.target.value})} className={input} />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1">{t('farmer.countyLabel', {}, 'County')}</label>
-                      <input type="text" value={formData.billingCounty} onChange={(e) => setFormData({...formData, billingCounty: e.target.value})} className="w-full px-4 py-3 border rounded-lg" />
+                      <input type="text" value={formData.billingCounty} onChange={(e) => setFormData({...formData, billingCounty: e.target.value})} className={input} />
                     </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('farmer.postcodeLabel', {}, 'Postcode *')}</label>
-                    <input type="text" value={formData.billingPostcode} onChange={(e) => setFormData({...formData, billingPostcode: e.target.value})} className="w-full px-4 py-3 border rounded-lg" />
+                    <input type="text" value={formData.billingPostcode} onChange={(e) => setFormData({...formData, billingPostcode: e.target.value})} className={input} />
                   </div>
                 </div>
                 <div className="flex gap-3 mt-6">
@@ -447,20 +453,20 @@ export default function FarmerDashboard() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('farmer.cardholderNameLabel', {}, 'Cardholder Name *')}</label>
-                    <input type="text" value={formData.cardName} onChange={(e) => setFormData({...formData, cardName: e.target.value})} placeholder={t('farmer.cardholderNamePlaceholder', {}, 'Name on card')} className="w-full px-4 py-3 border rounded-lg" />
+                    <input type="text" value={formData.cardName} onChange={(e) => setFormData({...formData, cardName: e.target.value})} placeholder={t('farmer.cardholderNamePlaceholder', {}, 'Name on card')} className={input} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('farmer.cardNumberLabel', {}, 'Card Number *')}</label>
-                    <input type="text" value={formData.cardNumber} onChange={(e) => setFormData({...formData, cardNumber: e.target.value.replace(/\D/g, '').slice(0, 16)})} placeholder={t('farmer.cardNumberPlaceholder', {}, '1234 5678 9012 3456')} className="w-full px-4 py-3 border rounded-lg font-mono" />
+                    <input type="text" value={formData.cardNumber} onChange={(e) => setFormData({...formData, cardNumber: e.target.value.replace(/\D/g, '').slice(0, 16)})} placeholder={t('farmer.cardNumberPlaceholder', {}, '1234 5678 9012 3456')} className={`${input} font-mono`} />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1">{t('farmer.expiryLabel', {}, 'Expiry *')}</label>
-                      <input type="text" value={formData.cardExpiry} onChange={(e) => setFormData({...formData, cardExpiry: e.target.value})} placeholder={t('farmer.expiryPlaceholder', {}, 'MM/YY')} className="w-full px-4 py-3 border rounded-lg" />
+                      <input type="text" value={formData.cardExpiry} onChange={(e) => setFormData({...formData, cardExpiry: e.target.value})} placeholder={t('farmer.expiryPlaceholder', {}, 'MM/YY')} className={input} />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1">{t('farmer.cvcLabel', {}, 'CVC *')}</label>
-                      <input type="text" value={formData.cardCvc} onChange={(e) => setFormData({...formData, cardCvc: e.target.value.replace(/\D/g, '').slice(0, 4)})} placeholder={t('farmer.cvcPlaceholder', {}, '123')} className="w-full px-4 py-3 border rounded-lg" />
+                      <input type="text" value={formData.cardCvc} onChange={(e) => setFormData({...formData, cardCvc: e.target.value.replace(/\D/g, '').slice(0, 4)})} placeholder={t('farmer.cvcPlaceholder', {}, '123')} className={input} />
                     </div>
                   </div>
                 </div>
@@ -1198,7 +1204,11 @@ export default function FarmerDashboard() {
                         return (
                           <div key={cat.id} className={`flex items-center justify-between p-3 rounded-lg ${isCompulsory ? 'bg-red-50 border border-red-100' : 'bg-slate-50 border border-slate-200'}`}>
                             <div className="flex items-center gap-2">
-                              <span className="text-xl">{cat.emoji}</span>
+                              {cat.imageUrl ? (
+                                <img src={cat.imageUrl} alt={cat.name} className="w-7 h-7 object-contain flex-shrink-0 rounded" />
+                              ) : (
+                                <span className="text-xl">{cat.emoji}</span>
+                              )}
                               <div>
                                 <div className="text-sm font-medium text-slate-700">{cat.name}</div>
                                 <div className="text-xs text-slate-500">
@@ -1226,6 +1236,59 @@ export default function FarmerDashboard() {
           </div>
         )}
       </main>
+
+      {/* Bottom Navigation — hidden during registration flow */}
+      {viewState !== 'register' && (
+        <BottomNav
+          items={[
+            {
+              id: 'dashboard',
+              label: 'Dashboard',
+              icon: '🏠',
+              active: viewState === 'dashboard',
+              onClick: () => setViewState('dashboard'),
+            },
+            {
+              id: 'farms',
+              label: 'Farms',
+              icon: '🏡',
+              active: viewState === 'view-farm' || viewState === 'create-farm' || viewState === 'add-field',
+              onClick: () => {
+                if (myFarms.length > 0) {
+                  setSelectedFarmId(myFarms[0].id)
+                  setViewState('view-farm')
+                } else {
+                  setViewState('create-farm')
+                }
+              },
+            },
+            {
+              id: 'alerts',
+              label: 'Alerts',
+              icon: '🔔',
+              active: viewState === 'notifications',
+              badge: unreadCount,
+              onClick: async () => {
+                setViewState('notifications')
+                if (currentUserId && unreadCount > 0) {
+                  await markAllNotificationsRead(currentUserId)
+                  setFarmerNotifications(prev =>
+                    prev.map(n => ({ ...n, read_at: n.read_at || new Date().toISOString(), status: 'read' }))
+                  )
+                }
+              },
+            },
+            {
+              id: 'profile',
+              label: 'Profile',
+              icon: '👤',
+              onClick: () => setProfileOpen(true),
+            },
+          ]}
+        />
+      )}
+
+      <ProfileDrawer open={profileOpen} onClose={() => setProfileOpen(false)} />
     </div>
   )
 }

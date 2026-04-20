@@ -39,3 +39,17 @@ html, body {
   background: transparent !important;
   border: none !important;
 }
+
+/* Bottom nav safe area (iOS home indicator) */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Profile drawer slide-up animation */
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.animate-slide-up {
+  animation: slide-up 0.25s ease-out;
+}

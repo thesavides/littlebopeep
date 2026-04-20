@@ -13,7 +13,14 @@ import {
   updateFieldInFarm,
   deleteFieldFromFarm,
   createNotificationsForFarmers,
+  fetchReportCategories,
+  addReportComment as addReportCommentInDB,
 } from '@/lib/supabase-client'
+
+// Fire-and-forget system comment writer — used by status-change actions
+function writeSystemComment(reportId: string, body: string) {
+  addReportCommentInDB({ reportId, commentType: 'system', body }).catch(() => {})
+}
 
 // Map configuration
 export const MAP_CONFIG = {
@@ -158,9 +165,11 @@ export interface SheepReport {
   photoUrls?: string[] // New: multiple photos (max 3)
   sheepCount: number
   condition: string
+  conditions?: string[]  // all selected conditions (multi-select)
   categoryId: string        // 'sheep' for default; custom category id otherwise
   categoryName: string      // 'Sheep' for default; custom category name otherwise
   categoryEmoji: string     // '🐑' for default; custom category emoji otherwise
+  categoryImageUrl?: string // optional image URL for the category (overrides emoji on map)
   reporterContact?: string
   reporterId?: string
   status: 'reported' | 'claimed' | 'resolved' | 'escalated' | 'complete'
@@ -191,6 +200,8 @@ export interface SheepReport {
   // WS14: screening
   screeningRequired?: boolean
   metadataCompletenessScore?: number
+  /** URL to OpenStreetMap viewer at the report location, stored at submit time */
+  mapSnapshotUrl?: string
 }
 
 // A field/paddock within a farm - defined by fence posts (polygon)
@@ -237,6 +248,14 @@ export interface MapPreferences {
   disclaimerAccepted: boolean
 }
 
+/** Return the localised category name for the given language code, falling back to English. */
+export function getLocalizedCategoryName(category: ReportCategory | { name: string; nameTranslations?: Record<string, string> }, lang: string): string {
+  if (lang && lang !== 'en' && category.nameTranslations?.[lang]) {
+    return category.nameTranslations[lang]
+  }
+  return category.name
+}
+
 export interface ReportCategory {
   id: string
   name: string             // e.g. 'Fence', 'Wall', 'Road', 'Other Animal'
@@ -248,6 +267,10 @@ export interface ReportCategory {
   isActive: boolean
   sortOrder: number
   subscriptionMode: CategorySubscriptionMode  // 'compulsory' | 'default_on' | 'default_off'
+  imageUrl?: string        // optional image URL (overrides emoji when set)
+  nameTranslations?: Record<string, string>  // e.g. { cy: 'Defaid', ga: 'Caoire' }
+  descriptionTranslations?: Record<string, string>  // translations of description text
+  conditionTranslations?: Record<string, Record<string, string>>  // { cy: { 'Healthy': 'Iach', 'Injured': 'Anafus' } }
   createdAt: Date
 }
 
@@ -308,6 +331,8 @@ interface AppState {
   markReportComplete: (reportId: string, notes?: string) => void
   escalateReport: (reportId: string) => void
   flagReportToAdmin: (reportId: string, note: string) => void
+  editOwnReport: (reportId: string, updates: Partial<Pick<SheepReport, 'description' | 'sheepCount' | 'condition' | 'conditions' | 'photoUrls'>>) => Promise<void>
+  addAdminComment: (reportId: string, body: string) => Promise<void>
   deleteReport: (id: string) => void
   archiveReport: (id: string) => void
   batchArchiveReports: (ids: string[]) => void
@@ -329,6 +354,7 @@ interface AppState {
   // Supabase sync
   loadReports: () => Promise<void>
   loadFarms: () => Promise<void>
+  loadCategories: () => Promise<void>
 
   // Report category actions
   reportCategories: ReportCategory[]
@@ -802,6 +828,32 @@ export const useAppStore = create<AppState>()(
         })
       },
       
+      editOwnReport: async (reportId, updates) => {
+        const conditions = updates.conditions?.length
+          ? updates.conditions
+          : updates.condition ? [updates.condition] : undefined
+        const condition = conditions?.[0] || updates.condition || ''
+        const merged = { ...updates, ...(conditions !== undefined ? { conditions } : {}), condition }
+        set(state => ({
+          reports: state.reports.map(r => r.id === reportId ? { ...r, ...merged } as SheepReport : r)
+        }))
+        import('@/lib/supabase-client').then(({ updateReport }) => {
+          updateReport(reportId, merged).catch(() => {
+            console.error('Failed to save report edits')
+          })
+        })
+      },
+
+      addAdminComment: async (reportId, body) => {
+        const { currentUserId } = get()
+        await addReportCommentInDB({
+          reportId,
+          commentType: 'manual',
+          body,
+          authorId: currentUserId,
+        })
+      },
+
       deleteReport: (id) => set((state) => ({
         reports: state.reports.filter((r) => r.id !== id)
       })),
@@ -908,6 +960,17 @@ export const useAppStore = create<AppState>()(
           }
         } catch (err) {
           console.error('Failed to load farms from Supabase:', err)
+        }
+      },
+
+      loadCategories: async () => {
+        try {
+          const categories = await fetchReportCategories()
+          if (categories.length > 0) {
+            set({ reportCategories: categories })
+          }
+        } catch (err) {
+          console.error('Failed to load categories from Supabase:', err)
         }
       },
 

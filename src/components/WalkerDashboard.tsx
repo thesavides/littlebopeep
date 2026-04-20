@@ -9,6 +9,10 @@ import Map from './Map'
 import LocationButton from './LocationButton'
 import PhotoUpload from './PhotoUpload'
 import PhotoGallery from './PhotoGallery'
+import BottomNav from './BottomNav'
+import ProfileDrawer from './ProfileDrawer'
+import Button from './Button'
+import { btn, input, label, card, text, badge as statusBadge } from '@/lib/ui'
 import { useTranslation } from '@/contexts/TranslationContext'
 
 type ViewState = 'dashboard' | 'reporting' | 'my-reports'
@@ -34,6 +38,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
     markNotificationRead,
     reportCategories,
     loadReports,
+    editOwnReport,
   } = useAppStore()
   
   const [viewState, setViewState] = useState<ViewState>('dashboard')
@@ -43,6 +48,10 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
   const [showNotification, setShowNotification] = useState(false)
   const [showCategoryPicker, setShowCategoryPicker] = useState(false)
   const [activeCategory, setActiveCategory] = useState<ReportCategory | null>(null)
+  const [preferredCategoryId, setPreferredCategoryId] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('lbp-preferred-category')
+    return null
+  })
 
   // Guest contact info (for walkers without accounts)
   const [guestName, setGuestName] = useState('')
@@ -57,6 +66,11 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
 
   // Thank You messages from Supabase
   const [thankYouMessages, setThankYouMessages] = useState<any[]>([])
+
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [editingReportId, setEditingReportId] = useState<string | null>(null)
+  const [editFields, setEditFields] = useState<{ description: string; sheepCount: number; conditions: string[]; photoUrls: string[] }>({ description: '', sheepCount: 1, conditions: [], photoUrls: [] })
+  const [savingEdit, setSavingEdit] = useState(false)
 
   // Load reports and thank-you messages from Supabase on mount
   useEffect(() => {
@@ -129,7 +143,9 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
   const handleBack = () => {
     if (viewState === 'reporting') {
       if (currentReportStep > 1) {
-        setCurrentReportStep(currentReportStep - 1)
+        // Skip step 3 backwards for logged-in users
+        const prevStep = currentReportStep === 4 && currentUserId ? 2 : currentReportStep - 1
+        setCurrentReportStep(prevStep)
       } else {
         setViewState('dashboard')
         resetDraft()
@@ -142,18 +158,28 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
 
   const handleMapClick = (lat: number, lng: number) => {
     updateDraftReport({ location: { lat, lng } })
-    
-    // Check for nearby reports at clicked location
-    const nearby = getNearbyReports(lat, lng, 100, 12)
-    setNearbyReports(nearby)
+
+    // Check for nearby reports of the same category at clicked location
+    const allNearby = getNearbyReports(lat, lng, 100, 12)
+    const sameCategoryNearby = allNearby.filter(r => r.categoryId === (draftReport.categoryId || 'sheep'))
+    setNearbyReports(sameCategoryNearby)
   }
 
   const handleNextStep = async () => {
-    // On step 1, check for duplicates before proceeding
+    // On step 1 completion, store a map reference URL with the report
     if (currentReportStep === 1 && draftReport.location) {
-      const nearby = getNearbyReports(draftReport.location.lat, draftReport.location.lng, 100, 12)
-      if (nearby.length > 0) {
-        setNearbyReports(nearby)
+      const { lat, lng } = draftReport.location
+      updateDraftReport({
+        mapSnapshotUrl: `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}&zoom=15`,
+      })
+    }
+
+    // On step 1, check for same-category duplicates before proceeding
+    if (currentReportStep === 1 && draftReport.location) {
+      const allNearby = getNearbyReports(draftReport.location.lat, draftReport.location.lng, 100, 12)
+      const sameCategoryNearby = allNearby.filter(r => r.categoryId === (draftReport.categoryId || 'sheep'))
+      if (sameCategoryNearby.length > 0) {
+        setNearbyReports(sameCategoryNearby)
         setShowDuplicateWarning(true)
         return
       }
@@ -168,7 +194,9 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
     }
 
     if (currentReportStep < 4) {
-      setCurrentReportStep(currentReportStep + 1)
+      // Skip step 3 (contact info) for logged-in users — their identity is known
+      const nextStep = currentReportStep === 2 && currentUserId ? 4 : currentReportStep + 1
+      setCurrentReportStep(nextStep)
     } else {
       try {
         await submitReport()
@@ -203,6 +231,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
         categoryId: category.id,
         categoryName: category.name,
         categoryEmoji: category.emoji,
+        categoryImageUrl: category.imageUrl || undefined,
       })
     } else {
       updateDraftReport({
@@ -216,26 +245,38 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
     setShowCategoryPicker(false)
   }
 
+  const setDefaultCategory = (categoryId: string | null) => {
+    setPreferredCategoryId(categoryId)
+    if (categoryId) localStorage.setItem('lbp-preferred-category', categoryId)
+    else localStorage.removeItem('lbp-preferred-category')
+  }
+
+  const preferredCategory = preferredCategoryId
+    ? reportCategories.find(c => c.id === preferredCategoryId) ?? null
+    : null
+
   const getTitle = () => {
     if (viewState === 'reporting') {
       const catName = activeCategory ? activeCategory.name : 'Sheep'
-      return `Report ${catName} (Step ${currentReportStep}/4)`
+      const totalSteps = currentUserId ? 3 : 4
+      const displayStep = currentUserId && currentReportStep === 4 ? 3 : currentReportStep
+      return `Report ${catName} (${displayStep}/${totalSteps})`
     }
     if (viewState === 'my-reports') return t('walker.myReports', {}, 'My Reports')
     return ''
   }
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'reported':
-        return <span className="px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700">{t('walker.statusReported', {}, 'Reported')}</span>
-      case 'claimed':
-        return <span className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-700">{t('walker.statusClaimed', {}, 'Claimed')}</span>
-      case 'resolved':
-        return <span className="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700">{t('walker.statusResolved', {}, 'Resolved')}</span>
-      default:
-        return null
+    const cls = statusBadge[status as keyof typeof statusBadge]
+    if (!cls) return null
+    const labels: Record<string, string> = {
+      reported: t('walker.statusReported', {}, 'Reported'),
+      claimed:  t('walker.statusClaimed',  {}, 'Claimed'),
+      resolved: t('walker.statusResolved', {}, 'Resolved'),
+      complete: t('walker.statusComplete', {}, 'Complete'),
+      escalated: t('walker.statusEscalated', {}, 'Escalated'),
     }
+    return <span className={cls}>{labels[status] ?? status}</span>
   }
 
   return (
@@ -306,16 +347,21 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
       )}
 
       {/* Progress bar for reporting */}
-      {viewState === 'reporting' && (
-        <div className="h-1 bg-slate-200">
-          <div 
-            className="h-full bg-green-500 transition-all"
-            style={{ width: `${(currentReportStep / 4) * 100}%` }}
-          />
-        </div>
-      )}
+      {viewState === 'reporting' && (() => {
+        // Logged-in users skip step 3, so progress is over 3 steps not 4
+        const totalSteps = currentUserId ? 3 : 4
+        const displayStep = currentUserId && currentReportStep === 4 ? 3 : currentReportStep
+        return (
+          <div className="h-1 bg-slate-200">
+            <div
+              className="h-full bg-green-500 transition-all"
+              style={{ width: `${(displayStep / totalSteps) * 100}%` }}
+            />
+          </div>
+        )
+      })()}
 
-      <main className="max-w-4xl mx-auto px-4 py-6">
+      <main className="max-w-4xl mx-auto px-4 py-6 pb-28">
         {/* ===== DASHBOARD VIEW ===== */}
         {viewState === 'dashboard' && (
           <>
@@ -350,6 +396,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                     type: 'sheep' as const,
                     status: r.status as 'reported' | 'claimed' | 'resolved',
                     emoji: r.categoryEmoji || '🐑',
+                    imageUrl: r.categoryImageUrl,
                   }))
                 ]}
               />
@@ -367,56 +414,75 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
 
             {/* Category Picker Modal */}
             {showCategoryPicker && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
-                  <div className="flex items-center justify-between mb-4">
+              <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4" onClick={() => setShowCategoryPicker(false)}>
+                <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg shadow-xl animate-slide-up sm:animate-none" onClick={e => e.stopPropagation()}>
+                  <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-100">
                     <h3 className="text-lg font-bold text-slate-800">What are you reporting?</h3>
                     <button onClick={() => setShowCategoryPicker(false)} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">×</button>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    {reportCategories.filter(c => c.isActive).sort((a, b) => a.sortOrder - b.sortOrder).map((cat) => (
-                      <button
-                        key={cat.id}
-                        onClick={() => handleStartReportWithCategory(cat)}
-                        className="flex flex-col items-center gap-2 p-4 bg-slate-50 hover:bg-green-50 border border-slate-200 hover:border-green-400 rounded-xl transition-colors"
-                      >
-                        <span className="text-3xl">{cat.emoji}</span>
-                        <span className="text-sm font-medium text-slate-700 text-center leading-tight">{cat.name}</span>
-                      </button>
-                    ))}
+                  <div className="p-4 space-y-2 max-h-[70vh] sm:max-h-[80vh] overflow-y-auto safe-area-pb">
+                    {/* Sheep — always first */}
+                    {(() => {
+                      const isSheepDefault = !preferredCategoryId
+                      return (
+                        <div className="flex items-center gap-3 p-3 rounded-xl border-2 border-green-200 bg-green-50">
+                          <button
+                            className="flex items-center gap-3 flex-1 text-left"
+                            onClick={() => handleStartReportWithCategory(null)}
+                          >
+                            <span className="text-3xl w-10 text-center flex-shrink-0">🐑</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-slate-800">Sheep</div>
+                              <div className="text-xs text-slate-500">Stray or loose sheep</div>
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setDefaultCategory(isSheepDefault ? null : null)}
+                            className={`text-lg flex-shrink-0 ${isSheepDefault ? 'text-yellow-400' : 'text-slate-300 hover:text-yellow-300'}`}
+                            title={isSheepDefault ? 'Your default' : 'Set as default'}
+                          >
+                            ★
+                          </button>
+                        </div>
+                      )
+                    })()}
+                    {/* Other active categories */}
+                    {reportCategories.filter(c => c.isActive).sort((a, b) => a.sortOrder - b.sortOrder).map((cat) => {
+                      const isDefault = preferredCategoryId === cat.id
+                      return (
+                        <div key={cat.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-colors ${isDefault ? 'border-green-200 bg-green-50' : 'border-slate-200 bg-slate-50 hover:border-green-300 hover:bg-white'}`}>
+                          <button
+                            className="flex items-center gap-3 flex-1 text-left"
+                            onClick={() => handleStartReportWithCategory(cat)}
+                          >
+                            {cat.imageUrl ? (
+                              <img src={cat.imageUrl} alt={cat.name} className="w-10 h-10 object-contain flex-shrink-0 rounded" />
+                            ) : (
+                              <span className="text-3xl w-10 text-center flex-shrink-0">{cat.emoji}</span>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-slate-800">{cat.name}</div>
+                              {cat.description && <div className="text-xs text-slate-500 truncate">{cat.description}</div>}
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setDefaultCategory(isDefault ? null : cat.id)}
+                            className={`text-lg flex-shrink-0 ${isDefault ? 'text-yellow-400' : 'text-slate-300 hover:text-yellow-300'}`}
+                            title={isDefault ? 'Your default' : 'Set as default'}
+                          >
+                            ★
+                          </button>
+                        </div>
+                      )
+                    })}
                     {reportCategories.filter(c => c.isActive).length === 0 && (
-                      <p className="col-span-2 text-center text-slate-500 text-sm py-4">No additional categories available yet.</p>
+                      <p className="text-center text-slate-500 text-sm py-4">Only sheep reporting is available.</p>
                     )}
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Actions */}
-            <div className="space-y-3">
-              <button
-                onClick={() => handleStartReportWithCategory(null)}
-                className="w-full py-4 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow-lg"
-              >
-                <span className="text-xl">🐑</span>
-                {t('walker.reportASheep', {}, 'Report a Sheep')}
-              </button>
-
-              <button
-                onClick={() => setShowCategoryPicker(true)}
-                className="w-full py-4 bg-slate-700 text-white rounded-xl font-semibold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
-              >
-                <span className="text-xl">📋</span>
-                Report Other
-              </button>
-
-              <button
-                onClick={() => setViewState('my-reports')}
-                className="w-full py-4 bg-white text-slate-800 rounded-xl font-semibold hover:bg-slate-50 transition-colors border border-slate-200"
-              >
-                {t('walker.myReportsWithCount', { count: myReports.length }, `My Reports (${myReports.length})`)}
-              </button>
-            </div>
 
             {/* Tips */}
             <div className="mt-8 bg-green-50 rounded-xl p-4">
@@ -445,11 +511,11 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                   Tap on the map to mark the location. Recent reports (last 12 hours) are shown as {activeCategory ? activeCategory.emoji : '🐑'} markers.
                 </p>
                 
-                {/* Location Button */}
-                <LocationButton 
-                  onLocationFound={(lat, lng) => {
-                    handleMapClick(lat, lng)
-                  }}
+                {/* Location — prominent auto-locate; tap map to refine */}
+                <LocationButton
+                  prominent
+                  autoLocate={!draftReport.location}
+                  onLocationFound={handleMapClick}
                   className="mb-4"
                 />
                 
@@ -474,14 +540,16 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                         type: 'sheep' as const,
                         status: r.status as 'reported' | 'claimed' | 'resolved',
                         emoji: r.categoryEmoji || '🐑',
+                        imageUrl: r.categoryImageUrl,
                       })),
-                      // Show selected location with category emoji
+                      // Show selected location with category image or emoji
                       ...(draftReport.location ? [{
                         id: 'selected',
                         position: [draftReport.location.lat, draftReport.location.lng] as [number, number],
                         popup: 'Your report location',
                         type: 'selected' as const,
                         emoji: activeCategory?.emoji || '🐑',
+                        imageUrl: activeCategory?.imageUrl,
                       }] : [])
                     ]}
                   />
@@ -494,7 +562,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                 {nearbyReports.length > 0 && draftReport.location && (
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
                     <p className="text-amber-800 text-sm">
-                      ⚠️ {t('walker.nearbyReportsExist', { count: nearbyReports.length }, `${nearbyReports.length} report(s) already exist within 100m of this location in the last 12 hours.`)}
+                      ⚠️ {nearbyReports.length} {activeCategory?.name || 'sheep'} report{nearbyReports.length > 1 ? 's' : ''} already {nearbyReports.length > 1 ? 'exist' : 'exists'} within 100m in the last 12 hours.
                     </p>
                   </div>
                 )}
@@ -508,43 +576,93 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                   Tell us about the {activeCategory ? activeCategory.name.toLowerCase() : 'sheep'}
                 </h2>
                 <div className="space-y-4">
+                  {/* Quantity — quick-pick 1-10 + stepper for larger */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
                       {activeCategory ? (activeCategory.countLabel || 'Quantity') : t('walker.sheepCount', {}, 'Number of sheep')}
                     </label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={draftReport.sheepCount || 1}
-                      onChange={(e) => updateDraftReport({ sheepCount: parseInt(e.target.value) || 1 })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-lg"
-                    />
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => updateDraftReport({ sheepCount: n })}
+                          className={`w-11 h-11 rounded-lg font-semibold text-sm border-2 transition-colors ${
+                            (draftReport.sheepCount || 1) === n
+                              ? 'bg-green-600 text-white border-green-600'
+                              : 'bg-white text-slate-700 border-slate-300 hover:border-green-400'
+                          }`}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => updateDraftReport({ sheepCount: Math.max(1, (draftReport.sheepCount || 1) - 1) })}
+                        className="w-11 h-11 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xl flex items-center justify-center active:bg-slate-300"
+                      >−</button>
+                      <input
+                        type="number"
+                        min="1"
+                        value={draftReport.sheepCount || 1}
+                        onChange={(e) => updateDraftReport({ sheepCount: parseInt(e.target.value) || 1 })}
+                        className="w-20 text-center px-2 py-2 border border-slate-300 rounded-lg text-lg font-semibold focus:ring-2 focus:ring-green-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => updateDraftReport({ sheepCount: (draftReport.sheepCount || 1) + 1 })}
+                        className="w-11 h-11 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xl flex items-center justify-center active:bg-slate-300"
+                      >+</button>
+                    </div>
                   </div>
+                  {/* Conditions — multi-select chips */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                      {t('walker.condition', {}, 'Condition')}
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      {t('walker.condition', {}, 'Condition')} <span className="text-slate-400 font-normal text-xs">— select all that apply</span>
                     </label>
-                    <select
-                      value={draftReport.condition || ''}
-                      onChange={(e) => updateDraftReport({ condition: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    >
-                      {activeCategory ? (
-                        <>
-                          <option value="">Select condition...</option>
-                          {activeCategory.conditions.map((cond) => (
-                            <option key={cond} value={cond}>{cond}</option>
-                          ))}
-                        </>
-                      ) : (
-                        <>
-                          <option value="healthy">{t('walker.conditionHealthy', {}, 'Healthy - looks fine')}</option>
-                          <option value="injured">{t('walker.conditionInjured', {}, 'Injured - needs attention')}</option>
-                          <option value="dead">{t('walker.conditionDead', {}, 'Dead - needs collection')}</option>
-                          <option value="unknown">{t('walker.conditionUnknown', {}, 'Not sure')}</option>
-                        </>
-                      )}
-                    </select>
+                    {(() => {
+                      const opts = activeCategory?.conditions?.length
+                        ? activeCategory.conditions
+                        : [
+                            t('walker.conditionHealthy', {}, 'Healthy'),
+                            t('walker.conditionInjured', {}, 'Injured'),
+                            t('walker.conditionDead', {}, 'Dead'),
+                            'In road',
+                            'Lost / straying',
+                            t('walker.conditionUnknown', {}, 'Not sure'),
+                          ]
+                      const selected: string[] = draftReport.conditions?.length
+                        ? draftReport.conditions
+                        : draftReport.condition ? [draftReport.condition] : []
+                      return (
+                        <div className="flex flex-wrap gap-2">
+                          {opts.map(opt => {
+                            const isSelected = selected.includes(opt)
+                            return (
+                              <button
+                                key={opt}
+                                type="button"
+                                onClick={() => {
+                                  const next = isSelected
+                                    ? selected.filter(c => c !== opt)
+                                    : [...selected, opt]
+                                  updateDraftReport({ conditions: next, condition: next[0] || '' })
+                                }}
+                                className={`px-3 py-2 rounded-full text-sm font-medium border-2 transition-colors ${
+                                  isSelected
+                                    ? 'bg-green-600 text-white border-green-600'
+                                    : 'bg-white text-slate-700 border-slate-300 hover:border-green-400 active:bg-slate-50'
+                                }`}
+                              >
+                                {opt}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )
+                    })()}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -555,7 +673,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                       onChange={(e) => updateDraftReport({ description: e.target.value })}
                       placeholder={t('walker.detailsPlaceholder', {}, 'e.g., Near the old stone wall, white sheep with black face, ear tag visible...')}
                       rows={3}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className={input}
                     />
                   </div>
                   <div>
@@ -596,7 +714,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                       value={guestName}
                       onChange={(e) => setGuestName(e.target.value)}
                       placeholder={t('walker.namePlaceholder', {}, 'Your name')}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className={input}
                     />
                   </div>
                   <div>
@@ -608,7 +726,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                       value={guestEmail}
                       onChange={(e) => setGuestEmail(e.target.value)}
                       placeholder={t('walker.emailPlaceholder', {}, 'your@email.com')}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className={input}
                     />
                   </div>
                   <div>
@@ -620,7 +738,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                       value={guestPhone}
                       onChange={(e) => setGuestPhone(e.target.value)}
                       placeholder={t('walker.phonePlaceholder', {}, '+44 7700 900000')}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className={input}
                     />
                   </div>
                 </div>
@@ -682,19 +800,16 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
 
             {/* Navigation */}
             <div className="mt-6 space-y-3">
-              <button
+              <Button
+                variant="primary"
                 onClick={handleNextStep}
                 disabled={currentReportStep === 1 && !draftReport.location}
-                className="w-full py-4 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
               >
                 {currentReportStep === 4 ? t('walker.submitReport', {}, '✓ Submit Report') : t('walker.continue', {}, 'Continue →')}
-              </button>
-              <button
-                onClick={handleBack}
-                className="w-full py-3 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200 transition-colors"
-              >
+              </Button>
+              <Button variant="ghost" onClick={handleBack}>
                 {currentReportStep === 1 ? t('walker.cancel', {}, 'Cancel') : t('walker.back', {}, '← Back')}
-              </button>
+              </Button>
             </div>
           </>
         )}
@@ -757,34 +872,176 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
               </div>
             ) : (
               <div className="space-y-4">
-                {myReports.map((report) => (
-                  <div key={report.id} className="bg-white rounded-xl p-4 shadow border border-slate-200">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <div className="font-semibold text-slate-800 flex items-center gap-2">
-                          🐑 {t('walker.sheepSpotted', { count: report.sheepCount }, `${report.sheepCount} sheep spotted`)}
+                {myReports.map((report) => {
+                  const isEditing = editingReportId === report.id
+                  const displayConditions = report.conditions?.length
+                    ? report.conditions
+                    : report.condition ? [report.condition] : []
+                  return (
+                    <div key={report.id} className="bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
+                      <div className="p-4">
+                        <div className="flex justify-between items-start mb-1">
+                          <div>
+                            <div className="font-semibold text-slate-800">
+                              {report.categoryEmoji || '🐑'} {report.sheepCount} {report.categoryName || 'sheep'}
+                            </div>
+                            <div className="text-sm text-slate-500">
+                              <span className="font-mono text-slate-400 mr-1">#{report.id.slice(-6).toUpperCase()}</span>
+                              · {new Date(report.timestamp).toLocaleString()}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {getStatusBadge(report.status)}
+                            {(report.status === 'reported' || report.status === 'claimed') && (
+                              <button
+                                onClick={() => {
+                                  if (isEditing) {
+                                    setEditingReportId(null)
+                                  } else {
+                                    setEditingReportId(report.id)
+                                    setEditFields({
+                                      description: report.description || '',
+                                      sheepCount: report.sheepCount,
+                                      conditions: report.conditions?.length ? report.conditions : report.condition ? [report.condition] : [],
+                                      photoUrls: report.photoUrls || [],
+                                    })
+                                  }
+                                }}
+                                className="px-2 py-1 text-xs bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200"
+                              >
+                                {isEditing ? 'Cancel' : 'Edit'}
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-sm text-slate-500">
-                          {new Date(report.timestamp).toLocaleString()}
-                        </div>
+                        {displayConditions.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {displayConditions.map(c => (
+                              <span key={c} className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs">{c}</span>
+                            ))}
+                          </div>
+                        )}
+                        {report.description && (
+                          <p className="text-sm text-slate-600 mt-2">{report.description}</p>
+                        )}
+                        {report.photoUrls && report.photoUrls.length > 0 && (
+                          <div className="mt-3">
+                            <PhotoGallery photos={report.photoUrls} className="max-w-xs" />
+                          </div>
+                        )}
                       </div>
-                      {getStatusBadge(report.status)}
+
+                      {isEditing && (
+                        <div className="border-t border-slate-200 bg-slate-50 p-4 space-y-4">
+                          <h4 className="font-semibold text-slate-700 text-sm">Edit Report</h4>
+
+                          <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Quantity</label>
+                            <div className="flex items-center gap-2">
+                              <button type="button" onClick={() => setEditFields(f => ({ ...f, sheepCount: Math.max(1, f.sheepCount - 1) }))}
+                                className="w-9 h-9 rounded-lg bg-white border border-slate-300 font-bold text-lg flex items-center justify-center">−</button>
+                              <input type="number" min="1" value={editFields.sheepCount}
+                                onChange={e => setEditFields(f => ({ ...f, sheepCount: parseInt(e.target.value) || 1 }))}
+                                className="w-16 text-center px-2 py-1 border border-slate-300 rounded-lg text-base font-semibold" />
+                              <button type="button" onClick={() => setEditFields(f => ({ ...f, sheepCount: f.sheepCount + 1 }))}
+                                className="w-9 h-9 rounded-lg bg-white border border-slate-300 font-bold text-lg flex items-center justify-center">+</button>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Conditions</label>
+                            <div className="flex flex-wrap gap-2">
+                              {['Healthy','Injured','Dead','In road','Lost / straying','Not sure'].map(opt => {
+                                const sel = editFields.conditions.includes(opt)
+                                return (
+                                  <button key={opt} type="button"
+                                    onClick={() => setEditFields(f => ({
+                                      ...f,
+                                      conditions: sel ? f.conditions.filter(c => c !== opt) : [...f.conditions, opt]
+                                    }))}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-medium border-2 transition-colors ${sel ? 'bg-green-600 text-white border-green-600' : 'bg-white text-slate-700 border-slate-300'}`}
+                                  >{opt}</button>
+                                )
+                              })}
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Details</label>
+                            <textarea value={editFields.description}
+                              onChange={e => setEditFields(f => ({ ...f, description: e.target.value }))}
+                              rows={2}
+                              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500" />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Photos</label>
+                            <PhotoUpload
+                              reportId={report.id}
+                              onPhotosUploaded={(urls) => setEditFields(f => ({ ...f, photoUrls: [...new Set([...f.photoUrls, ...urls])] }))}
+                            />
+                          </div>
+
+                          <button
+                            onClick={async () => {
+                              setSavingEdit(true)
+                              await editOwnReport(report.id, editFields)
+                              setSavingEdit(false)
+                              setEditingReportId(null)
+                            }}
+                            disabled={savingEdit}
+                            className="w-full py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 disabled:opacity-50"
+                          >
+                            {savingEdit ? 'Saving…' : 'Save Changes'}
+                          </button>
+                        </div>
+                      )}
                     </div>
-                    {report.description && (
-                      <p className="text-sm text-slate-600 mt-2">{report.description}</p>
-                    )}
-                    {report.photoUrls && report.photoUrls.length > 0 && (
-                      <div className="mt-3">
-                        <PhotoGallery photos={report.photoUrls} className="max-w-xs" />
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </>
         )}
       </main>
+
+      {/* Bottom Navigation — hidden during active report flow */}
+      {viewState !== 'reporting' && (
+        <BottomNav
+          items={[
+            {
+              id: 'map',
+              label: 'Map',
+              icon: '🗺️',
+              active: viewState === 'dashboard',
+              onClick: () => setViewState('dashboard'),
+            },
+            {
+              id: 'reports',
+              label: 'My Reports',
+              icon: '📋',
+              active: viewState === 'my-reports',
+              badge: thankYouMessages.filter(m => !m.read_at).length,
+              onClick: () => setViewState('my-reports'),
+            },
+            {
+              id: 'profile',
+              label: 'Profile',
+              icon: '👤',
+              onClick: () => setProfileOpen(true),
+            },
+          ]}
+          fab={{
+            label: 'Report',
+            icon: preferredCategory?.imageUrl
+              ? <img src={preferredCategory.imageUrl} alt={preferredCategory.name} className="w-7 h-7 object-contain" />
+              : <span className="text-2xl">{preferredCategory?.emoji ?? '🐑'}</span>,
+            onClick: () => setShowCategoryPicker(true),
+          }}
+        />
+      )}
+
+      <ProfileDrawer open={profileOpen} onClose={() => setProfileOpen(false)} />
     </div>
   )
 }

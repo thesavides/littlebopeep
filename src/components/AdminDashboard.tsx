@@ -2,13 +2,17 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { useAppStore, getDaysSince, MAP_CONFIG, isReportNearFarm } from '@/store/appStore'
+import { useTranslation } from '@/contexts/TranslationContext'
 import Header from './Header'
 import Map from './Map'
 import AdminUserManagement from './AdminUserManagement'
 import WalkerDashboard from './WalkerDashboard'
+import ProfileDrawer from './ProfileDrawer'
+import CategoryImageUploader from './CategoryImageUploader'
 import { inviteUser, getAllUsers, adminResetUserPassword, updateUserProfile, deleteUser as deleteUserFromSupabase, suspendUser as suspendUserInSupabase, activateUser as activateUserInSupabase } from '@/lib/unified-auth'
 import { fetchAuditLogs } from '@/lib/audit'
-import { fetchNotificationsForReport, approveReportScreening } from '@/lib/supabase-client'
+import { fetchNotificationsForReport, approveReportScreening, updateReport as updateReportInDB, fetchReportComments, type ReportComment } from '@/lib/supabase-client'
+import PhotoUpload from './PhotoUpload'
 
 type AdminView = 'overview' | 'walkers' | 'farmers' | 'reports' | 'farms' | 'billing' | 'admins' | 'categories' | 'audit'
 type SortBy = 'date' | 'daysUnclaimed'
@@ -17,6 +21,7 @@ type FilterArchive = 'active' | 'archived' | 'all'
 
 export default function AdminDashboard() {
   const {
+    currentUserId,
     users,
     reports,
     farms,
@@ -49,10 +54,12 @@ export default function AdminDashboard() {
     updateFarmCategorySubscription,
     loadReports,
     loadFarms,
+    addAdminComment,
   } = useAppStore()
 
   const [currentView, setCurrentView] = useState<AdminView>('overview')
   const [showReportMode, setShowReportMode] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
   const [deleteType, setDeleteType] = useState<'user' | 'report' | 'farm' | 'field'>('user')
   const [realUsers, setRealUsers] = useState<any[]>([]) // Users from Supabase
@@ -70,6 +77,7 @@ export default function AdminDashboard() {
   const [showClaimReportModal, setShowClaimReportModal] = useState<string | null>(null) // reportId
   const [showFarmDetailsModal, setShowFarmDetailsModal] = useState<string | null>(null) // farmId
   const [showCreateCategoryModal, setShowCreateCategoryModal] = useState(false)
+  const [showReorderModal, setShowReorderModal] = useState(false)
   const [editingCategory, setEditingCategory] = useState<any | null>(null)
   const [viewingUser, setViewingUser] = useState<any | null>(null)
 
@@ -88,8 +96,8 @@ export default function AdminDashboard() {
     }
   }, [])
 
-  // Report filters and sorting
-  const [sortBy, setSortBy] = useState<SortBy>('daysUnclaimed')
+  // Report filters, sorting, and pagination
+  const [sortBy, setSortBy] = useState<SortBy>('date')
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all')
   const [filterArchive, setFilterArchive] = useState<FilterArchive>('active')
   const [filterFarmerId, setFilterFarmerId] = useState<string>('all')
@@ -99,10 +107,19 @@ export default function AdminDashboard() {
   const [filterKeyword, setFilterKeyword] = useState<string>('')
   const [selectedReports, setSelectedReports] = useState<string[]>([])
   const [mapBounds, setMapBounds] = useState<{north: number, south: number, east: number, west: number} | null>(null)
+  const [reportsPerPage, setReportsPerPage] = useState<number>(25)
+  const [reportsPage, setReportsPage] = useState<number>(1)
   const [detailReportId, setDetailReportId] = useState<string | null>(null)
   const [detailNotifications, setDetailNotifications] = useState<any[]>([])
   const [detailAuditLogs, setDetailAuditLogs] = useState<any[]>([])
   const [loadingDetail, setLoadingDetail] = useState(false)
+  const [detailComments, setDetailComments] = useState<ReportComment[]>([])
+  const [newComment, setNewComment] = useState('')
+  const [submittingComment, setSubmittingComment] = useState(false)
+  const [editingDetailReport, setEditingDetailReport] = useState(false)
+  const [detailEditFields, setDetailEditFields] = useState<{ description: string; sheepCount: number; conditions: string[]; photoUrls: string[] }>({ description: '', sheepCount: 1, conditions: [], photoUrls: [] })
+  const [savingDetailEdit, setSavingDetailEdit] = useState(false)
+  const [exportLoading, setExportLoading] = useState(false)
   // Complete modal
   const [completeReportId, setCompleteReportId] = useState<string | null>(null)
   const [completeNotes, setCompleteNotes] = useState('')
@@ -276,6 +293,13 @@ export default function AdminDashboard() {
     return result
   }, [reports, filterStatus, filterArchive, sortBy, mapBounds, filterFarmerId, filterFarmId, farms, filterDateFrom, filterDateTo, filterKeyword])
 
+  // Reset to page 1 whenever filters change
+  useEffect(() => { setReportsPage(1) }, [filterStatus, filterArchive, sortBy, mapBounds, filterFarmerId, filterFarmId, filterDateFrom, filterDateTo, filterKeyword])
+
+  // Pagination
+  const totalReportPages = reportsPerPage === 0 ? 1 : Math.max(1, Math.ceil(filteredReports.length / reportsPerPage))
+  const paginatedReports = reportsPerPage === 0 ? filteredReports : filteredReports.slice((reportsPage - 1) * reportsPerPage, reportsPage * reportsPerPage)
+
   const handleDelete = async () => {
     if (!showDeleteConfirm) return
     if (deleteType === 'user') {
@@ -301,15 +325,20 @@ export default function AdminDashboard() {
     setDetailReportId(reportId)
     setLoadingDetail(true)
     try {
-      const [logs, notifs] = await Promise.all([
+      setDetailComments([])
+      setNewComment('')
+      const [logs, notifs, comments] = await Promise.all([
         fetchAuditLogs({ entityId: reportId }),
         fetchNotificationsForReport(reportId),
+        fetchReportComments(reportId),
       ])
       setDetailAuditLogs(logs)
       setDetailNotifications(notifs)
+      setDetailComments(comments)
     } catch {
       setDetailAuditLogs([])
       setDetailNotifications([])
+      setDetailComments([])
     }
     setLoadingDetail(false)
   }
@@ -325,11 +354,28 @@ export default function AdminDashboard() {
     )
   }
 
+  const handleAddComment = async (reportId: string) => {
+    const body = newComment.trim()
+    if (!body) return
+    setSubmittingComment(true)
+    try {
+      await addAdminComment(reportId, body)
+      setNewComment('')
+      const updated = await fetchReportComments(reportId)
+      setDetailComments(updated)
+    } catch {
+      // leave text in box on failure
+    }
+    setSubmittingComment(false)
+  }
+
   const handleSelectAllReports = () => {
-    if (selectedReports.length === filteredReports.length) {
-      setSelectedReports([])
+    const pageIds = paginatedReports.map(r => r.id)
+    const allPageSelected = pageIds.every(id => selectedReports.includes(id))
+    if (allPageSelected) {
+      setSelectedReports(prev => prev.filter(id => !pageIds.includes(id)))
     } else {
-      setSelectedReports(filteredReports.map(r => r.id))
+      setSelectedReports(prev => [...new Set([...prev, ...pageIds])])
     }
   }
 
@@ -370,6 +416,175 @@ export default function AdminDashboard() {
     return <span className={`px-2 py-1 rounded text-xs font-medium ${colors[status]}`}>{status}</span>
   }
 
+  // ── Export helpers ────────────────────────────────────────────────────────
+  const loadScript = (src: string): Promise<void> =>
+    new Promise((resolve, reject) => {
+      if (document.querySelector(`script[src="${src}"]`)) { resolve(); return }
+      const s = document.createElement('script')
+      s.src = src; s.onload = () => resolve(); s.onerror = reject
+      document.head.appendChild(s)
+    })
+
+  const generateMapCanvas = async (lat: number, lng: number): Promise<string | null> => {
+    try {
+      const zoom = 15
+      const n = Math.pow(2, zoom)
+      const cx = Math.floor((lng + 180) / 360 * n)
+      const latRad = lat * Math.PI / 180
+      const cy = Math.floor((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n)
+      const canvas = document.createElement('canvas')
+      canvas.width = 512; canvas.height = 512
+      const ctx = canvas.getContext('2d')!
+      const subs = ['a', 'b', 'c']
+      const tilePx = 256
+      await Promise.all(
+        [-1, 0, 1].flatMap(dy =>
+          [-1, 0, 1].map(dx =>
+            new Promise<void>(res => {
+              const img = new Image(); img.crossOrigin = 'anonymous'
+              img.onload = () => { ctx.drawImage(img, (dx + 1) * tilePx - tilePx / 2, (dy + 1) * tilePx - tilePx / 2, tilePx, tilePx); res() }
+              img.onerror = () => res()
+              img.src = `https://${subs[((cx + dx + cy + dy) % 3 + 3) % 3]}.tile.openstreetmap.org/${zoom}/${cx + dx}/${cy + dy}.png`
+            })
+          )
+        )
+      )
+      ctx.beginPath(); ctx.arc(256, 256, 9, 0, Math.PI * 2)
+      ctx.fillStyle = '#ef4444'; ctx.fill()
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke()
+      return canvas.toDataURL('image/png')
+    } catch { return null }
+  }
+
+  const reportsToExport = selectedReports.length > 0
+    ? filteredReports.filter(r => selectedReports.includes(r.id))
+    : filteredReports
+
+  const handleExportCSV = () => {
+    const headers = ['ID', 'Date', 'Category', 'Status', 'Lat', 'Lng', 'Count', 'Conditions', 'Description', 'Reporter', 'Map URL', 'Photo 1', 'Photo 2', 'Photo 3']
+    const rows = reportsToExport.map(r => [
+      r.id,
+      new Date(r.timestamp).toISOString(),
+      `${r.categoryEmoji || ''} ${r.categoryName || 'Sheep'}`.trim(),
+      r.status,
+      r.location.lat,
+      r.location.lng,
+      r.sheepCount,
+      (r.conditions || []).join('; '),
+      r.description || '',
+      r.submittedByUserName || r.reporterContact || '',
+      r.mapSnapshotUrl || `https://www.openstreetmap.org/?mlat=${r.location.lat}&mlon=${r.location.lng}&zoom=15`,
+      r.photoUrls?.[0] || '',
+      r.photoUrls?.[1] || '',
+      r.photoUrls?.[2] || '',
+    ])
+    const csv = [headers, ...rows]
+      .map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
+      .join('\n')
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = `lbp-reports-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click(); URL.revokeObjectURL(url)
+  }
+
+  const handleExportXLSX = async () => {
+    setExportLoading(true)
+    try {
+      await loadScript('https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js')
+      const XLSX = (window as any).XLSX
+      const data = reportsToExport.map(r => ({
+        'ID': r.id,
+        'Date': new Date(r.timestamp).toLocaleString(),
+        'Category': `${r.categoryEmoji || ''} ${r.categoryName || 'Sheep'}`.trim(),
+        'Status': r.status,
+        'Latitude': r.location.lat,
+        'Longitude': r.location.lng,
+        'Count': r.sheepCount,
+        'Conditions': (r.conditions || []).join(', '),
+        'Description': r.description || '',
+        'Reporter': r.submittedByUserName || r.reporterContact || '',
+        'Map URL': r.mapSnapshotUrl || `https://www.openstreetmap.org/?mlat=${r.location.lat}&mlon=${r.location.lng}&zoom=15`,
+        'Photo 1': r.photoUrls?.[0] || '',
+        'Photo 2': r.photoUrls?.[1] || '',
+        'Photo 3': r.photoUrls?.[2] || '',
+      }))
+      const ws = XLSX.utils.json_to_sheet(data)
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, ws, 'Reports')
+      XLSX.writeFile(wb, `lbp-reports-${new Date().toISOString().slice(0, 10)}.xlsx`)
+    } catch (e) {
+      alert('Export failed — check your network connection and try again.')
+    } finally {
+      setExportLoading(false)
+    }
+  }
+
+  const handleExportPDF = async () => {
+    setExportLoading(true)
+    try {
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js')
+      const { jsPDF } = (window as any).jspdf
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+      doc.setFontSize(16)
+      doc.text('Little Bo Peep — Report Export', 14, 14)
+      doc.setFontSize(9)
+      doc.text(`Generated: ${new Date().toLocaleString()}  |  ${reportsToExport.length} reports`, 14, 21)
+      ;(doc as any).autoTable({
+        startY: 26,
+        head: [['ID', 'Date', 'Category', 'Status', 'Count', 'Lat / Lng', 'Description']],
+        body: reportsToExport.map(r => [
+          r.id.slice(0, 8) + '…',
+          new Date(r.timestamp).toLocaleDateString(),
+          `${r.categoryEmoji || ''} ${r.categoryName || 'Sheep'}`.trim(),
+          r.status,
+          r.sheepCount,
+          `${r.location.lat.toFixed(4)}, ${r.location.lng.toFixed(4)}`,
+          (r.description || '').slice(0, 50),
+        ]),
+        styles: { fontSize: 7 },
+        headStyles: { fillColor: [22, 163, 74] },
+      })
+      for (const r of reportsToExport.slice(0, 30)) {
+        doc.addPage()
+        let y = 14
+        doc.setFontSize(11); doc.text(`Report ${r.id.slice(0, 12)}…`, 14, y); y += 7
+        doc.setFontSize(8)
+        const lines = [
+          `Date: ${new Date(r.timestamp).toLocaleString()}`,
+          `Category: ${r.categoryEmoji || ''} ${r.categoryName || 'Sheep'}  |  Status: ${r.status}  |  Count: ${r.sheepCount}`,
+          `Location: ${r.location.lat.toFixed(5)}, ${r.location.lng.toFixed(5)}`,
+          ...(r.conditions?.length ? [`Conditions: ${r.conditions.join(', ')}`] : []),
+          ...(r.description ? [`Description: ${r.description}`] : []),
+          ...(r.submittedByUserName || r.reporterContact ? [`Reporter: ${r.submittedByUserName || r.reporterContact}`] : []),
+        ]
+        lines.forEach(l => { doc.text(l, 14, y); y += 5 })
+        y += 3
+        const mapImg = await generateMapCanvas(r.location.lat, r.location.lng)
+        if (mapImg) { doc.addImage(mapImg, 'PNG', 14, y, 80, 80) }
+        let photoX = 100
+        for (const photoUrl of (r.photoUrls || []).slice(0, 3)) {
+          try {
+            const resp = await fetch(photoUrl)
+            const blob = await resp.blob()
+            const dataUrl = await new Promise<string>(res => {
+              const fr = new FileReader(); fr.onloadend = () => res(fr.result as string); fr.readAsDataURL(blob)
+            })
+            doc.addImage(dataUrl, 'JPEG', photoX, y, 60, 60)
+            photoX += 65
+          } catch { /* skip */ }
+        }
+      }
+      doc.save(`lbp-reports-${new Date().toISOString().slice(0, 10)}.pdf`)
+    } catch (e) {
+      alert('Export failed — check your network connection and try again.')
+    } finally {
+      setExportLoading(false)
+    }
+  }
+  // ── End export helpers ────────────────────────────────────────────────────
+
   const NavButton = ({ view, label, count }: { view: AdminView; label: string; count?: number }) => (
     <button
       onClick={() => setCurrentView(view)}
@@ -391,7 +606,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-100">
-      <Header title="Admin Dashboard" />
+      <Header title="Admin Dashboard" onTitleClick={() => setCurrentView('overview')} />
 
       {/* Report Detail Panel — Workstream 5 */}
       {detailReportId && (() => {
@@ -404,7 +619,7 @@ export default function AdminDashboard() {
             <div className="bg-white w-full max-w-xl h-full overflow-y-auto shadow-2xl flex flex-col">
               <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white z-10">
                 <h2 className="font-bold text-slate-800">Report Detail</h2>
-                <button onClick={() => setDetailReportId(null)} className="text-slate-500 hover:text-slate-700 text-2xl leading-none">×</button>
+                <button onClick={() => { setDetailReportId(null); setEditingDetailReport(false); setDetailComments([]); setNewComment('') }} className="text-slate-500 hover:text-slate-700 text-2xl leading-none">×</button>
               </div>
               <div className="p-4 space-y-5 flex-1">
                 {loadingDetail ? (
@@ -551,6 +766,156 @@ export default function AdminDashboard() {
                               <div className="text-slate-500 text-xs mt-0.5">{log.actor_email || log.actor_id}</div>
                             </div>
                           ))}
+                        </div>
+                      )}
+                    </section>
+
+                    {/* Comments */}
+                    <section>
+                      <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Comments ({detailComments.length})</h3>
+                      <div className="space-y-2 mb-3">
+                        {detailComments.length === 0 && (
+                          <div className="text-sm text-slate-400 italic">No comments yet.</div>
+                        )}
+                        {detailComments.map((c) => (
+                          <div key={c.id} className={`rounded-lg p-3 text-sm ${c.commentType === 'system' ? 'bg-slate-50 border-l-2 border-slate-300' : 'bg-blue-50 border-l-2 border-blue-400'}`}>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className={`text-xs font-medium ${c.commentType === 'system' ? 'text-slate-500' : 'text-blue-700'}`}>
+                                {c.commentType === 'system' ? '⚙️ System' : `💬 ${c.authorEmail || 'Admin'}`}
+                              </span>
+                              <span className="text-xs text-slate-400">{c.createdAt.toLocaleString('en-GB')}</span>
+                            </div>
+                            <p className="text-slate-700">{c.body}</p>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="space-y-2">
+                        <textarea
+                          value={newComment}
+                          onChange={(e) => setNewComment(e.target.value)}
+                          placeholder="Add a comment…"
+                          rows={2}
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-slate-400"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                              e.preventDefault()
+                              if (detailReportId) handleAddComment(detailReportId)
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={() => detailReportId && handleAddComment(detailReportId)}
+                          disabled={!newComment.trim() || submittingComment}
+                          className="px-3 py-2 bg-slate-700 text-white rounded-lg text-sm hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          {submittingComment ? 'Saving…' : 'Add Comment'}
+                        </button>
+                      </div>
+                    </section>
+
+                    {/* Admin Edit Report */}
+                    <section>
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Edit Report</h3>
+                        {!editingDetailReport && (
+                          <button
+                            onClick={() => {
+                              setEditingDetailReport(true)
+                              setDetailEditFields({
+                                description: report.description || '',
+                                sheepCount: report.sheepCount,
+                                conditions: report.conditions?.length ? report.conditions : report.condition ? [report.condition] : [],
+                                photoUrls: report.photoUrls || [],
+                              })
+                            }}
+                            className="text-xs px-3 py-1 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200"
+                          >
+                            ✏️ Edit
+                          </button>
+                        )}
+                      </div>
+                      {editingDetailReport && (
+                        <div className="bg-slate-50 rounded-xl p-4 space-y-4 border border-slate-200">
+                          {report.reporterId && report.reporterId !== currentUserId && (
+                            <div className="text-xs bg-amber-50 border border-amber-200 rounded-lg p-2 text-amber-700">
+                              ⚠️ You are editing a report submitted by another user. Changes will be logged in the audit trail.
+                            </div>
+                          )}
+                          <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Quantity</label>
+                            <div className="flex items-center gap-2">
+                              <button type="button" onClick={() => setDetailEditFields(f => ({ ...f, sheepCount: Math.max(1, f.sheepCount - 1) }))}
+                                className="w-9 h-9 rounded-lg bg-white border border-slate-300 font-bold text-lg flex items-center justify-center">−</button>
+                              <input type="number" min="1" value={detailEditFields.sheepCount}
+                                onChange={e => setDetailEditFields(f => ({ ...f, sheepCount: parseInt(e.target.value) || 1 }))}
+                                className="w-16 text-center px-2 py-1 border border-slate-300 rounded-lg text-base font-semibold" />
+                              <button type="button" onClick={() => setDetailEditFields(f => ({ ...f, sheepCount: f.sheepCount + 1 }))}
+                                className="w-9 h-9 rounded-lg bg-white border border-slate-300 font-bold text-lg flex items-center justify-center">+</button>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Conditions</label>
+                            <div className="flex flex-wrap gap-2">
+                              {(reportCategories.find(c => c.id === report.categoryId)?.conditions || ['Healthy','Injured','Dead','In road','Lost / straying','Not sure']).map(opt => {
+                                const sel = detailEditFields.conditions.includes(opt)
+                                return (
+                                  <button key={opt} type="button"
+                                    onClick={() => setDetailEditFields(f => ({
+                                      ...f,
+                                      conditions: sel ? f.conditions.filter(c => c !== opt) : [...f.conditions, opt]
+                                    }))}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-medium border-2 transition-colors ${sel ? 'bg-green-600 text-white border-green-600' : 'bg-white text-slate-700 border-slate-300'}`}
+                                  >{opt}</button>
+                                )
+                              })}
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Details</label>
+                            <textarea value={detailEditFields.description}
+                              onChange={e => setDetailEditFields(f => ({ ...f, description: e.target.value }))}
+                              rows={3}
+                              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Add Photos</label>
+                            <PhotoUpload
+                              reportId={report.id}
+                              onPhotosUploaded={(urls) => setDetailEditFields(f => ({ ...f, photoUrls: [...new Set([...f.photoUrls, ...urls])] }))}
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={async () => {
+                                setSavingDetailEdit(true)
+                                try {
+                                  const conditions = detailEditFields.conditions
+                                  const condition = conditions[0] || ''
+                                  await updateReportInDB(report.id, {
+                                    description: detailEditFields.description,
+                                    sheepCount: detailEditFields.sheepCount,
+                                    conditions,
+                                    condition,
+                                    photoUrls: detailEditFields.photoUrls,
+                                  })
+                                  await loadReports()
+                                  setEditingDetailReport(false)
+                                } finally {
+                                  setSavingDetailEdit(false)
+                                }
+                              }}
+                              disabled={savingDetailEdit}
+                              className="flex-1 py-2 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 disabled:opacity-50"
+                            >
+                              {savingDetailEdit ? 'Saving…' : 'Save Changes'}
+                            </button>
+                            <button
+                              onClick={() => setEditingDetailReport(false)}
+                              className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm hover:bg-slate-200"
+                            >
+                              Cancel
+                            </button>
+                          </div>
                         </div>
                       )}
                     </section>
@@ -767,7 +1132,6 @@ export default function AdminDashboard() {
       <div className="bg-white border-b sticky top-16 z-40">
         <div className="max-w-6xl mx-auto px-4 py-3">
           <div className="flex items-center gap-2 overflow-x-auto">
-            <NavButton view="overview" label="Overview" />
             <NavButton view="walkers" label="Walkers" count={walkers.length} />
             <NavButton view="farmers" label="Farmers" count={farmers.length} />
             <NavButton view="reports" label="Reports" count={reports.filter(r => !r.archived).length} />
@@ -775,12 +1139,21 @@ export default function AdminDashboard() {
             <NavButton view="billing" label="Billing" />
             <NavButton view="admins" label="Admin Users" />
             <NavButton view="categories" label="Categories" count={reportCategories.length} />
-            <div className="ml-auto flex-shrink-0">
+            <div className="ml-auto flex-shrink-0 flex items-center gap-2">
               <button
                 onClick={() => setShowReportMode(true)}
                 className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
               >
-                🐑 Report Sheep
+                🐑 Report
+              </button>
+              <button
+                onClick={() => setProfileOpen(true)}
+                title="Account settings"
+                className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
               </button>
             </div>
           </div>
@@ -1073,8 +1446,8 @@ export default function AdminDashboard() {
                     <option value="all">All</option>
                   </select>
                   <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortBy)} className="px-3 py-2 border rounded-lg text-sm">
-                    <option value="daysUnclaimed">Sort: Days Unclaimed</option>
-                    <option value="date">Sort: Date</option>
+                    <option value="date">Latest first</option>
+                    <option value="daysUnclaimed">Longest unclaimed</option>
                   </select>
                   <select
                     value={filterFarmerId}
@@ -1167,18 +1540,39 @@ export default function AdminDashboard() {
                 />
               </div>
               <div className="p-2 text-center text-xs text-slate-500">
-                Showing {filteredReports.length} reports {mapBounds ? 'in selected area' : ''}
+                {filteredReports.length} report{filteredReports.length !== 1 ? 's' : ''} {mapBounds ? 'in selected area' : 'total'}
               </div>
             </div>
 
             {/* Reports List */}
             <div className="bg-white rounded-xl shadow">
-              <div className="p-4 border-b flex justify-between items-center">
-                <h2 className="font-semibold text-slate-800">Reports ({filteredReports.length})</h2>
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={selectedReports.length === filteredReports.length && filteredReports.length > 0} onChange={handleSelectAllReports} className="rounded" />
-                  Select All
-                </label>
+              <div className="p-4 border-b flex flex-wrap items-center gap-3 justify-between">
+                <div className="flex items-center gap-3">
+                  <h2 className="font-semibold text-slate-800">Reports ({filteredReports.length})</h2>
+                  <label className="flex items-center gap-2 text-sm text-slate-600">
+                    <input type="checkbox" checked={selectedReports.length === paginatedReports.length && paginatedReports.length > 0} onChange={handleSelectAllReports} className="rounded" />
+                    Select all on page
+                  </label>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-slate-500">Per page:</span>
+                    <select value={reportsPerPage} onChange={(e) => { setReportsPerPage(Number(e.target.value)); setReportsPage(1) }} className="px-2 py-1 border rounded-lg text-xs">
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                      <option value={0}>All</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-slate-500">
+                      Export {selectedReports.length > 0 ? `${selectedReports.length} selected` : `all ${filteredReports.length}`}:
+                    </span>
+                    <button onClick={handleExportCSV} disabled={exportLoading} className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-200 disabled:opacity-50">CSV</button>
+                    <button onClick={handleExportXLSX} disabled={exportLoading} className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-medium hover:bg-green-200 disabled:opacity-50">{exportLoading ? '…' : 'Excel'}</button>
+                    <button onClick={handleExportPDF} disabled={exportLoading} className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-200 disabled:opacity-50">{exportLoading ? '…' : 'PDF'}</button>
+                  </div>
+                </div>
               </div>
               {filteredReports.length === 0 ? (
                 <div className="p-8 text-center text-slate-500">
@@ -1186,56 +1580,96 @@ export default function AdminDashboard() {
                 </div>
               ) : (
                 <div className="divide-y">
-                  {filteredReports.map((report) => (
-                    <div key={report.id} className={`p-4 flex items-center justify-between ${report.archived ? 'bg-slate-50' : ''}`}>
-                      <div className="flex items-center gap-3">
-                        <input type="checkbox" checked={selectedReports.includes(report.id)} onChange={() => handleSelectReport(report.id)} className="rounded" />
-                        <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">{report.categoryEmoji || '🐑'}</div>
-                        <div>
-                          <div className="font-medium text-slate-800">{report.sheepCount} {report.categoryName || 'sheep'} • {report.condition}</div>
-                          <div className="text-sm text-slate-500">{new Date(report.timestamp).toLocaleString()}</div>
-                          {report.description && <div className="text-xs text-slate-400 truncate max-w-xs">{report.description}</div>}
+                  {paginatedReports.map((report) => {
+                    const cat = reportCategories.find(c => c.id === report.categoryId)
+                    const conditions = report.conditions?.length ? report.conditions : report.condition ? [report.condition] : []
+                    const btnBase = 'px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors'
+                    return (
+                    <div key={report.id} className={`p-4 flex items-start gap-3 ${report.archived ? 'bg-slate-50' : ''}`}>
+                      <input type="checkbox" checked={selectedReports.includes(report.id)} onChange={() => handleSelectReport(report.id)} className="rounded mt-1 flex-shrink-0" />
+                      {/* Clickable category icon */}
+                      <button
+                        onClick={() => openReportDetail(report.id)}
+                        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 hover:ring-2 hover:ring-indigo-400 transition-all bg-yellow-100"
+                        title="View report detail"
+                      >
+                        {cat?.imageUrl
+                          ? <img src={cat.imageUrl} alt={cat.name} className="w-8 h-8 object-contain rounded-full" />
+                          : <span className="text-xl">{report.categoryEmoji || '🐑'}</span>
+                        }
+                      </button>
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <button onClick={() => openReportDetail(report.id)} className="text-left w-full hover:text-indigo-700 transition-colors">
+                          <div className="font-medium text-slate-800">{report.sheepCount} {report.categoryName || 'Sheep'}</div>
+                        </button>
+                        <div className="text-xs text-slate-500 mt-0.5">
+                          {report.submittedByUserName || report.reporterContact || <span className="italic text-slate-400">Anonymous</span>}
+                          {' · '}{new Date(report.timestamp).toLocaleString()}
                         </div>
+                        {conditions.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {conditions.map(c => <span key={c} className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">{c}</span>)}
+                          </div>
+                        )}
+                        {report.description && <div className="text-xs text-slate-400 mt-1 truncate">{report.description}</div>}
                       </div>
-                      <div className="flex items-center gap-2 flex-wrap justify-end">
+                      {/* Actions */}
+                      <div className="flex items-center gap-1.5 flex-wrap justify-end flex-shrink-0">
                         {getDaysUnclaimedBadge(report)}
                         {report.screeningRequired && !report.archived && (
-                          <span className="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700">⚠️ Review</span>
+                          <span className="px-2 py-1.5 rounded-lg text-xs font-medium bg-red-100 text-red-700">⚠️ Review</span>
                         )}
                         {report.flaggedByFarmer && report.status !== 'complete' && (
-                          <span className="px-2 py-1 rounded text-xs font-medium bg-amber-100 text-amber-700">🚩 Flagged</span>
+                          <span className="px-2 py-1.5 rounded-lg text-xs font-medium bg-amber-100 text-amber-700">🚩</span>
                         )}
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        <span className={`px-2 py-1.5 rounded-lg text-xs font-medium ${
                           report.status === 'complete' ? 'bg-slate-200 text-slate-700' :
                           report.status === 'escalated' ? 'bg-orange-100 text-orange-700' :
                           report.status === 'resolved' ? 'bg-green-100 text-green-700' :
                           report.status === 'claimed' ? 'bg-blue-100 text-blue-700' :
                           'bg-yellow-100 text-yellow-700'
                         }`}>{report.status}</span>
-                        {report.archived && <span className="px-2 py-1 rounded text-xs bg-slate-200 text-slate-600">Archived</span>}
-                        <button onClick={() => openReportDetail(report.id)} className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded text-sm hover:bg-indigo-200">View</button>
+                        {report.archived && <span className={`${btnBase} bg-slate-200 text-slate-600`}>Archived</span>}
+                        <button onClick={() => openReportDetail(report.id)} className={`${btnBase} bg-indigo-100 text-indigo-700 hover:bg-indigo-200`}>View</button>
                         {!report.archived && report.screeningRequired && (
-                          <button onClick={() => approveReportScreening(report.id)} className="px-3 py-1 bg-teal-100 text-teal-700 rounded text-sm hover:bg-teal-200">Approve</button>
+                          <button onClick={() => approveReportScreening(report.id)} className={`${btnBase} bg-teal-100 text-teal-700 hover:bg-teal-200`}>Approve</button>
                         )}
                         {!report.archived && report.status === 'reported' && !report.screeningRequired && (
-                          <button onClick={() => setShowClaimReportModal(report.id)} className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200">Claim for Farmer</button>
+                          <button onClick={() => setShowClaimReportModal(report.id)} className={`${btnBase} bg-green-100 text-green-700 hover:bg-green-200`}>Claim</button>
                         )}
                         {!report.archived && report.status === 'claimed' && (
-                          <button onClick={() => resolveReport(report.id)} className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200">Resolve</button>
+                          <button onClick={() => resolveReport(report.id)} className={`${btnBase} bg-blue-100 text-blue-700 hover:bg-blue-200`}>Resolve</button>
                         )}
                         {!report.archived && (report.status === 'resolved' || report.status === 'escalated') && (
-                          <button onClick={() => escalateReport(report.id)} className="px-3 py-1 bg-orange-100 text-orange-700 rounded text-sm hover:bg-orange-200">Escalate</button>
+                          <button onClick={() => escalateReport(report.id)} className={`${btnBase} bg-orange-100 text-orange-700 hover:bg-orange-200`}>Escalate</button>
                         )}
                         {!report.archived && (report.status === 'resolved' || report.status === 'escalated') && (
-                          <button onClick={() => { setCompleteReportId(report.id); setCompleteNotes('') }} className="px-3 py-1 bg-slate-700 text-white rounded text-sm hover:bg-slate-800">Complete</button>
+                          <button onClick={() => { setCompleteReportId(report.id); setCompleteNotes('') }} className={`${btnBase} bg-slate-700 text-white hover:bg-slate-800`}>Complete</button>
                         )}
                         {!report.archived && (
-                          <button onClick={() => archiveReport(report.id)} className="px-3 py-1 bg-slate-100 text-slate-600 rounded text-sm hover:bg-slate-200">Archive</button>
+                          <button onClick={() => archiveReport(report.id)} className={`${btnBase} bg-slate-100 text-slate-600 hover:bg-slate-200`}>Archive</button>
                         )}
-                        <button onClick={() => confirmDelete(report.id, 'report')} className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200">Delete</button>
+                        <button onClick={() => confirmDelete(report.id, 'report')} className={`${btnBase} bg-red-100 text-red-700 hover:bg-red-200`}>Delete</button>
                       </div>
                     </div>
-                  ))}
+                    )
+                  })}
+                </div>
+              )}
+              {/* Pagination */}
+              {reportsPerPage > 0 && filteredReports.length > reportsPerPage && (
+                <div className="p-3 border-t flex flex-wrap items-center justify-between gap-3">
+                  <span className="text-sm text-slate-500">
+                    Showing {Math.min((reportsPage - 1) * reportsPerPage + 1, filteredReports.length)}–{Math.min(reportsPage * reportsPerPage, filteredReports.length)} of {filteredReports.length}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => setReportsPage(1)} disabled={reportsPage === 1} className="px-2.5 py-1.5 rounded-lg text-xs border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed">First</button>
+                    <button onClick={() => setReportsPage(p => Math.max(1, p - 1))} disabled={reportsPage === 1} className="px-2.5 py-1.5 rounded-lg text-xs border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed">Prev</button>
+                    <span className="px-3 py-1.5 text-xs text-slate-700 font-medium">Page {reportsPage} of {totalReportPages}</span>
+                    <button onClick={() => setReportsPage(p => Math.min(totalReportPages, p + 1))} disabled={reportsPage === totalReportPages} className="px-2.5 py-1.5 rounded-lg text-xs border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed">Next</button>
+                    <button onClick={() => setReportsPage(totalReportPages)} disabled={reportsPage === totalReportPages} className="px-2.5 py-1.5 rounded-lg text-xs border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed">Last</button>
+                  </div>
                 </div>
               )}
             </div>
@@ -1354,12 +1788,22 @@ export default function AdminDashboard() {
           <>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-slate-800">Report Categories</h2>
-              <button
-                onClick={() => setShowCreateCategoryModal(true)}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700"
-              >
-                + Add Category
-              </button>
+              <div className="flex gap-2">
+                {reportCategories.length > 1 && (
+                  <button
+                    onClick={() => setShowReorderModal(true)}
+                    className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg font-medium hover:bg-slate-200"
+                  >
+                    ⇅ Reorder
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowCreateCategoryModal(true)}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700"
+                >
+                  + Add Category
+                </button>
+              </div>
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
@@ -1377,7 +1821,11 @@ export default function AdminDashboard() {
               {[...reportCategories].sort((a, b) => a.sortOrder - b.sortOrder).map((cat) => (
                 <div key={cat.id} className="bg-white rounded-xl p-4 shadow flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="text-3xl">{cat.emoji}</span>
+                    {cat.imageUrl ? (
+                      <img src={cat.imageUrl} alt={cat.name} className="w-10 h-10 object-contain rounded flex-shrink-0" />
+                    ) : (
+                      <span className="text-3xl">{cat.emoji}</span>
+                    )}
                     <div>
                       <div className="font-semibold text-slate-800 flex items-center gap-2">
                         {cat.name}
@@ -1426,6 +1874,24 @@ export default function AdminDashboard() {
                   }
                   setShowCreateCategoryModal(false)
                   setEditingCategory(null)
+                }}
+              />
+            )}
+
+            {/* Reorder Categories Modal */}
+            {showReorderModal && (
+              <ReorderCategoriesModal
+                categories={reportCategories}
+                onClose={() => setShowReorderModal(false)}
+                onSave={async (ordered) => {
+                  await Promise.all(
+                    ordered.map((c, i) => {
+                      const newOrder = i + 1
+                      if (c.sortOrder !== newOrder) return updateReportCategory(c.id, { sortOrder: newOrder })
+                      return Promise.resolve()
+                    })
+                  )
+                  setShowReorderModal(false)
                 }}
               />
             )}
@@ -1488,6 +1954,8 @@ export default function AdminDashboard() {
           <p>Little Bo Peep Admin Panel • Version 3.0.0</p>
         </div>
       </main>
+
+      <ProfileDrawer open={profileOpen} onClose={() => setProfileOpen(false)} />
     </div>
   )
 }
@@ -2062,7 +2530,11 @@ function FarmDetailsModal({ farm, owner, onClose, onAddField, onEditField, onDel
                 return (
                   <div key={cat.id} className={`flex items-center justify-between p-3 rounded-lg ${isCompulsory ? 'bg-red-50 border border-red-100' : 'bg-slate-50 border border-slate-200'}`}>
                     <div className="flex items-center gap-2">
-                      <span className="text-xl">{cat.emoji}</span>
+                      {cat.imageUrl ? (
+                        <img src={cat.imageUrl} alt={cat.name} className="w-7 h-7 object-contain flex-shrink-0" />
+                      ) : (
+                        <span className="text-xl">{cat.emoji}</span>
+                      )}
                       <div>
                         <div className="text-sm font-medium text-slate-700">{cat.name}</div>
                         <div className="text-xs text-slate-500">
@@ -2371,7 +2843,9 @@ function CategoryFormModal({ category, onClose, onSave }: {
   onClose: () => void
   onSave: (data: any) => void
 }) {
+  const { languages } = useTranslation()
   const [name, setName] = useState(category?.name || '')
+  const [nameTranslations, setNameTranslations] = useState<Record<string, string>>(category?.nameTranslations || {})
   const [emoji, setEmoji] = useState(category?.emoji || '📋')
   const [description, setDescription] = useState(category?.description || '')
   const [conditions, setConditions] = useState<string[]>(category?.conditions || [])
@@ -2381,6 +2855,12 @@ function CategoryFormModal({ category, onClose, onSave }: {
   const [isActive, setIsActive] = useState(category?.isActive ?? true)
   const [sortOrder, setSortOrder] = useState(category?.sortOrder ?? 0)
   const [subscriptionMode, setSubscriptionMode] = useState<'compulsory' | 'default_on' | 'default_off'>(category?.subscriptionMode || 'default_off')
+  const [imageUrl, setImageUrl] = useState<string>(category?.imageUrl || '')
+  const [descriptionTranslations, setDescriptionTranslations] = useState<Record<string, string>>(category?.descriptionTranslations || {})
+  const [conditionTranslations, setConditionTranslations] = useState<Record<string, Record<string, string>>>(category?.conditionTranslations || {})
+  const [showTranslations, setShowTranslations] = useState(false)
+  // Other (non-English) languages for translation fields
+  const otherLanguages = languages.filter(l => l.enabled && l.code !== 'en')
 
   const addCondition = () => {
     const trimmed = newCondition.trim()
@@ -2395,7 +2875,14 @@ function CategoryFormModal({ category, onClose, onSave }: {
   const handleSave = () => {
     if (!name.trim()) { alert('Name is required'); return }
     if (conditions.length === 0) { alert('Add at least one condition option'); return }
-    onSave({ name: name.trim(), emoji, description: description.trim(), conditions, showCount, countLabel, isActive, sortOrder: Number(sortOrder), subscriptionMode })
+    onSave({
+      name: name.trim(), emoji, description: description.trim(), conditions,
+      showCount, countLabel, isActive, sortOrder: Number(sortOrder), subscriptionMode,
+      imageUrl: imageUrl || undefined,
+      nameTranslations: Object.keys(nameTranslations).length > 0 ? nameTranslations : undefined,
+      descriptionTranslations: Object.keys(descriptionTranslations).length > 0 ? descriptionTranslations : undefined,
+      conditionTranslations: Object.keys(conditionTranslations).length > 0 ? conditionTranslations : undefined,
+    })
   }
 
   return (
@@ -2409,33 +2896,42 @@ function CategoryFormModal({ category, onClose, onSave }: {
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Emoji</label>
-            <div className="flex items-center gap-2 mb-2">
-              <input
-                type="text"
-                value={emoji}
-                onChange={(e) => setEmoji(e.target.value)}
-                className="w-16 px-2 py-2 border border-slate-300 rounded-lg text-center text-2xl"
-                maxLength={2}
-              />
-              <span className="text-xs text-slate-500">Or pick one:</span>
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {['🐑','🐄','🐖','🐎','🐏','🐐','🐓','🦆','🦅','🦉','🐇','🦊','🦡','🐿️','🌾','🌿','🍀','🌱','🌲','🌳','🌴','🪨','🪵','🪹','🏡','🏠','🏚️','🚜','🚛','🛻','⛏️','🔨','🪚','🪛','⚙️','🪜','🧱','🪟','🚪','🔒','🔓','🪝','🧲','🪤','🌄','🌅','🌦️','🌧️','⛅','🌫️','🛤️','🛣️','🏞️','⛰️','🌁','🌊','💧','🍂','🍁','🌸','🌼','🌻','🥕','🌽','🍄','🌰','⚠️','🔴','🟡'].map(e => (
-                <button
-                  key={e}
-                  type="button"
-                  onClick={() => setEmoji(e)}
-                  className={`text-xl p-1 rounded hover:bg-slate-100 transition-colors ${emoji === e ? 'bg-green-100 ring-2 ring-green-400' : ''}`}
-                >
-                  {e}
-                </button>
-              ))}
-            </div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Category Icon</label>
+            <CategoryImageUploader
+              currentImageUrl={imageUrl || undefined}
+              onUploaded={(url) => setImageUrl(url)}
+              onClear={() => setImageUrl('')}
+            />
+            {!imageUrl && (
+              <div className="mt-3">
+                <p className="text-xs text-slate-500 mb-1.5">Or use an emoji instead:</p>
+                <div className="flex items-center gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={emoji}
+                    onChange={(e) => setEmoji(e.target.value)}
+                    className="w-16 px-2 py-2 border border-slate-300 rounded-lg text-center text-2xl"
+                    maxLength={2}
+                  />
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {['🐑','🐄','🐖','🐎','🐏','🐐','🐓','🦆','🦅','🦉','🐇','🦊','🦡','🐿️','🌾','🌿','🍀','🌱','🌲','🌳','🌴','🪨','🪵','🪹','🏡','🏠','🏚️','🚜','🚛','🛻','⛏️','🔨','🪚','🪛','⚙️','🪜','🧱','🪟','🚪','🔒','🔓','🪝','🧲','🪤','🌄','🌅','🌦️','🌧️','⛅','🌫️','🛤️','🛣️','🏞️','⛰️','🌁','🌊','💧','🍂','🍁','🌸','🌼','🌻','🥕','🌽','🍄','🌰','⚠️','🔴','🟡'].map(e => (
+                    <button
+                      key={e}
+                      type="button"
+                      onClick={() => setEmoji(e)}
+                      className={`text-xl p-1 rounded hover:bg-slate-100 transition-colors ${emoji === e ? 'bg-green-100 ring-2 ring-green-400' : ''}`}
+                    >
+                      {e}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Name (English) *</label>
               <input
                 type="text"
                 value={name}
@@ -2446,8 +2942,91 @@ function CategoryFormModal({ category, onClose, onSave }: {
             </div>
           </div>
 
+          {otherLanguages.length > 0 && (
+            <div className="border border-slate-200 rounded-xl overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setShowTranslations(v => !v)}
+                className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 text-sm font-medium text-slate-700 transition-colors"
+              >
+                <span>🌐 Translations <span className="text-slate-400 font-normal">(English is always the fallback)</span></span>
+                <span className="text-slate-400 text-lg leading-none">{showTranslations ? '−' : '+'}</span>
+              </button>
+              {showTranslations && (
+                <div className="p-4 space-y-5">
+                  {otherLanguages.map(lang => (
+                    <div key={lang.code}>
+                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">{lang.flag_emoji} {lang.name_native} ({lang.code})</div>
+                      {/* Name */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs text-slate-500 w-20 flex-shrink-0">Name</span>
+                        <input
+                          type="text"
+                          value={nameTranslations[lang.code] || ''}
+                          onChange={(e) => setNameTranslations(prev => {
+                            const next = { ...prev }
+                            if (e.target.value.trim()) next[lang.code] = e.target.value
+                            else delete next[lang.code]
+                            return next
+                          })}
+                          placeholder={name || 'Translation…'}
+                          className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        />
+                      </div>
+                      {/* Description */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs text-slate-500 w-20 flex-shrink-0">Description</span>
+                        <input
+                          type="text"
+                          value={descriptionTranslations[lang.code] || ''}
+                          onChange={(e) => setDescriptionTranslations(prev => {
+                            const next = { ...prev }
+                            if (e.target.value.trim()) next[lang.code] = e.target.value
+                            else delete next[lang.code]
+                            return next
+                          })}
+                          placeholder={description || 'Translation…'}
+                          className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        />
+                      </div>
+                      {/* Conditions */}
+                      {conditions.length > 0 && (
+                        <div>
+                          <span className="text-xs text-slate-500 block mb-1.5">Conditions</span>
+                          <div className="space-y-1.5 pl-0">
+                            {conditions.map(cond => (
+                              <div key={cond} className="flex items-center gap-2">
+                                <span className="text-xs text-slate-400 w-20 flex-shrink-0 truncate" title={cond}>{cond}</span>
+                                <input
+                                  type="text"
+                                  value={conditionTranslations[lang.code]?.[cond] || ''}
+                                  onChange={(e) => setConditionTranslations(prev => {
+                                    const next = { ...prev }
+                                    if (!next[lang.code]) next[lang.code] = {}
+                                    if (e.target.value.trim()) next[lang.code][cond] = e.target.value
+                                    else {
+                                      delete next[lang.code][cond]
+                                      if (Object.keys(next[lang.code]).length === 0) delete next[lang.code]
+                                    }
+                                    return next
+                                  })}
+                                  placeholder={cond}
+                                  className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Description (optional)</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Description (optional, English)</label>
             <input
               type="text"
               value={description}
@@ -2801,6 +3380,68 @@ function UserDetailModal({ user, reports, farms, onClose, onUpdate, onReset, onS
               )}
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ReorderCategoriesModal({ categories, onClose, onSave }: {
+  categories: import('@/store/appStore').ReportCategory[]
+  onClose: () => void
+  onSave: (ordered: import('@/store/appStore').ReportCategory[]) => Promise<void>
+}) {
+  const [list, setList] = useState<import('@/store/appStore').ReportCategory[]>(() =>
+    [...categories].sort((a, b) => a.sortOrder - b.sortOrder)
+  )
+  const [dragIdx, setDragIdx] = useState<number | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  const handleDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault()
+    if (dragIdx === null || dragIdx === idx) return
+    const reordered = [...list]
+    const [moved] = reordered.splice(dragIdx, 1)
+    reordered.splice(idx, 0, moved)
+    setList(reordered)
+    setDragIdx(idx)
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-lg font-bold text-slate-800">Reorder Categories</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">×</button>
+        </div>
+        <p className="text-sm text-slate-500 mb-4">Drag items to set the display order.</p>
+        <div className="space-y-2 mb-5">
+          {list.map((cat, idx) => (
+            <div
+              key={cat.id}
+              draggable
+              onDragStart={() => setDragIdx(idx)}
+              onDragOver={(e) => handleDragOver(e, idx)}
+              onDragEnd={() => setDragIdx(null)}
+              className={`flex items-center gap-3 p-3 bg-white border rounded-xl cursor-grab active:cursor-grabbing transition-shadow ${dragIdx === idx ? 'shadow-lg border-green-400 scale-[1.02]' : 'border-slate-200 hover:border-slate-300'}`}
+            >
+              <span className="text-slate-400 text-lg select-none">⠿</span>
+              {cat.imageUrl ? <img src={cat.imageUrl} alt={cat.name} className="w-7 h-7 object-contain flex-shrink-0" /> : <span className="text-xl">{cat.emoji}</span>}
+              <span className="font-medium text-slate-700">{cat.name}</span>
+              <span className="ml-auto text-xs text-slate-400">#{idx + 1}</span>
+            </div>
+          ))}
+          {list.length === 0 && <p className="text-sm text-slate-400 text-center py-4">No categories to reorder.</p>}
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={async () => { setSaving(true); await onSave(list); setSaving(false) }}
+            disabled={saving}
+            className="flex-1 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 disabled:opacity-60"
+          >
+            {saving ? 'Saving…' : 'Save Order'}
+          </button>
+          <button onClick={onClose} className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200">Cancel</button>
         </div>
       </div>
     </div>

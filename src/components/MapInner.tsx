@@ -166,6 +166,7 @@ interface MapProps {
     type?: 'default' | 'fencepost' | 'sheep' | 'existing' | 'selected' | 'user-location' | 'walker-location' | 'farmer-location'
     status?: 'reported' | 'claimed' | 'resolved'
     emoji?: string
+    imageUrl?: string
   }>
   circles?: Array<{
     center: [number, number]
@@ -338,7 +339,7 @@ function LayerRenderer() {
   )
 }
 
-function getMarkerIcon(type?: string, status?: string, emoji?: string) {
+function getMarkerIcon(type?: string, status?: string, emoji?: string, imageUrl?: string) {
   switch (type) {
     case 'fencepost':
       return fencePostIcon
@@ -348,33 +349,34 @@ function getMarkerIcon(type?: string, status?: string, emoji?: string) {
       return walkerLocationIcon
     case 'farmer-location':
       return farmerLocationIcon
-    case 'selected':
-      // Use category emoji for the selected drop-pin
+    case 'selected': {
+      // Use category image or emoji for the selected drop-pin
+      const inner = imageUrl
+        ? `<img src="${imageUrl}" style="width:26px;height:26px;object-fit:contain;" />`
+        : (emoji || '📍')
       return L.divIcon({
         className: 'category-selected-marker',
-        html: `<div style="
-          font-size: 26px;
-          width: 44px;
-          height: 44px;
-          background: white;
-          border: 3px solid #22c55e;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.35);
-        ">${emoji || '📍'}</div>`,
+        html: `<div style="font-size: 26px; width: 44px; height: 44px; background: white; border: 3px solid #22c55e; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.35);">${inner}</div>`,
         iconSize: [44, 44],
         iconAnchor: [22, 22],
         popupAnchor: [0, -22],
       })
+    }
     case 'sheep':
     case 'existing': {
-      // Use category emoji with status-coloured border
+      // Use category image or emoji with status-coloured border
       const borderColor = status === 'claimed' ? '#eab308' : status === 'resolved' ? '#64748b' : '#22c55e'
       const opacity = status === 'resolved' ? 'opacity: 0.7;' : ''
+      if (imageUrl) {
+        return L.divIcon({
+          className: 'category-report-marker',
+          html: `<div style="width: 40px; height: 40px; background: white; border: 3px solid ${borderColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.3); ${opacity}"><img src="${imageUrl}" style="width:24px;height:24px;object-fit:contain;" /></div>`,
+          iconSize: [40, 40],
+          iconAnchor: [20, 20],
+          popupAnchor: [0, -20],
+        })
+      }
       const markerEmoji = emoji || '🐑'
-      // Only use dynamic icon if a non-sheep emoji is provided (avoids recreating for default case)
       if (markerEmoji !== '🐑') {
         return L.divIcon({
           className: 'category-report-marker',
@@ -471,7 +473,7 @@ export default function MapInner({
         <Marker
           key={marker.id}
           position={marker.position}
-          icon={getMarkerIcon(marker.type, marker.status, marker.emoji)}
+          icon={getMarkerIcon(marker.type, marker.status, marker.emoji, marker.imageUrl)}
         >
           {marker.popup && <Popup>{marker.popup}</Popup>}
         </Marker>
