@@ -2,7 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   turbopack: {
-    root: require('path').resolve(__dirname, '../../..'),
+    // __dirname is always the directory containing next.config.js (the repo root),
+    // regardless of whether we're running from the main repo or a git worktree.
+    root: __dirname,
   },
 }
 
