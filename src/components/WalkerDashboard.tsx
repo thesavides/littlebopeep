@@ -1067,20 +1067,13 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
       {/* Bottom Navigation — hidden during active report flow */}
       {viewState !== 'reporting' && (
         currentUserId ? (
-          <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 safe-area-pb flex justify-center py-3">
-            <div className="flex flex-col items-center">
-              <button
-                onClick={() => setShowCategoryPicker(true)}
-                aria-label="Report"
-                className="w-16 h-16 rounded-full bg-green-600 text-white shadow-lg flex items-center justify-center hover:bg-green-700 active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-              >
-                {preferredCategory?.imageUrl
-                  ? <img src={preferredCategory.imageUrl} alt={preferredCategory.name} className="w-7 h-7 object-contain" />
-                  : <span className="text-2xl">{preferredCategory?.emoji ?? '🐑'}</span>
-                }
-              </button>
-              <span className="text-[10px] text-slate-500 mt-1">Report</span>
-            </div>
+          <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 safe-area-pb px-4 py-3">
+            <button
+              onClick={() => setShowCategoryPicker(true)}
+              className="w-full py-4 bg-green-600 text-white rounded-xl font-semibold text-base hover:bg-green-700 active:scale-[0.98] transition-all focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 shadow-sm"
+            >
+              Report
+            </button>
           </nav>
         ) : (
           <BottomNav
