@@ -134,7 +134,7 @@ function LandingPage() {
           className="inline-block rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-widest mb-6"
           style={{ backgroundColor: '#D8F3DC', color: '#2D6A4F' }}
         >
-          {t('home.landing.eyebrow', {}, 'Real-Time Country Side reporting')}
+          {t('home.landing.eyebrow', {}, 'Real-Time Countryside Reporting')}
         </p>
 
         {/* Headline — four-line nursery rhyme */}

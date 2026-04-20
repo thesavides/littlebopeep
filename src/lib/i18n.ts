@@ -23,7 +23,7 @@ export interface Translation {
 export type TranslationDictionary = Record<string, string>
 
 const CACHE_PREFIX = 'translations_'
-const CACHE_VERSION = 'v5' // Incremented to force cache refresh after eyebrow + hero lines update
+const CACHE_VERSION = 'v6' // Incremented to force cache refresh after eyebrow spelling fix
 const CACHE_DURATION = 24 * 60 * 60 * 1000 // 24 hours
 
 /**
