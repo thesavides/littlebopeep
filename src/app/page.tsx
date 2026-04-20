@@ -143,9 +143,9 @@ function LandingPage() {
           style={{ color: '#2D6A4F' }}
         >
           {t('home.landing.heroLine1', {}, 'Little Bo Peep')}<br />
-          {t('home.landing.heroLine2', {}, 'Has lost her sheep.')}<br />
-          {t('home.landing.heroLine3', {}, 'Help find it,')}<br />
-          {t('home.landing.heroLine4', {}, 'Report anything else along the way.')}
+          {t('home.landing.heroLine2', {}, 'has lost her sheep.')}<br />
+          {t('home.landing.heroLine3', {}, 'Help find them and')}<br />
+          {t('home.landing.heroLine4', {}, 'report anything along the way.')}
         </h1>
       </section>
 
