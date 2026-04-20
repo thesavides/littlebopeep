@@ -47,7 +47,7 @@ function LandingPage() {
     {
       num: '02',
       title: t('home.landing.step2Title', {}, 'Open the app'),
-      desc: t('home.landing.step2Desc', {}, 'No fuss — just tap Report and you're straight in.'),
+      desc: t('home.landing.step2Desc', {}, "No fuss — just tap Report and you're straight in."),
     },
     {
       num: '03',
@@ -128,7 +128,7 @@ function LandingPage() {
       </nav>
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-5xl px-5 pt-14 pb-10 text-center">
+      <section className="mx-auto max-w-5xl px-5 pt-8 pb-6 text-center">
         {/* Eyebrow */}
         <p
           className="inline-block rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-widest mb-6"
@@ -137,53 +137,48 @@ function LandingPage() {
           {t('home.landing.eyebrow', {}, 'Trusted by farms across the UK')}
         </p>
 
-        {/* Headline */}
+        {/* Headline — styled as a nursery rhyme, both lines same font & size */}
         <h1
-          className="font-serif text-4xl sm:text-5xl leading-tight mb-6 max-w-2xl mx-auto"
+          className="font-serif text-4xl sm:text-5xl leading-snug mb-6 max-w-2xl mx-auto"
           style={{ color: '#2D6A4F' }}
         >
           {t('home.landing.headline1', {}, 'Little Bo Peep has lost her sheep.')}
           <br />
-          <span className="italic" style={{ color: '#52B788' }}>
-            {t('home.landing.headline2', {}, 'Help find it — and everything else along the way.')}
-          </span>
+          {t('home.landing.headline2', {}, 'Help find it & report anything else along the way.')}
         </h1>
 
         {/* Subheading */}
         <p className="text-base sm:text-lg max-w-xl mx-auto" style={{ color: '#5C7C65' }}>
-          {t('home.landing.subheading', {}, 'Spot issues. Report instantly. Help farmers respond.')}
+          {t('home.landing.subheading', {}, 'Real-time countryside reporting')}
         </p>
       </section>
 
       {/* ── Three cards ──────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-5xl px-5 pb-10">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <section className="mx-auto max-w-5xl px-5 pb-6">
+        <div className="grid grid-cols-3 gap-4">
           {cards.map((card) => (
             <div
               key={card.step}
-              className="rounded-2xl p-6"
+              className="rounded-2xl p-5 flex flex-col items-center text-center gap-2"
               style={{ backgroundColor: '#D8F3DC' }}
             >
               <div
-                className="text-xs font-bold uppercase tracking-widest mb-3"
+                className="text-xs font-bold uppercase tracking-widest"
                 style={{ color: '#52B788' }}
               >
                 {t('home.landing.stepLabel', {}, 'Step')} {card.step}
               </div>
-              <div className="text-3xl mb-3">{card.icon}</div>
-              <h3 className="font-semibold text-lg mb-2" style={{ color: '#2D6A4F' }}>
+              <div className="text-3xl">{card.icon}</div>
+              <h3 className="font-semibold text-base" style={{ color: '#2D6A4F' }}>
                 {card.title}
               </h3>
-              <p className="text-sm leading-relaxed" style={{ color: '#5C7C65' }}>
-                {card.desc}
-              </p>
             </div>
           ))}
         </div>
       </section>
 
       {/* ── CTAs ─────────────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-5xl px-5 pb-14 flex flex-col items-center gap-4">
+      <section className="mx-auto max-w-5xl px-5 pb-10 flex flex-col items-center gap-4">
         <Link
           href="/auth/signup"
           className="rounded-full px-8 py-4 text-base font-semibold text-center transition-opacity hover:opacity-90 w-full sm:w-auto sm:min-w-[280px]"
