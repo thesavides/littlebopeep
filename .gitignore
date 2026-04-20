@@ -2,7 +2,9 @@ node_modules
 .next
 .open-next
 .wrangler
+.claude
 .env*.local
 !.env.production
 *.log
 .DS_Store
+tsconfig.tsbuildinfo
