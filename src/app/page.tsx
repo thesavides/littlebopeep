@@ -134,23 +134,19 @@ function LandingPage() {
           className="inline-block rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-widest mb-6"
           style={{ backgroundColor: '#D8F3DC', color: '#2D6A4F' }}
         >
-          {t('home.landing.eyebrow', {}, 'Trusted by farms across the UK')}
+          {t('home.landing.eyebrow', {}, 'Real-Time Country Side reporting')}
         </p>
 
-        {/* Headline — styled as a nursery rhyme, both lines same font & size */}
+        {/* Headline — four-line nursery rhyme */}
         <h1
           className="font-serif text-4xl sm:text-5xl leading-snug mb-6 max-w-2xl mx-auto"
           style={{ color: '#2D6A4F' }}
         >
-          {t('home.landing.headline1', {}, 'Little Bo Peep has lost her sheep.')}
-          <br />
-          {t('home.landing.headline2', {}, 'Help find it & report anything else along the way.')}
+          {t('home.landing.heroLine1', {}, 'Little Bo Peep')}<br />
+          {t('home.landing.heroLine2', {}, 'Has lost her sheep.')}<br />
+          {t('home.landing.heroLine3', {}, 'Help find it,')}<br />
+          {t('home.landing.heroLine4', {}, 'Report anything else along the way.')}
         </h1>
-
-        {/* Subheading */}
-        <p className="text-base sm:text-lg max-w-xl mx-auto" style={{ color: '#5C7C65' }}>
-          {t('home.landing.subheading', {}, 'Real-time countryside reporting')}
-        </p>
       </section>
 
       {/* ── Three cards ──────────────────────────────────────────────────── */}
