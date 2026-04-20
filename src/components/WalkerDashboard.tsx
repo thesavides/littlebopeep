@@ -326,7 +326,10 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
               <h3 className="text-lg font-bold text-slate-800">{t('walker.existingReportNearby', {}, 'Existing Report Nearby')}</h3>
             </div>
             <p className="text-slate-600 text-center mb-6">
-              {t('walker.duplicateWarning', {}, 'A report for a missing sheep was reported in this vicinity within the past 12 hours. Do you still want to proceed?')}
+              {nearbyReports.length === 1
+                ? `A ${nearbyReports[0].categoryName || 'report'} has already been submitted within 100m of this location in the past 12 hours. Do you still want to submit a new one?`
+                : `${nearbyReports.length} reports of this type have already been submitted within 100m of this location in the past 12 hours. Do you still want to submit a new one?`
+              }
             </p>
             <div className="space-y-3">
               <button
@@ -370,7 +373,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
                 <h3 className="font-semibold text-amber-800 mb-1">📍 {t('walker.reportsNearYou', {}, 'Reports Near You')}</h3>
                 <p className="text-amber-700 text-sm">
-                  {t('walker.nearbyReportsWarning', { count: recentNearbyReports.length }, `${recentNearbyReports.length} sheep report(s) within 100m in the last 12 hours. Check if these match what you've seen before submitting a new report.`)}
+                  {recentNearbyReports.length} {recentNearbyReports.length === 1 ? 'report has' : 'reports have'} been submitted within 100m of your location in the last 12 hours. Check the map to see if they already cover what you&apos;ve spotted.
                 </p>
               </div>
             )}
