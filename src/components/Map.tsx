@@ -15,6 +15,7 @@ interface MapProps {
     type?: 'default' | 'fencepost' | 'sheep' | 'existing' | 'selected' | 'user-location' | 'walker-location' | 'farmer-location'
     status?: 'reported' | 'claimed' | 'resolved'
     emoji?: string
+    imageUrl?: string
   }>
   circles?: Array<{
     center: [number, number]

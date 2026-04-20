@@ -14,7 +14,13 @@ import {
   deleteFieldFromFarm,
   createNotificationsForFarmers,
   fetchReportCategories,
+  addReportComment as addReportCommentInDB,
 } from '@/lib/supabase-client'
+
+// Fire-and-forget system comment writer — used by status-change actions
+function writeSystemComment(reportId: string, body: string) {
+  addReportCommentInDB({ reportId, commentType: 'system', body }).catch(() => {})
+}
 
 // Map configuration
 export const MAP_CONFIG = {
@@ -163,6 +169,7 @@ export interface SheepReport {
   categoryId: string        // 'sheep' for default; custom category id otherwise
   categoryName: string      // 'Sheep' for default; custom category name otherwise
   categoryEmoji: string     // '🐑' for default; custom category emoji otherwise
+  categoryImageUrl?: string // optional image URL for the category (overrides emoji on map)
   reporterContact?: string
   reporterId?: string
   status: 'reported' | 'claimed' | 'resolved' | 'escalated' | 'complete'
@@ -241,6 +248,14 @@ export interface MapPreferences {
   disclaimerAccepted: boolean
 }
 
+/** Return the localised category name for the given language code, falling back to English. */
+export function getLocalizedCategoryName(category: ReportCategory | { name: string; nameTranslations?: Record<string, string> }, lang: string): string {
+  if (lang && lang !== 'en' && category.nameTranslations?.[lang]) {
+    return category.nameTranslations[lang]
+  }
+  return category.name
+}
+
 export interface ReportCategory {
   id: string
   name: string             // e.g. 'Fence', 'Wall', 'Road', 'Other Animal'
@@ -253,6 +268,7 @@ export interface ReportCategory {
   sortOrder: number
   subscriptionMode: CategorySubscriptionMode  // 'compulsory' | 'default_on' | 'default_off'
   imageUrl?: string        // optional image URL (overrides emoji when set)
+  nameTranslations?: Record<string, string>  // translations keyed by language code, e.g. { cy: 'Defaid', ga: 'Caoire' }
   createdAt: Date
 }
 
@@ -314,6 +330,7 @@ interface AppState {
   escalateReport: (reportId: string) => void
   flagReportToAdmin: (reportId: string, note: string) => void
   editOwnReport: (reportId: string, updates: Partial<Pick<SheepReport, 'description' | 'sheepCount' | 'condition' | 'conditions' | 'photoUrls'>>) => Promise<void>
+  addAdminComment: (reportId: string, body: string) => Promise<void>
   deleteReport: (id: string) => void
   archiveReport: (id: string) => void
   batchArchiveReports: (ids: string[]) => void
@@ -822,6 +839,16 @@ export const useAppStore = create<AppState>()(
           updateReport(reportId, merged).catch(() => {
             console.error('Failed to save report edits')
           })
+        })
+      },
+
+      addAdminComment: async (reportId, body) => {
+        const { currentUserId } = get()
+        await addReportCommentInDB({
+          reportId,
+          commentType: 'manual',
+          body,
+          authorId: currentUserId,
         })
       },
 

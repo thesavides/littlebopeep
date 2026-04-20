@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { useAppStore, getDaysSince, MAP_CONFIG, isReportNearFarm } from '@/store/appStore'
+import { useTranslation } from '@/contexts/TranslationContext'
 import Header from './Header'
 import Map from './Map'
 import AdminUserManagement from './AdminUserManagement'
@@ -10,7 +11,7 @@ import ProfileDrawer from './ProfileDrawer'
 import CategoryImageUploader from './CategoryImageUploader'
 import { inviteUser, getAllUsers, adminResetUserPassword, updateUserProfile, deleteUser as deleteUserFromSupabase, suspendUser as suspendUserInSupabase, activateUser as activateUserInSupabase } from '@/lib/unified-auth'
 import { fetchAuditLogs } from '@/lib/audit'
-import { fetchNotificationsForReport, approveReportScreening, updateReport as updateReportInDB } from '@/lib/supabase-client'
+import { fetchNotificationsForReport, approveReportScreening, updateReport as updateReportInDB, fetchReportComments, type ReportComment } from '@/lib/supabase-client'
 import PhotoUpload from './PhotoUpload'
 
 type AdminView = 'overview' | 'walkers' | 'farmers' | 'reports' | 'farms' | 'billing' | 'admins' | 'categories' | 'audit'
@@ -53,6 +54,7 @@ export default function AdminDashboard() {
     updateFarmCategorySubscription,
     loadReports,
     loadFarms,
+    addAdminComment,
   } = useAppStore()
 
   const [currentView, setCurrentView] = useState<AdminView>('overview')
@@ -75,6 +77,7 @@ export default function AdminDashboard() {
   const [showClaimReportModal, setShowClaimReportModal] = useState<string | null>(null) // reportId
   const [showFarmDetailsModal, setShowFarmDetailsModal] = useState<string | null>(null) // farmId
   const [showCreateCategoryModal, setShowCreateCategoryModal] = useState(false)
+  const [showReorderModal, setShowReorderModal] = useState(false)
   const [editingCategory, setEditingCategory] = useState<any | null>(null)
   const [viewingUser, setViewingUser] = useState<any | null>(null)
 
@@ -108,6 +111,9 @@ export default function AdminDashboard() {
   const [detailNotifications, setDetailNotifications] = useState<any[]>([])
   const [detailAuditLogs, setDetailAuditLogs] = useState<any[]>([])
   const [loadingDetail, setLoadingDetail] = useState(false)
+  const [detailComments, setDetailComments] = useState<ReportComment[]>([])
+  const [newComment, setNewComment] = useState('')
+  const [submittingComment, setSubmittingComment] = useState(false)
   const [editingDetailReport, setEditingDetailReport] = useState(false)
   const [detailEditFields, setDetailEditFields] = useState<{ description: string; sheepCount: number; conditions: string[]; photoUrls: string[] }>({ description: '', sheepCount: 1, conditions: [], photoUrls: [] })
   const [savingDetailEdit, setSavingDetailEdit] = useState(false)
@@ -310,15 +316,20 @@ export default function AdminDashboard() {
     setDetailReportId(reportId)
     setLoadingDetail(true)
     try {
-      const [logs, notifs] = await Promise.all([
+      setDetailComments([])
+      setNewComment('')
+      const [logs, notifs, comments] = await Promise.all([
         fetchAuditLogs({ entityId: reportId }),
         fetchNotificationsForReport(reportId),
+        fetchReportComments(reportId),
       ])
       setDetailAuditLogs(logs)
       setDetailNotifications(notifs)
+      setDetailComments(comments)
     } catch {
       setDetailAuditLogs([])
       setDetailNotifications([])
+      setDetailComments([])
     }
     setLoadingDetail(false)
   }
@@ -332,6 +343,21 @@ export default function AdminDashboard() {
     setSelectedReports(prev => 
       prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id]
     )
+  }
+
+  const handleAddComment = async (reportId: string) => {
+    const body = newComment.trim()
+    if (!body) return
+    setSubmittingComment(true)
+    try {
+      await addAdminComment(reportId, body)
+      setNewComment('')
+      const updated = await fetchReportComments(reportId)
+      setDetailComments(updated)
+    } catch {
+      // leave text in box on failure
+    }
+    setSubmittingComment(false)
   }
 
   const handleSelectAllReports = () => {
@@ -582,7 +608,7 @@ export default function AdminDashboard() {
             <div className="bg-white w-full max-w-xl h-full overflow-y-auto shadow-2xl flex flex-col">
               <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white z-10">
                 <h2 className="font-bold text-slate-800">Report Detail</h2>
-                <button onClick={() => { setDetailReportId(null); setEditingDetailReport(false) }} className="text-slate-500 hover:text-slate-700 text-2xl leading-none">×</button>
+                <button onClick={() => { setDetailReportId(null); setEditingDetailReport(false); setDetailComments([]); setNewComment('') }} className="text-slate-500 hover:text-slate-700 text-2xl leading-none">×</button>
               </div>
               <div className="p-4 space-y-5 flex-1">
                 {loadingDetail ? (
@@ -731,6 +757,49 @@ export default function AdminDashboard() {
                           ))}
                         </div>
                       )}
+                    </section>
+
+                    {/* Comments */}
+                    <section>
+                      <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Comments ({detailComments.length})</h3>
+                      <div className="space-y-2 mb-3">
+                        {detailComments.length === 0 && (
+                          <div className="text-sm text-slate-400 italic">No comments yet.</div>
+                        )}
+                        {detailComments.map((c) => (
+                          <div key={c.id} className={`rounded-lg p-3 text-sm ${c.commentType === 'system' ? 'bg-slate-50 border-l-2 border-slate-300' : 'bg-blue-50 border-l-2 border-blue-400'}`}>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className={`text-xs font-medium ${c.commentType === 'system' ? 'text-slate-500' : 'text-blue-700'}`}>
+                                {c.commentType === 'system' ? '⚙️ System' : `💬 ${c.authorEmail || 'Admin'}`}
+                              </span>
+                              <span className="text-xs text-slate-400">{c.createdAt.toLocaleString('en-GB')}</span>
+                            </div>
+                            <p className="text-slate-700">{c.body}</p>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="space-y-2">
+                        <textarea
+                          value={newComment}
+                          onChange={(e) => setNewComment(e.target.value)}
+                          placeholder="Add a comment…"
+                          rows={2}
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-slate-400"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                              e.preventDefault()
+                              if (detailReportId) handleAddComment(detailReportId)
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={() => detailReportId && handleAddComment(detailReportId)}
+                          disabled={!newComment.trim() || submittingComment}
+                          className="px-3 py-2 bg-slate-700 text-white rounded-lg text-sm hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          {submittingComment ? 'Saving…' : 'Add Comment'}
+                        </button>
+                      </div>
                     </section>
 
                     {/* Admin Edit Report */}
@@ -1682,12 +1751,22 @@ export default function AdminDashboard() {
           <>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-slate-800">Report Categories</h2>
-              <button
-                onClick={() => setShowCreateCategoryModal(true)}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700"
-              >
-                + Add Category
-              </button>
+              <div className="flex gap-2">
+                {reportCategories.length > 1 && (
+                  <button
+                    onClick={() => setShowReorderModal(true)}
+                    className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg font-medium hover:bg-slate-200"
+                  >
+                    ⇅ Reorder
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowCreateCategoryModal(true)}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700"
+                >
+                  + Add Category
+                </button>
+              </div>
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
@@ -1758,6 +1837,24 @@ export default function AdminDashboard() {
                   }
                   setShowCreateCategoryModal(false)
                   setEditingCategory(null)
+                }}
+              />
+            )}
+
+            {/* Reorder Categories Modal */}
+            {showReorderModal && (
+              <ReorderCategoriesModal
+                categories={reportCategories}
+                onClose={() => setShowReorderModal(false)}
+                onSave={async (ordered) => {
+                  await Promise.all(
+                    ordered.map((c, i) => {
+                      const newOrder = i + 1
+                      if (c.sortOrder !== newOrder) return updateReportCategory(c.id, { sortOrder: newOrder })
+                      return Promise.resolve()
+                    })
+                  )
+                  setShowReorderModal(false)
                 }}
               />
             )}
@@ -2709,7 +2806,9 @@ function CategoryFormModal({ category, onClose, onSave }: {
   onClose: () => void
   onSave: (data: any) => void
 }) {
+  const { languages } = useTranslation()
   const [name, setName] = useState(category?.name || '')
+  const [nameTranslations, setNameTranslations] = useState<Record<string, string>>(category?.nameTranslations || {})
   const [emoji, setEmoji] = useState(category?.emoji || '📋')
   const [description, setDescription] = useState(category?.description || '')
   const [conditions, setConditions] = useState<string[]>(category?.conditions || [])
@@ -2720,6 +2819,8 @@ function CategoryFormModal({ category, onClose, onSave }: {
   const [sortOrder, setSortOrder] = useState(category?.sortOrder ?? 0)
   const [subscriptionMode, setSubscriptionMode] = useState<'compulsory' | 'default_on' | 'default_off'>(category?.subscriptionMode || 'default_off')
   const [imageUrl, setImageUrl] = useState<string>(category?.imageUrl || '')
+  // Other (non-English) languages for translation fields
+  const otherLanguages = languages.filter(l => l.enabled && l.code !== 'en')
 
   const addCondition = () => {
     const trimmed = newCondition.trim()
@@ -2734,7 +2835,7 @@ function CategoryFormModal({ category, onClose, onSave }: {
   const handleSave = () => {
     if (!name.trim()) { alert('Name is required'); return }
     if (conditions.length === 0) { alert('Add at least one condition option'); return }
-    onSave({ name: name.trim(), emoji, description: description.trim(), conditions, showCount, countLabel, isActive, sortOrder: Number(sortOrder), subscriptionMode, imageUrl: imageUrl || undefined })
+    onSave({ name: name.trim(), emoji, description: description.trim(), conditions, showCount, countLabel, isActive, sortOrder: Number(sortOrder), subscriptionMode, imageUrl: imageUrl || undefined, nameTranslations: Object.keys(nameTranslations).length > 0 ? nameTranslations : undefined })
   }
 
   return (
@@ -2783,7 +2884,7 @@ function CategoryFormModal({ category, onClose, onSave }: {
           </div>
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Name (English) *</label>
               <input
                 type="text"
                 value={name}
@@ -2793,6 +2894,31 @@ function CategoryFormModal({ category, onClose, onSave }: {
               />
             </div>
           </div>
+
+          {otherLanguages.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Name translations <span className="text-slate-400 font-normal">(optional — English used as fallback)</span></label>
+              <div className="space-y-2">
+                {otherLanguages.map(lang => (
+                  <div key={lang.code} className="flex items-center gap-2">
+                    <span className="text-sm text-slate-500 w-28 flex-shrink-0">{lang.flag_emoji} {lang.name_native}</span>
+                    <input
+                      type="text"
+                      value={nameTranslations[lang.code] || ''}
+                      onChange={(e) => setNameTranslations(prev => {
+                        const next = { ...prev }
+                        if (e.target.value.trim()) next[lang.code] = e.target.value
+                        else delete next[lang.code]
+                        return next
+                      })}
+                      placeholder={name || 'Translation…'}
+                      className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Description (optional)</label>
@@ -3149,6 +3275,68 @@ function UserDetailModal({ user, reports, farms, onClose, onUpdate, onReset, onS
               )}
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ReorderCategoriesModal({ categories, onClose, onSave }: {
+  categories: import('@/store/appStore').ReportCategory[]
+  onClose: () => void
+  onSave: (ordered: import('@/store/appStore').ReportCategory[]) => Promise<void>
+}) {
+  const [list, setList] = useState<import('@/store/appStore').ReportCategory[]>(() =>
+    [...categories].sort((a, b) => a.sortOrder - b.sortOrder)
+  )
+  const [dragIdx, setDragIdx] = useState<number | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  const handleDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault()
+    if (dragIdx === null || dragIdx === idx) return
+    const reordered = [...list]
+    const [moved] = reordered.splice(dragIdx, 1)
+    reordered.splice(idx, 0, moved)
+    setList(reordered)
+    setDragIdx(idx)
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-lg font-bold text-slate-800">Reorder Categories</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">×</button>
+        </div>
+        <p className="text-sm text-slate-500 mb-4">Drag items to set the display order.</p>
+        <div className="space-y-2 mb-5">
+          {list.map((cat, idx) => (
+            <div
+              key={cat.id}
+              draggable
+              onDragStart={() => setDragIdx(idx)}
+              onDragOver={(e) => handleDragOver(e, idx)}
+              onDragEnd={() => setDragIdx(null)}
+              className={`flex items-center gap-3 p-3 bg-white border rounded-xl cursor-grab active:cursor-grabbing transition-shadow ${dragIdx === idx ? 'shadow-lg border-green-400 scale-[1.02]' : 'border-slate-200 hover:border-slate-300'}`}
+            >
+              <span className="text-slate-400 text-lg select-none">⠿</span>
+              {cat.imageUrl ? <img src={cat.imageUrl} alt={cat.name} className="w-7 h-7 object-contain flex-shrink-0" /> : <span className="text-xl">{cat.emoji}</span>}
+              <span className="font-medium text-slate-700">{cat.name}</span>
+              <span className="ml-auto text-xs text-slate-400">#{idx + 1}</span>
+            </div>
+          ))}
+          {list.length === 0 && <p className="text-sm text-slate-400 text-center py-4">No categories to reorder.</p>}
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={async () => { setSaving(true); await onSave(list); setSaving(false) }}
+            disabled={saving}
+            className="flex-1 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 disabled:opacity-60"
+          >
+            {saving ? 'Saving…' : 'Save Order'}
+          </button>
+          <button onClick={onClose} className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200">Cancel</button>
         </div>
       </div>
     </div>

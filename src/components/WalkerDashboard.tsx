@@ -229,6 +229,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
         categoryId: category.id,
         categoryName: category.name,
         categoryEmoji: category.emoji,
+        categoryImageUrl: category.imageUrl || undefined,
       })
     } else {
       updateDraftReport({
@@ -393,6 +394,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                     type: 'sheep' as const,
                     status: r.status as 'reported' | 'claimed' | 'resolved',
                     emoji: r.categoryEmoji || '🐑',
+                    imageUrl: r.categoryImageUrl,
                   }))
                 ]}
               />
@@ -536,14 +538,16 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                         type: 'sheep' as const,
                         status: r.status as 'reported' | 'claimed' | 'resolved',
                         emoji: r.categoryEmoji || '🐑',
+                        imageUrl: r.categoryImageUrl,
                       })),
-                      // Show selected location with category emoji
+                      // Show selected location with category image or emoji
                       ...(draftReport.location ? [{
                         id: 'selected',
                         position: [draftReport.location.lat, draftReport.location.lng] as [number, number],
                         popup: 'Your report location',
                         type: 'selected' as const,
                         emoji: activeCategory?.emoji || '🐑',
+                        imageUrl: activeCategory?.imageUrl,
                       }] : [])
                     ]}
                   />
@@ -570,43 +574,93 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                   Tell us about the {activeCategory ? activeCategory.name.toLowerCase() : 'sheep'}
                 </h2>
                 <div className="space-y-4">
+                  {/* Quantity — quick-pick 1-10 + stepper for larger */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
                       {activeCategory ? (activeCategory.countLabel || 'Quantity') : t('walker.sheepCount', {}, 'Number of sheep')}
                     </label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={draftReport.sheepCount || 1}
-                      onChange={(e) => updateDraftReport({ sheepCount: parseInt(e.target.value) || 1 })}
-                      className={`${input} text-lg`}
-                    />
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => updateDraftReport({ sheepCount: n })}
+                          className={`w-11 h-11 rounded-lg font-semibold text-sm border-2 transition-colors ${
+                            (draftReport.sheepCount || 1) === n
+                              ? 'bg-green-600 text-white border-green-600'
+                              : 'bg-white text-slate-700 border-slate-300 hover:border-green-400'
+                          }`}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => updateDraftReport({ sheepCount: Math.max(1, (draftReport.sheepCount || 1) - 1) })}
+                        className="w-11 h-11 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xl flex items-center justify-center active:bg-slate-300"
+                      >−</button>
+                      <input
+                        type="number"
+                        min="1"
+                        value={draftReport.sheepCount || 1}
+                        onChange={(e) => updateDraftReport({ sheepCount: parseInt(e.target.value) || 1 })}
+                        className="w-20 text-center px-2 py-2 border border-slate-300 rounded-lg text-lg font-semibold focus:ring-2 focus:ring-green-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => updateDraftReport({ sheepCount: (draftReport.sheepCount || 1) + 1 })}
+                        className="w-11 h-11 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xl flex items-center justify-center active:bg-slate-300"
+                      >+</button>
+                    </div>
                   </div>
+                  {/* Conditions — multi-select chips */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                      {t('walker.condition', {}, 'Condition')}
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      {t('walker.condition', {}, 'Condition')} <span className="text-slate-400 font-normal text-xs">— select all that apply</span>
                     </label>
-                    <select
-                      value={draftReport.condition || ''}
-                      onChange={(e) => updateDraftReport({ condition: e.target.value })}
-                      className={input}
-                    >
-                      {activeCategory ? (
-                        <>
-                          <option value="">Select condition...</option>
-                          {activeCategory.conditions.map((cond) => (
-                            <option key={cond} value={cond}>{cond}</option>
-                          ))}
-                        </>
-                      ) : (
-                        <>
-                          <option value="healthy">{t('walker.conditionHealthy', {}, 'Healthy - looks fine')}</option>
-                          <option value="injured">{t('walker.conditionInjured', {}, 'Injured - needs attention')}</option>
-                          <option value="dead">{t('walker.conditionDead', {}, 'Dead - needs collection')}</option>
-                          <option value="unknown">{t('walker.conditionUnknown', {}, 'Not sure')}</option>
-                        </>
-                      )}
-                    </select>
+                    {(() => {
+                      const opts = activeCategory?.conditions?.length
+                        ? activeCategory.conditions
+                        : [
+                            t('walker.conditionHealthy', {}, 'Healthy'),
+                            t('walker.conditionInjured', {}, 'Injured'),
+                            t('walker.conditionDead', {}, 'Dead'),
+                            'In road',
+                            'Lost / straying',
+                            t('walker.conditionUnknown', {}, 'Not sure'),
+                          ]
+                      const selected: string[] = draftReport.conditions?.length
+                        ? draftReport.conditions
+                        : draftReport.condition ? [draftReport.condition] : []
+                      return (
+                        <div className="flex flex-wrap gap-2">
+                          {opts.map(opt => {
+                            const isSelected = selected.includes(opt)
+                            return (
+                              <button
+                                key={opt}
+                                type="button"
+                                onClick={() => {
+                                  const next = isSelected
+                                    ? selected.filter(c => c !== opt)
+                                    : [...selected, opt]
+                                  updateDraftReport({ conditions: next, condition: next[0] || '' })
+                                }}
+                                className={`px-3 py-2 rounded-full text-sm font-medium border-2 transition-colors ${
+                                  isSelected
+                                    ? 'bg-green-600 text-white border-green-600'
+                                    : 'bg-white text-slate-700 border-slate-300 hover:border-green-400 active:bg-slate-50'
+                                }`}
+                              >
+                                {opt}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )
+                    })()}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">

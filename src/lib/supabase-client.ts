@@ -24,6 +24,7 @@ export interface SheepReportDB {
   category_id?: string
   category_name?: string
   category_emoji?: string
+  category_image_url?: string | null
   created_at?: string
   updated_at?: string
   // Attribution + metadata
@@ -70,6 +71,7 @@ export function dbToAppReport(dbReport: SheepReportDB) {
     categoryId: dbReport.category_id || 'sheep',
     categoryName: dbReport.category_name || 'Sheep',
     categoryEmoji: dbReport.category_emoji || '🐑',
+    categoryImageUrl: dbReport.category_image_url || undefined,
     submittedByUserName: dbReport.submitted_by_user_name || undefined,
     roleOfSubmitter: dbReport.role_of_submitter || undefined,
     affectedFarmIds: dbReport.affected_farm_ids || [],
@@ -111,6 +113,7 @@ export function appToDbReport(appReport: any) {
     category_id: appReport.categoryId || 'sheep',
     category_name: appReport.categoryName || 'Sheep',
     category_emoji: appReport.categoryEmoji || '🐑',
+    category_image_url: appReport.categoryImageUrl || null,
     submitted_by_user_name: appReport.submittedByUserName || null,
     role_of_submitter: appReport.roleOfSubmitter || null,
     affected_farm_ids: appReport.affectedFarmIds || [],
@@ -353,6 +356,7 @@ export interface ReportCategoryDB {
   is_active: boolean
   sort_order: number
   image_url: string | null
+  name_translations: Record<string, string> | null
   created_at: string
 }
 
@@ -380,6 +384,7 @@ export async function fetchReportCategories() {
     sortOrder: c.sort_order,
     subscriptionMode: (c as any).subscription_mode || 'default_on',
     imageUrl: c.image_url || undefined,
+    nameTranslations: c.name_translations || undefined,
     createdAt: new Date(c.created_at),
   }))
 }
@@ -397,6 +402,7 @@ export async function createReportCategory(category: Omit<import('@/store/appSto
       is_active: category.isActive,
       sort_order: category.sortOrder,
       image_url: category.imageUrl || null,
+      name_translations: category.nameTranslations || null,
     }])
     .select()
     .single()
@@ -421,6 +427,7 @@ export async function updateReportCategoryDB(id: string, updates: any) {
       is_active: updates.isActive,
       sort_order: updates.sortOrder,
       image_url: updates.imageUrl !== undefined ? (updates.imageUrl || null) : undefined,
+      name_translations: updates.nameTranslations !== undefined ? (updates.nameTranslations || null) : undefined,
     })
     .eq('id', id)
     .select()
@@ -631,6 +638,72 @@ export async function approveReportScreening(reportId: string): Promise<void> {
   if (error) {
     console.error('Error approving report screening:', error)
     throw error
+  }
+}
+
+// ==================== REPORT COMMENTS ====================
+
+export interface ReportComment {
+  id: string
+  reportId: string
+  commentType: 'manual' | 'system'
+  body: string
+  authorId?: string
+  authorEmail?: string
+  createdAt: Date
+}
+
+export async function fetchReportComments(reportId: string): Promise<ReportComment[]> {
+  const { data, error } = await supabase
+    .from('report_comments')
+    .select('*')
+    .eq('report_id', reportId)
+    .order('created_at', { ascending: true })
+  if (error) {
+    console.error('Error fetching report comments:', error)
+    return []
+  }
+  return (data || []).map((c: any) => ({
+    id: c.id,
+    reportId: c.report_id,
+    commentType: c.comment_type,
+    body: c.body,
+    authorId: c.author_id || undefined,
+    authorEmail: c.author_email || undefined,
+    createdAt: new Date(c.created_at),
+  }))
+}
+
+export async function addReportComment(params: {
+  reportId: string
+  commentType: 'manual' | 'system'
+  body: string
+  authorId?: string | null
+  authorEmail?: string | null
+}): Promise<ReportComment> {
+  const { data, error } = await supabase
+    .from('report_comments')
+    .insert([{
+      report_id: params.reportId,
+      comment_type: params.commentType,
+      body: params.body,
+      author_id: params.authorId || null,
+      author_email: params.authorEmail || null,
+    }])
+    .select()
+    .single()
+  if (error) {
+    console.error('Error adding report comment:', error)
+    throw error
+  }
+  return {
+    id: data.id,
+    reportId: data.report_id,
+    commentType: data.comment_type,
+    body: data.body,
+    authorId: data.author_id || undefined,
+    authorEmail: data.author_email || undefined,
+    createdAt: new Date(data.created_at),
   }
 }
 
