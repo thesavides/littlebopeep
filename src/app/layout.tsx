@@ -24,7 +24,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#16a34a',
+  themeColor: '#614270',
 }
 
 export default function RootLayout({
@@ -42,7 +42,7 @@ export default function RootLayout({
           crossOrigin=""
         />
       </head>
-      <body className="bg-slate-50 min-h-screen">
+      <body className="bg-[#D1D9C5] min-h-screen font-sans">
         <TranslationProvider>
           <ServiceWorkerSetup />
           <ReportsLoader />
