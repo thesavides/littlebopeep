@@ -48,11 +48,19 @@ export default function Header({ showBackButton = false, onBack, title, onTitleC
           className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
           aria-label="Go to home"
         >
-          <img src="/logo-pin.png" alt="" aria-hidden="true" className="w-7 h-7" />
+          <img src="/logo-pin.png" alt="" aria-hidden="true" className="w-8 h-8" />
           {!title && (
-            <span className={`font-serif font-semibold text-lg tracking-tight ${isAdmin ? 'text-white' : 'text-[#614270]'}`}>
-              {t('header.appName', {}, 'Little Bo Peep')}
-            </span>
+            isAdmin ? (
+              <span className="font-serif font-semibold text-lg tracking-tight text-white leading-none">
+                Little Bo Peep
+              </span>
+            ) : (
+              <span className="font-serif font-semibold text-lg tracking-tight leading-none">
+                <span style={{ color: '#614270' }}>Little </span>
+                <span style={{ color: '#92998B' }}>Bo </span>
+                <span style={{ color: '#614270' }}>Peep</span>
+              </span>
+            )
           )}
         </button>
 

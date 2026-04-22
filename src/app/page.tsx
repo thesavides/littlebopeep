@@ -69,9 +69,11 @@ function LandingPage() {
         <div className="mx-auto max-w-5xl flex items-center justify-between px-5 py-3">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 no-underline">
-            <img src="/logo-pin.png" alt="" aria-hidden="true" className="w-7 h-7" />
-            <span className="font-serif font-semibold text-sm tracking-tight" style={{ color: '#614270' }}>
-              Little Bo Peep
+            <img src="/logo-pin.png" alt="" aria-hidden="true" className="w-8 h-8" />
+            <span className="font-serif font-semibold text-lg tracking-tight leading-none">
+              <span style={{ color: '#614270' }}>Little </span>
+              <span style={{ color: '#92998B' }}>Bo </span>
+              <span style={{ color: '#614270' }}>Peep</span>
             </span>
           </Link>
 
@@ -258,10 +260,12 @@ function LandingPage() {
       <footer className="py-8 border-t" style={{ backgroundColor: '#D1D9C5', borderColor: 'rgba(146,153,139,0.3)' }}>
         <div className="mx-auto max-w-5xl px-5 flex flex-col sm:flex-row items-center justify-between gap-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 no-underline opacity-70 hover:opacity-100 transition-opacity">
-            <img src="/logo-pin.png" alt="" aria-hidden="true" className="w-6 h-6" />
-            <span className="text-xs font-serif font-semibold tracking-tight" style={{ color: '#614270' }}>
-              Little Bo Peep
+          <Link href="/" className="flex items-center gap-2 no-underline opacity-70 hover:opacity-100 transition-opacity">
+            <img src="/logo-pin.png" alt="" aria-hidden="true" className="w-5 h-5" />
+            <span className="text-xs font-serif font-semibold tracking-tight leading-none">
+              <span style={{ color: '#614270' }}>Little </span>
+              <span style={{ color: '#92998B' }}>Bo </span>
+              <span style={{ color: '#614270' }}>Peep</span>
             </span>
           </Link>
 
