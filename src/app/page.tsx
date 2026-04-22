@@ -62,15 +62,15 @@ function LandingPage() {
   ]
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#F8F5EE' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#D1D9C5' }}>
 
       {/* ── Nav ──────────────────────────────────────────────────────────── */}
-      <nav className="sticky top-0 z-40 border-b border-black/5" style={{ backgroundColor: '#F8F5EE' }}>
+      <nav className="sticky top-0 z-40 border-b" style={{ backgroundColor: '#D1D9C5', borderColor: 'rgba(97,66,112,0.12)' }}>
         <div className="mx-auto max-w-5xl flex items-center justify-between px-5 py-3">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 no-underline">
-            <span className="text-xl">🐑</span>
-            <span className="font-semibold text-sm tracking-tight" style={{ color: '#2D6A4F' }}>
+          <Link href="/" className="flex items-center gap-2.5 no-underline">
+            <img src="/logo-pin.png" alt="" aria-hidden="true" className="w-7 h-7" />
+            <span className="font-serif font-semibold text-sm tracking-tight" style={{ color: '#614270' }}>
               Little Bo Peep
             </span>
           </Link>
@@ -82,7 +82,7 @@ function LandingPage() {
               <button
                 onClick={() => setLangOpen((o) => !o)}
                 className="flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium border transition-colors"
-                style={{ borderColor: '#5C7C65', color: '#5C7C65' }}
+                style={{ borderColor: '#92998B', color: '#92998B' }}
               >
                 <span>{currentLang?.flag_emoji ?? '🌐'}</span>
                 <span>{currentLang?.code?.toUpperCase() ?? 'EN'}</span>
@@ -94,7 +94,7 @@ function LandingPage() {
               {langOpen && (
                 <div
                   className="absolute right-0 mt-1 rounded-xl shadow-lg border overflow-hidden z-50"
-                  style={{ backgroundColor: '#F8F5EE', borderColor: '#D8F3DC', minWidth: '140px' }}
+                  style={{ backgroundColor: '#D1D9C5', borderColor: '#92998B', minWidth: '140px' }}
                 >
                   {languages.map((lang) => (
                     <button
@@ -102,8 +102,8 @@ function LandingPage() {
                       onClick={() => { changeLanguage(lang.code); setLangOpen(false) }}
                       className="flex items-center gap-2 w-full px-3 py-2 text-xs text-left transition-colors hover:opacity-80"
                       style={{
-                        backgroundColor: lang.code === language ? '#D8F3DC' : 'transparent',
-                        color: '#2D6A4F',
+                        backgroundColor: lang.code === language ? 'rgba(97,66,112,0.1)' : 'transparent',
+                        color: '#614270',
                         fontWeight: lang.code === language ? 600 : 400,
                       }}
                     >
@@ -119,7 +119,7 @@ function LandingPage() {
             <Link
               href="/auth"
               className="rounded-full px-4 py-1.5 text-xs font-semibold transition-opacity hover:opacity-80"
-              style={{ backgroundColor: '#2D6A4F', color: '#F8F5EE' }}
+              style={{ backgroundColor: '#7D8DCC', color: '#fff' }}
             >
               {t('auth.signIn', {}, 'Sign in')}
             </Link>
@@ -132,18 +132,18 @@ function LandingPage() {
         {/* Eyebrow */}
         <p
           className="inline-block rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-widest mb-6"
-          style={{ backgroundColor: '#D8F3DC', color: '#2D6A4F' }}
+          style={{ backgroundColor: 'rgba(125,141,204,0.15)', color: '#7D8DCC' }}
         >
           {t('home.landing.eyebrow', {}, 'Real-Time Countryside Reporting')}
         </p>
 
-        {/* Headline — four-line nursery rhyme */}
+        {/* Headline */}
         <h1
           className="font-serif text-3xl sm:text-4xl leading-snug mb-5 max-w-2xl mx-auto"
-          style={{ color: '#2D6A4F' }}
+          style={{ color: '#614270' }}
         >
           {t('home.landing.heroLine1', {}, 'Little Bo Peep')}<br />
-          {t('home.landing.heroLine2', {}, 'has lost her sheep.')}<br />
+          <span style={{ color: '#7D8DCC' }}>{t('home.landing.heroLine2', {}, 'has lost her sheep.')}</span><br />
           {t('home.landing.heroLine3', {}, 'Help find them and')}<br />
           {t('home.landing.heroLine4', {}, 'report anything along the way.')}
         </h1>
@@ -156,16 +156,16 @@ function LandingPage() {
             <div
               key={card.step}
               className="rounded-2xl p-5 flex flex-col items-center text-center gap-2"
-              style={{ backgroundColor: '#D8F3DC' }}
+              style={{ backgroundColor: '#fff', border: '1px solid rgba(146,153,139,0.3)' }}
             >
               <div
                 className="text-xs font-bold uppercase tracking-widest"
-                style={{ color: '#52B788' }}
+                style={{ color: '#92998B' }}
               >
                 {t('home.landing.stepLabel', {}, 'Step')} {card.step}
               </div>
               <div className="text-3xl">{card.icon}</div>
-              <h3 className="font-semibold text-base" style={{ color: '#2D6A4F' }}>
+              <h3 className="font-semibold text-base" style={{ color: '#614270' }}>
                 {card.title}
               </h3>
             </div>
@@ -178,28 +178,25 @@ function LandingPage() {
         <Link
           href="/auth?mode=signup"
           className="rounded-full px-8 py-4 text-base font-semibold text-center transition-opacity hover:opacity-90 w-full sm:w-auto sm:min-w-[280px]"
-          style={{ backgroundColor: '#2D6A4F', color: '#F8F5EE' }}
+          style={{ backgroundColor: '#7D8DCC', color: '#fff' }}
         >
           {t('home.landing.ctaPrimary', {}, 'Sign up & report')}
         </Link>
         <Link
           href="/auth?mode=signup&role=farmer"
           className="rounded-full px-8 py-3.5 text-sm font-medium text-center border transition-colors hover:opacity-80 w-full sm:w-auto sm:min-w-[280px]"
-          style={{ borderColor: '#2D6A4F', color: '#2D6A4F' }}
+          style={{ borderColor: '#614270', color: '#614270' }}
         >
           {t('home.landing.ctaFarmer', {}, 'Farmer? Sign up to get alerts')}
         </Link>
       </section>
 
       {/* ── How it works ─────────────────────────────────────────────────── */}
-      <section
-        className="py-14"
-        style={{ backgroundColor: '#fff' }}
-      >
+      <section className="py-14" style={{ backgroundColor: '#fff' }}>
         <div className="mx-auto max-w-5xl px-5">
           <h2
-            className="text-center text-2xl font-semibold mb-10"
-            style={{ color: '#2D6A4F' }}
+            className="font-serif text-center text-2xl font-semibold mb-10"
+            style={{ color: '#614270' }}
           >
             {t('home.howItWorks', {}, 'How it works')}
           </h2>
@@ -207,15 +204,15 @@ function LandingPage() {
             {steps.map((step) => (
               <div key={step.num} className="flex flex-col items-start">
                 <div
-                  className="text-4xl font-bold mb-3 leading-none"
-                  style={{ color: '#D8F3DC' }}
+                  className="text-4xl font-bold mb-3 leading-none font-serif"
+                  style={{ color: '#D1D9C5' }}
                 >
                   {step.num}
                 </div>
-                <h3 className="font-semibold text-base mb-1" style={{ color: '#2D6A4F' }}>
+                <h3 className="font-semibold text-base mb-1" style={{ color: '#614270' }}>
                   {step.title}
                 </h3>
-                <p className="text-sm leading-relaxed" style={{ color: '#5C7C65' }}>
+                <p className="text-sm leading-relaxed" style={{ color: '#92998B' }}>
                   {step.desc}
                 </p>
               </div>
@@ -225,31 +222,31 @@ function LandingPage() {
       </section>
 
       {/* ── Stats bar ────────────────────────────────────────────────────── */}
-      <section className="py-12" style={{ backgroundColor: '#2D6A4F' }}>
+      <section className="py-12" style={{ backgroundColor: '#614270' }}>
         <div className="mx-auto max-w-5xl px-5">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
             <div>
-              <p className="text-4xl font-bold mb-1" style={{ color: '#D8F3DC' }}>
+              <p className="text-4xl font-bold font-serif mb-1" style={{ color: '#D1D9C5' }}>
                 {t('home.landing.stat1Value', {}, '33M')}
               </p>
-              <p className="text-sm" style={{ color: '#52B788' }}>
+              <p className="text-sm" style={{ color: 'rgba(209,217,197,0.7)' }}>
                 {t('home.landing.stat1Label', {}, 'sheep in the UK')}
               </p>
             </div>
             <div>
-              <p className="text-4xl font-bold mb-1" style={{ color: '#D8F3DC' }}>
+              <p className="text-4xl font-bold font-serif mb-1" style={{ color: '#D1D9C5' }}>
                 {t('home.landing.stat2Value', {}, '£80M')}
               </p>
-              <p className="text-sm" style={{ color: '#52B788' }}>
+              <p className="text-sm" style={{ color: 'rgba(209,217,197,0.7)' }}>
                 {t('home.landing.stat2Label', {}, 'in livestock losses each year')}
               </p>
             </div>
             <div>
-              <p className="text-4xl font-bold mb-1" style={{ color: '#D8F3DC' }}>
+              <p className="text-4xl font-bold font-serif mb-1" style={{ color: '#D1D9C5' }}>
                 {t('home.landing.stat3Value', {}, '30')}
                 <span className="text-2xl font-semibold">{t('home.landing.stat3Unit', {}, '-day')}</span>
               </p>
-              <p className="text-sm" style={{ color: '#52B788' }}>
+              <p className="text-sm" style={{ color: 'rgba(209,217,197,0.7)' }}>
                 {t('home.landing.stat3Label', {}, 'free trial for farmers')}
               </p>
             </div>
@@ -258,12 +255,12 @@ function LandingPage() {
       </section>
 
       {/* ── Footer ───────────────────────────────────────────────────────── */}
-      <footer className="py-8 border-t border-black/5" style={{ backgroundColor: '#F8F5EE' }}>
+      <footer className="py-8 border-t" style={{ backgroundColor: '#D1D9C5', borderColor: 'rgba(146,153,139,0.3)' }}>
         <div className="mx-auto max-w-5xl px-5 flex flex-col sm:flex-row items-center justify-between gap-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 no-underline opacity-70 hover:opacity-100 transition-opacity">
-            <span className="text-lg">🐑</span>
-            <span className="text-xs font-semibold tracking-tight" style={{ color: '#2D6A4F' }}>
+          <Link href="/" className="flex items-center gap-2.5 no-underline opacity-70 hover:opacity-100 transition-opacity">
+            <img src="/logo-pin.png" alt="" aria-hidden="true" className="w-6 h-6" />
+            <span className="text-xs font-serif font-semibold tracking-tight" style={{ color: '#614270' }}>
               Little Bo Peep
             </span>
           </Link>
@@ -280,7 +277,7 @@ function LandingPage() {
                 key={link.href}
                 href={link.href}
                 className="text-xs hover:opacity-80 transition-opacity"
-                style={{ color: '#5C7C65' }}
+                style={{ color: '#92998B' }}
               >
                 {link.label}
               </Link>
