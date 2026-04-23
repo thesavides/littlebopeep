@@ -1,7 +1,7 @@
 {
   "name": "Little Bo Peep",
   "short_name": "LittleBoPeep",
-  "description": "Connect walkers who spot lost sheep with farmers who need to find them",
+  "description": "Little Bo Peep, Realtime Country Side Reporting",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#D1D9C5",
