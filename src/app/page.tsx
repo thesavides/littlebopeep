@@ -171,7 +171,7 @@ function LandingPage() {
                   <line x1="32" y1="43" x2="40" y2="41" stroke="#614270" strokeWidth="2.5" strokeLinecap="round"/>
                 </svg>
               </div>
-              <div className="text-2xl sm:text-3xl font-bold leading-none font-serif" style={{ color: '#D1D9C5' }}>01</div>
+              <div className="text-2xl sm:text-3xl font-bold leading-none font-serif" style={{ color: '#614270' }}>01</div>
               <h3 className="font-semibold text-sm sm:text-base" style={{ color: '#614270' }}>{cards[0].title}</h3>
               <p className="text-xs sm:text-sm leading-snug" style={{ color: '#92998B' }}>{cards[0].desc}</p>
             </div>
@@ -181,7 +181,7 @@ function LandingPage() {
               <div className="h-12 flex items-end justify-center">
                 <img src="/logo-pin.svg" alt="" aria-hidden="true" className="w-10 h-10" />
               </div>
-              <div className="text-2xl sm:text-3xl font-bold leading-none font-serif" style={{ color: '#D1D9C5' }}>02</div>
+              <div className="text-2xl sm:text-3xl font-bold leading-none font-serif" style={{ color: '#614270' }}>02</div>
               <h3 className="font-semibold text-sm sm:text-base" style={{ color: '#614270' }}>{cards[1].title}</h3>
               <p className="text-xs sm:text-sm leading-snug" style={{ color: '#92998B' }}>{cards[1].desc}</p>
             </div>
@@ -194,7 +194,7 @@ function LandingPage() {
                   <polyline points="13,25 20,33 35,15" stroke="#9ED663" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
-              <div className="text-2xl sm:text-3xl font-bold leading-none font-serif" style={{ color: '#D1D9C5' }}>03</div>
+              <div className="text-2xl sm:text-3xl font-bold leading-none font-serif" style={{ color: '#614270' }}>03</div>
               <h3 className="font-semibold text-sm sm:text-base" style={{ color: '#614270' }}>{cards[2].title}</h3>
               <p className="text-xs sm:text-sm leading-snug" style={{ color: '#92998B' }}>{cards[2].desc}</p>
             </div>
@@ -229,19 +229,19 @@ function LandingPage() {
       </section>
 
       {/* ── How it works ─────────────────────────────────────────────────── */}
-      <section className="py-14" style={{ backgroundColor: '#fff' }}>
+      <section className="py-8" style={{ backgroundColor: '#fff' }}>
         <div className="mx-auto max-w-5xl px-5">
           <h2
-            className="font-serif text-center text-2xl font-semibold mb-10"
+            className="font-serif text-center text-2xl font-semibold mb-6"
             style={{ color: '#614270' }}
           >
             {t('home.howItWorks', {}, 'How it works')}
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {steps.map((step) => (
               <div key={step.num} className="flex flex-col items-center text-center">
                 <div
-                  className="text-4xl font-bold mb-3 leading-none font-serif"
+                  className="text-4xl font-bold mb-2 leading-none font-serif"
                   style={{ color: '#D1D9C5' }}
                 >
                   {step.num}
@@ -254,6 +254,17 @@ function LandingPage() {
                 </p>
               </div>
             ))}
+          </div>
+          {/* About us link */}
+          <div className="mt-6 text-center">
+            <Link
+              href="/about"
+              className="inline-flex items-center gap-1 text-sm font-medium hover:opacity-80 transition-opacity"
+              style={{ color: '#7D8DCC' }}
+            >
+              {t('home.landing.aboutUs', {}, 'About us')}
+              <span aria-hidden="true">→</span>
+            </Link>
           </div>
         </div>
       </section>
