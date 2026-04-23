@@ -219,7 +219,7 @@ function LandingPage() {
             <div className="flex flex-col items-center text-center gap-1">
               <div className="h-12 w-12 flex items-center justify-center">
                 <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="24" cy="24" r="21" stroke="#9ED663" strokeWidth="2.5" fill="rgba(158,214,99,0.12)"/>
+                  <circle cx="24" cy="24" r="21" stroke="#614270" strokeWidth="2.5" fill="rgba(97,66,112,0.08)"/>
                   <polyline points="14,25 21,32 34,17" stroke="#9ED663" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
