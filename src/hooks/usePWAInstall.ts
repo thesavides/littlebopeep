@@ -14,7 +14,7 @@ export type InstallState =
   | 'dismissed'       // User dismissed, snooze for 7 days
   | 'installed'       // Successfully installed
 
-const DISMISS_KEY = 'lbp-pwa-dismissed'
+const DISMISS_KEY = 'lbp-pwa-dismissed-v2'
 const SNOOZE_DAYS = 7
 
 export function usePWAInstall() {

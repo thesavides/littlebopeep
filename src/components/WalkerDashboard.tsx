@@ -498,8 +498,8 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                         </div>
                       )
                     })()}
-                    {/* Other active categories */}
-                    {reportCategories.filter(c => c.isActive).sort((a, b) => a.sortOrder - b.sortOrder).map((cat) => {
+                    {/* Other active categories — exclude built-in 'sheep' (shown above) */}
+                    {reportCategories.filter(c => c.isActive && c.id !== 'sheep').sort((a, b) => a.sortOrder - b.sortOrder).map((cat) => {
                       const isDefault = preferredCategoryId === cat.id
                       return (
                         <div key={cat.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-colors ${isDefault ? 'border-[#D1D9C5] bg-[#D1D9C5]/50' : 'border-[#D1D9C5] bg-[#D1D9C5]/20 hover:border-[#92998B] hover:bg-white'}`}>
@@ -527,7 +527,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                         </div>
                       )
                     })}
-                    {reportCategories.filter(c => c.isActive).length === 0 && (
+                    {reportCategories.filter(c => c.isActive && c.id !== 'sheep').length === 0 && (
                       <p className="text-center text-[#92998B] text-sm py-4">Only sheep reporting is available.</p>
                     )}
                   </div>
