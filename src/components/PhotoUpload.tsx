@@ -18,6 +18,7 @@ export default function PhotoUpload({ reportId, onPhotosUploaded, maxPhotos = ge
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -106,7 +107,17 @@ export default function PhotoUpload({ reportId, onPhotosUploaded, maxPhotos = ge
     <div className="space-y-4">
       {/* Upload Button */}
       {canAddMore && (
-        <div>
+        <div className="space-y-2">
+          {/* Camera input — single shot, no multiple (Android compatible) */}
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+          {/* Gallery input — multiple files, no capture */}
           <input
             ref={fileInputRef}
             type="file"
@@ -115,23 +126,27 @@ export default function PhotoUpload({ reportId, onPhotosUploaded, maxPhotos = ge
             onChange={handleFileSelect}
             className="hidden"
           />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            className="w-full px-4 py-3 border-2 border-dashed border-[#92998B]/50 rounded-lg text-[#92998B] hover:border-[#7D8DCC] hover:text-[#7D8DCC] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <div className="flex flex-col items-center gap-2">
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              <span className="text-sm">
-                {t('walker.addPhotos', {}, 'Add Photos')} ({uploadedUrls.length + selectedFiles.length}/{maxPhotos})
-              </span>
-              <span className="text-xs text-[#92998B]">
-                {t('walker.photoFormats', {}, 'Any photo format • Max 20MB')}
-              </span>
-            </div>
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => cameraInputRef.current?.click()}
+              disabled={uploading}
+              className="flex-1 px-3 py-3 border-2 border-dashed border-[#92998B]/50 rounded-lg text-[#92998B] hover:border-[#7D8DCC] hover:text-[#7D8DCC] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center gap-1"
+            >
+              <span className="text-2xl">📷</span>
+              <span className="text-xs font-medium">{t('walker.takePhoto', {}, 'Take photo')}</span>
+            </button>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="flex-1 px-3 py-3 border-2 border-dashed border-[#92998B]/50 rounded-lg text-[#92998B] hover:border-[#7D8DCC] hover:text-[#7D8DCC] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center gap-1"
+            >
+              <span className="text-2xl">🖼️</span>
+              <span className="text-xs font-medium">{t('walker.choosePhoto', {}, 'From gallery')}</span>
+            </button>
+          </div>
+          <p className="text-xs text-[#92998B] text-center">
+            {uploadedUrls.length + selectedFiles.length}/{maxPhotos} {t('walker.photosAdded', {}, 'photos')} · {t('walker.photoFormats', {}, 'Max 20MB each')}
+          </p>
         </div>
       )}
 

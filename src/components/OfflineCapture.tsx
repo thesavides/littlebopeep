@@ -24,6 +24,7 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
 
   const [photoDataUrls, setPhotoDataUrls] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
 
   const [categoryId, setCategoryId] = useState('sheep')
   const [categoryName, setCategoryName] = useState('Sheep')
@@ -221,24 +222,42 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
               <p className="text-[#D1D9C5] text-sm mt-1 opacity-70">Optional but really helpful — up to 3 photos</p>
             </div>
 
+            {/* Camera input — single shot, no multiple (Android compatible) */}
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handlePhotoCapture}
+              className="hidden"
+            />
+            {/* Gallery input — multiple, no capture */}
             <input
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              capture="environment"
               multiple
               onChange={handlePhotoCapture}
               className="hidden"
             />
 
             {photoDataUrls.length === 0 ? (
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full h-40 border-2 border-dashed border-[#614270] rounded-2xl flex flex-col items-center justify-center gap-2 text-[#D1D9C5] hover:border-[#7D8DCC] hover:text-[#7D8DCC] transition-colors"
-              >
-                <span className="text-4xl">📷</span>
-                <span className="text-sm">Tap to open camera</span>
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => cameraInputRef.current?.click()}
+                  className="flex-1 h-36 border-2 border-dashed border-[#614270] rounded-2xl flex flex-col items-center justify-center gap-2 text-[#D1D9C5] hover:border-[#7D8DCC] hover:text-[#7D8DCC] transition-colors"
+                >
+                  <span className="text-3xl">📷</span>
+                  <span className="text-xs">Take photo</span>
+                </button>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex-1 h-36 border-2 border-dashed border-[#614270] rounded-2xl flex flex-col items-center justify-center gap-2 text-[#D1D9C5] hover:border-[#7D8DCC] hover:text-[#7D8DCC] transition-colors"
+                >
+                  <span className="text-3xl">🖼️</span>
+                  <span className="text-xs">From gallery</span>
+                </button>
+              </div>
             ) : (
               <div className="grid grid-cols-3 gap-2">
                 {photoDataUrls.map((url, i) => (
@@ -254,10 +273,11 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
                 ))}
                 {photoDataUrls.length < 3 && (
                   <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="aspect-square rounded-xl border-2 border-dashed border-[#614270] flex items-center justify-center text-[#D1D9C5] hover:border-[#7D8DCC] transition-colors"
+                    onClick={() => cameraInputRef.current?.click()}
+                    className="aspect-square rounded-xl border-2 border-dashed border-[#614270] flex flex-col items-center justify-center text-[#D1D9C5] hover:border-[#7D8DCC] transition-colors gap-1"
                   >
-                    <span className="text-2xl">+</span>
+                    <span className="text-xl">📷</span>
+                    <span className="text-[10px]">Add</span>
                   </button>
                 )}
               </div>
