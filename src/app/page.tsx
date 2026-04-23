@@ -47,7 +47,7 @@ function LandingPage() {
     {
       num: '02',
       title: t('home.landing.step2Title', {}, 'Open the app'),
-      desc: t('home.landing.step2Desc', {}, "No fuss — just tap Report and you're straight in."),
+      desc: t('home.landing.step2Desc', {}, "No fuss, just tap Report and you're straight in."),
     },
     {
       num: '03',
@@ -177,28 +177,10 @@ function LandingPage() {
         <div className="mx-auto max-w-5xl px-5">
           <div className="grid grid-cols-3 gap-3 sm:gap-8">
 
-            {/* Step 1 — See it: walker in Plum circle */}
+            {/* Step 1 — See it: walker emoji matching profile avatar style */}
             <div className="flex flex-col items-center text-center gap-1">
-              <div className="h-12 w-12 flex items-center justify-center">
-                <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="24" cy="24" r="21" stroke="#614270" strokeWidth="2.5" fill="rgba(97,66,112,0.08)"/>
-                  {/* Walker — head */}
-                  <circle cx="27" cy="13" r="3" stroke="#614270" strokeWidth="2"/>
-                  {/* Body */}
-                  <line x1="27" y1="16" x2="25" y2="27" stroke="#614270" strokeWidth="2" strokeLinecap="round"/>
-                  {/* Forward arm */}
-                  <line x1="26" y1="19" x2="18" y2="23" stroke="#614270" strokeWidth="2" strokeLinecap="round"/>
-                  {/* Back arm */}
-                  <line x1="26" y1="21" x2="32" y2="25" stroke="#614270" strokeWidth="2" strokeLinecap="round"/>
-                  {/* Walking stick */}
-                  <line x1="18" y1="23" x2="15" y2="34" stroke="#614270" strokeWidth="1.5" strokeLinecap="round"/>
-                  {/* Forward leg + foot */}
-                  <line x1="25" y1="27" x2="20" y2="35" stroke="#614270" strokeWidth="2" strokeLinecap="round"/>
-                  <line x1="20" y1="35" x2="15" y2="36" stroke="#614270" strokeWidth="2" strokeLinecap="round"/>
-                  {/* Back leg + foot */}
-                  <line x1="25" y1="27" x2="30" y2="35" stroke="#614270" strokeWidth="2" strokeLinecap="round"/>
-                  <line x1="30" y1="35" x2="35" y2="34" stroke="#614270" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
+              <div className="h-12 w-12 rounded-full flex items-center justify-center text-2xl" style={{ backgroundColor: '#D1D9C5', border: '2.5px solid #614270' }}>
+                🚶
               </div>
               <div className="text-2xl sm:text-3xl font-bold leading-none font-serif mt-1" style={{ color: '#D1D9C5' }}>01</div>
               <h3 className="font-semibold text-sm sm:text-base" style={{ color: '#614270' }}>{cards[0].title}</h3>
