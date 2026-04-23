@@ -126,6 +126,7 @@ export default function AdminDashboard() {
   // Thank You modal (admin → walker on behalf of farmer)
   const [thankYouReportId, setThankYouReportId] = useState<string | null>(null)
   const [thankYouText, setThankYouText] = useState('')
+  const [thankYouSenderId, setThankYouSenderId] = useState<string>('')
   const [sendingThankYou, setSendingThankYou] = useState(false)
   const [thankYouSent, setThankYouSent] = useState<Set<string>>(new Set())
   // Complete modal
@@ -989,16 +990,34 @@ export default function AdminDashboard() {
                       )}
                       <div className="flex flex-wrap gap-2">
                         {!report.archived && report.status === 'reported' && !report.screeningRequired && (
-                          <button onClick={() => { setShowClaimReportModal(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-[#9ED663]/20 text-[#614270] rounded-lg text-sm hover:bg-[#9ED663]/30">Claim for Farmer</button>
+                          <button onClick={() => setShowClaimReportModal(report.id)} className="px-3 py-2 bg-[#9ED663]/20 text-[#614270] rounded-lg text-sm hover:bg-[#9ED663]/30">Claim for Farmer</button>
                         )}
                         {!report.archived && report.status === 'claimed' && (
-                          <button onClick={() => { setShowClaimReportModal(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-[#9ED663]/20 text-[#614270] rounded-lg text-sm hover:bg-[#9ED663]/30">Add Farmer</button>
+                          <button onClick={() => setShowClaimReportModal(report.id)} className="px-3 py-2 bg-[#9ED663]/20 text-[#614270] rounded-lg text-sm hover:bg-[#9ED663]/30">Add Farmer</button>
                         )}
                         {!report.archived && report.status === 'claimed' && (
-                          <button onClick={() => { setShowReassignReportModal(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-[#7D8DCC]/10 text-[#7D8DCC] rounded-lg text-sm hover:bg-[#7D8DCC]/20">Reassign</button>
+                          <button onClick={() => setShowReassignReportModal(report.id)} className="px-3 py-2 bg-[#7D8DCC]/10 text-[#7D8DCC] rounded-lg text-sm hover:bg-[#7D8DCC]/20">Reassign</button>
                         )}
-                        {report.reporterId && report.status === 'claimed' && !thankYouSent.has(report.id) && (
-                          <button onClick={() => { setThankYouReportId(report.id); setThankYouText('') }} className="px-3 py-2 bg-[#EADA69]/20 text-[#614270] rounded-lg text-sm hover:bg-[#EADA69]/40">💌 Thank Walker</button>
+                        {!report.archived && report.status === 'claimed' && (report.claimedByFarmerIds?.length ?? 0) > 0 && (
+                          <button
+                            onClick={() => {
+                              if (confirm('Remove all farmers from this report and set status back to Reported?')) {
+                                report.claimedByFarmerIds!.forEach(fid => unclaimReportForFarmer(report.id, fid))
+                              }
+                            }}
+                            className="px-3 py-2 bg-[#FA9335]/10 text-[#FA9335] rounded-lg text-sm hover:bg-[#FA9335]/20"
+                          >Unclaim All</button>
+                        )}
+                        {report.reporterId && !['reported'].includes(report.status) && !report.archived && !thankYouSent.has(report.id) && (
+                          <button
+                            onClick={() => {
+                              const firstClaimant = report.claimedByFarmerIds?.[0] ?? ''
+                              setThankYouSenderId(firstClaimant)
+                              setThankYouReportId(report.id)
+                              setThankYouText('')
+                            }}
+                            className="px-3 py-2 bg-[#EADA69]/20 text-[#614270] rounded-lg text-sm hover:bg-[#EADA69]/40"
+                          >💌 Thank Walker</button>
                         )}
                         {thankYouSent.has(report.id) && (
                           <span className="px-3 py-2 text-[#9ED663] text-sm font-medium">✓ Thanks Sent</span>
@@ -1058,11 +1077,31 @@ export default function AdminDashboard() {
       {/* Thank Walker Modal */}
       {thankYouReportId && (() => {
         const tyReport = reports.find(r => r.id === thankYouReportId)
+        const claimants = (tyReport?.claimedByFarmerIds ?? [])
+          .map(fid => allUsers.find((u: any) => u.id === fid))
+          .filter(Boolean) as any[]
+        const senderUser = thankYouSenderId
+          ? allUsers.find((u: any) => u.id === thankYouSenderId)
+          : null
         return (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
             <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
               <h3 className="text-lg font-bold text-[#614270] mb-1">💌 Thank the Walker</h3>
               <p className="text-sm text-[#92998B] mb-3">Send a thank you message to the walker who filed this report.</p>
+              {/* Sender selection */}
+              <div className="mb-3">
+                <label className="block text-xs font-semibold text-[#92998B] uppercase tracking-wide mb-1">Send on behalf of</label>
+                <select
+                  value={thankYouSenderId}
+                  onChange={e => setThankYouSenderId(e.target.value)}
+                  className="w-full px-3 py-2 border border-[#D1D9C5] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7D8DCC]"
+                >
+                  <option value="">Admin (me)</option>
+                  {claimants.map((u: any) => (
+                    <option key={u.id} value={u.id}>🧑‍🌾 {u.full_name || u.email}</option>
+                  ))}
+                </select>
+              </div>
               <textarea
                 value={thankYouText}
                 onChange={(e) => setThankYouText(e.target.value)}
@@ -1078,10 +1117,15 @@ export default function AdminDashboard() {
                     setSendingThankYou(true)
                     try {
                       const msg = thankYouText.trim() || 'Thank you for reporting this — the animals have been safely recovered!'
-                      await sendThankYouMessage(tyReport.reporterId, thankYouReportId, msg)
+                      const senderId = thankYouSenderId || undefined
+                      const senderName = senderId
+                        ? (senderUser?.full_name || senderUser?.email || undefined)
+                        : 'Admin'
+                      await sendThankYouMessage(tyReport.reporterId, thankYouReportId, msg, senderId, senderName)
                       setThankYouSent(prev => new Set(prev).add(thankYouReportId))
                       setThankYouReportId(null)
                       setThankYouText('')
+                      setThankYouSenderId('')
                     } catch {
                       alert('Failed to send message. Please try again.')
                     } finally {
@@ -1092,7 +1136,7 @@ export default function AdminDashboard() {
                 >
                   {sendingThankYou ? 'Sending…' : 'Send Thank You'}
                 </button>
-                <button onClick={() => { setThankYouReportId(null); setThankYouText('') }} className="w-full py-3 bg-[#D1D9C5] text-[#614270] rounded-xl font-semibold hover:bg-[#D1D9C5]">Cancel</button>
+                <button onClick={() => { setThankYouReportId(null); setThankYouText(''); setThankYouSenderId('') }} className="w-full py-3 bg-[#D1D9C5] text-[#614270] rounded-xl font-semibold hover:bg-[#D1D9C5]">Cancel</button>
               </div>
             </div>
           </div>
@@ -3028,7 +3072,7 @@ function ClaimReportModal({ reportId, report, farmers, onClose, onClaim, title, 
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
       <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-bold text-[#614270]">{title || 'Claim Report for Farmer'}</h3>

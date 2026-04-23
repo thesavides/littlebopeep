@@ -240,6 +240,9 @@ export interface NotificationDB {
   user_id: string
   report_id: string | null
   type: string
+  message_text: string | null
+  sender_id: string | null
+  sender_name: string | null
   sent_at: string
   read_at: string | null
   status: string
@@ -325,17 +328,21 @@ export async function markAllNotificationsRead(userId: string): Promise<void> {
   }
 }
 
-// Send a Thank You message from a farmer to the walker who submitted a report
+// Send a Thank You message from a farmer (or admin on behalf of farmer) to the walker
 export async function sendThankYouMessage(
   reporterId: string,
   reportId: string,
-  messageText: string
+  messageText: string,
+  senderId?: string,
+  senderName?: string
 ): Promise<void> {
   const { error } = await supabase.from('notifications').insert({
     user_id: reporterId,
     report_id: reportId,
     type: 'thank_you',
     message_text: messageText,
+    sender_id: senderId ?? null,
+    sender_name: senderName ?? null,
     status: 'sent',
   })
   if (error) {

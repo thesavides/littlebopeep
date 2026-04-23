@@ -323,7 +323,8 @@ export default function FarmerDashboard() {
     setSendingThankYou(true)
     try {
       const msg = thankYouText.trim() || 'Thank you for reporting this — the animals have been safely recovered!'
-      await sendThankYouMessage(reporterId, reportId, msg)
+      const senderName = supabaseProfile?.full_name || currentUser?.name || currentUser?.email || undefined
+      await sendThankYouMessage(reporterId, reportId, msg, currentUserId ?? undefined, senderName)
       setThankYouSent(prev => new Set(prev).add(reportId))
       setThankYouOpen(null)
       setThankYouText('')

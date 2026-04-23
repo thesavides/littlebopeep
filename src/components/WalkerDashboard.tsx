@@ -870,7 +870,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
             {thankYouMessages.length > 0 && (
               <div className="bg-[#EADA69]/20 border border-[#EADA69]/40 rounded-xl p-4 mb-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-[#614270]">💌 Messages from Farmers ({thankYouMessages.length})</h3>
+                  <h3 className="font-semibold text-[#614270]">💌 Thank You Messages ({thankYouMessages.length})</h3>
                   {thankYouMessages.some(m => !m.read_at) && (
                     <button
                       onClick={async () => {
@@ -889,13 +889,18 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                   {thankYouMessages.map(msg => {
                     const report = myReports.find(r => r.id === msg.report_id)
                     const isUnread = !msg.read_at
+                    const senderLabel = msg.sender_name || 'A farmer'
                     return (
                       <div key={msg.id} className={`rounded-lg p-3 text-sm ${isUnread ? 'bg-white border border-[#EADA69]/60 shadow-sm' : 'bg-[#EADA69]/10'}`}>
-                        {isUnread && <span className="inline-block w-2 h-2 bg-[#EADA69] rounded-full mr-2" />}
+                        <div className="flex items-center gap-1.5 mb-1">
+                          {isUnread && <span className="inline-block w-2 h-2 bg-[#EADA69] rounded-full flex-shrink-0" />}
+                          <span className="text-xs font-semibold text-[#614270]">🧑‍🌾 {senderLabel}</span>
+                          <span className="text-xs text-[#92998B] ml-auto">{new Date(msg.sent_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+                        </div>
                         <p className="text-[#614270] italic">&ldquo;{msg.message_text || 'Thank you!'}&rdquo;</p>
                         {report && (
                           <p className="text-xs text-[#92998B] mt-1">
-                            Re: {report.categoryEmoji} {report.categoryName} · {new Date(msg.sent_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                            Re: {report.categoryEmoji} {report.categoryName}
                           </p>
                         )}
                       </div>
