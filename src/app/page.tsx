@@ -149,11 +149,11 @@ function LandingPage() {
           }}
         />
 
-        {/* Content */}
-        <div className="relative mx-auto max-w-5xl px-5 pt-8 pb-10 sm:pt-12 sm:pb-14 text-center">
+        {/* Content — compact on mobile, taller on desktop so the image breathes */}
+        <div className="relative mx-auto max-w-5xl px-5 pt-8 pb-10 sm:min-h-[560px] sm:pt-20 sm:pb-24 text-center sm:flex sm:flex-col sm:items-center sm:justify-center">
           {/* Eyebrow */}
           <p
-            className="inline-block rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-widest mb-4 backdrop-blur-sm"
+            className="inline-block rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-widest mb-4 sm:mb-6 backdrop-blur-sm"
             style={{ backgroundColor: 'rgba(255,255,255,0.22)', color: '#fff' }}
           >
             {t('home.landing.eyebrow', {}, 'Real-Time Countryside Reporting')}
@@ -161,8 +161,8 @@ function LandingPage() {
 
           {/* Headline */}
           <h1
-            className="font-serif text-2xl sm:text-4xl leading-snug mb-2 max-w-2xl mx-auto"
-            style={{ color: '#ffffff', textShadow: '0 2px 12px rgba(30,18,40,0.55)' }}
+            className="font-serif text-2xl sm:text-5xl leading-snug sm:leading-tight mb-2 max-w-3xl mx-auto"
+            style={{ color: '#ffffff', textShadow: '0 2px 16px rgba(30,18,40,0.6)' }}
           >
             {t('home.landing.heroLine1', {}, 'Little Bo Peep')}{' '}
             <span style={{ color: '#EADA69' }}>{t('home.landing.heroLine2', {}, 'has lost her sheep.')}</span><br />
