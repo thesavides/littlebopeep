@@ -437,7 +437,8 @@ export const useAppStore = create<AppState>()(
       
       deleteUser: (id) => set((state) => ({
         users: state.users.filter((u) => u.id !== id),
-        reports: state.reports.filter((r) => r.reporterId !== id),
+        // Reports are retained — reporter_id is denormalised text, not FK-cascaded.
+        // submitted_by_user_name survives deletion so admin can still read the history.
         farms: state.farms.filter((f) => f.farmerId !== id)
       })),
       
