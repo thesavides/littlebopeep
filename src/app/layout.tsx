@@ -5,8 +5,8 @@ import { TranslationProvider } from '@/contexts/TranslationContext'
 import ServiceWorkerSetup from '@/components/ServiceWorkerSetup'
 
 export const metadata: Metadata = {
-  title: 'Little Bo Peep, Realtime Country Side Reporting',
-  description: 'Little Bo Peep, Realtime Country Side Reporting',
+  title: 'Little Bo Peep, Real-time countryside reporting',
+  description: 'Real-time countryside reporting',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,

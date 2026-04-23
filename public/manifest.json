@@ -1,7 +1,7 @@
 {
   "name": "Little Bo Peep",
   "short_name": "LittleBoPeep",
-  "description": "Little Bo Peep, Realtime Country Side Reporting",
+  "description": "Real-time countryside reporting",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#D1D9C5",
