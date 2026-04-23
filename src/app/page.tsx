@@ -179,7 +179,7 @@ function LandingPage() {
 
             {/* Step 1 — See it: walker emoji matching profile avatar style */}
             <div className="flex flex-col items-center text-center gap-1">
-              <div className="h-12 w-12 rounded-full flex items-center justify-center text-2xl" style={{ backgroundColor: '#D1D9C5', border: '2.5px solid #614270' }}>
+              <div className="h-12 w-12 rounded-full flex items-center justify-center text-2xl" style={{ backgroundColor: 'rgba(97,66,112,0.08)', border: '2.5px solid #614270' }}>
                 🚶
               </div>
               <div className="text-2xl sm:text-3xl font-bold leading-none font-serif mt-1" style={{ color: '#D1D9C5' }}>01</div>
