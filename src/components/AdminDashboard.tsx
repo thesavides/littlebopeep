@@ -389,7 +389,7 @@ export default function AdminDashboard() {
     else if (days >= 3) colorClass = 'bg-[#EADA69]/20 text-[#614270]'
     return (
       <span className={`px-2 py-1 rounded text-xs font-medium ${colorClass}`}>
-        {days}d unclaimed
+        {days}d Unclaimed
       </span>
     )
   }
@@ -634,7 +634,7 @@ export default function AdminDashboard() {
                         <div className="text-2xl">{report.categoryEmoji} <span className="text-base font-medium">{report.categoryName}</span></div>
                         <div><span className="text-[#92998B]">Count:</span> {report.sheepCount}</div>
                         <div><span className="text-[#92998B]">Condition:</span> {report.condition}</div>
-                        <div><span className="text-[#92998B]">Status:</span> <span className={`capitalize font-medium ${report.status === 'reported' ? 'text-[#614270]' : report.status === 'claimed' ? 'text-[#7D8DCC]' : 'text-[#9ED663]'}`}>{report.status}</span></div>
+                        <div><span className="text-[#92998B]">Status:</span> <span className={`font-medium ${report.status === 'reported' ? 'text-[#614270]' : report.status === 'claimed' ? 'text-[#7D8DCC]' : 'text-[#9ED663]'}`}>{{ reported: 'Reported', claimed: 'Claimed', resolved: 'Resolved', escalated: 'Escalated' }[report.status] || report.status}</span></div>
                         <div><span className="text-[#92998B]">Submitted:</span> {new Date(report.timestamp).toLocaleString('en-GB')}</div>
                         {report.description && <div><span className="text-[#92998B]">Description:</span> {report.description}</div>}
                       </div>
@@ -1660,13 +1660,13 @@ export default function AdminDashboard() {
                         {report.flaggedByFarmer && report.status !== 'complete' && (
                           <span className="px-2 py-1.5 rounded-lg text-xs font-medium bg-[#EADA69]/20 text-[#614270]">🚩</span>
                         )}
-                        <span className={`px-2 py-1.5 rounded-lg text-xs font-medium capitalize ${
+                        <span className={`px-2 py-1.5 rounded-lg text-xs font-medium ${
                           report.status === 'complete' ? 'bg-[#D1D9C5] text-[#614270]' :
                           report.status === 'escalated' ? 'bg-[#FA9335]/10 text-[#FA9335]' :
                           report.status === 'resolved' ? 'bg-[#9ED663]/20 text-[#614270]' :
                           report.status === 'claimed' ? 'bg-[#7D8DCC]/10 text-[#7D8DCC]' :
                           'bg-[#EADA69]/20 text-[#614270]'
-                        }`}>{report.status}</span>
+                        }`}>{{ reported: 'Reported', claimed: 'Claimed', resolved: 'Resolved', escalated: 'Escalated', complete: 'Complete' }[report.status] || report.status}</span>
                         {report.archived && <span className={`${btnBase} bg-[#D1D9C5] text-[#614270]`}>Archived</span>}
                         <button onClick={() => openReportDetail(report.id)} className={`${btnBase} bg-indigo-100 text-indigo-700 hover:bg-indigo-200`}>View</button>
                         {!report.archived && report.screeningRequired && (

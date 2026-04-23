@@ -841,7 +841,7 @@ export default function FarmerDashboard() {
                             </p>
                           )}
                         </div>
-                        <span className="px-2 py-1 rounded text-xs bg-[#9ED663]/20 text-[#614270] font-medium">resolved</span>
+                        <span className="px-2 py-1 rounded text-xs bg-[#9ED663]/20 text-[#614270] font-medium">Resolved</span>
                       </div>
                       <div className="flex gap-2">
                         <button

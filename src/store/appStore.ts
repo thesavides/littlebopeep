@@ -611,6 +611,7 @@ export const useAppStore = create<AppState>()(
           roleOfSubmitter,
           affectedFarmIds,
           affectedFarmerIds,
+          photoUrls: draftReport.photoUrls || [],
         }
         // Save to local store immediately (optimistic)
         set({
