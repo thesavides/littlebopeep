@@ -129,26 +129,47 @@ function LandingPage() {
         </div>
       </nav>
 
-      {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-5xl px-5 pt-5 pb-4 text-center">
-        {/* Eyebrow */}
-        <p
-          className="inline-block rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-widest mb-3"
-          style={{ backgroundColor: 'rgba(125,141,204,0.15)', color: '#7D8DCC' }}
-        >
-          {t('home.landing.eyebrow', {}, 'Real-Time Countryside Reporting')}
-        </p>
+      {/* ── Hero (with sheep-on-road background) ─────────────────────────── */}
+      <section
+        className="relative overflow-hidden"
+        style={{
+          backgroundImage: 'url(/hero-sheep.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center 60%',
+          backgroundRepeat: 'no-repeat',
+        }}
+      >
+        {/* Dark plum gradient overlay for text legibility */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0"
+          style={{
+            background:
+              'linear-gradient(to bottom, rgba(97,66,112,0.55) 0%, rgba(97,66,112,0.35) 45%, rgba(97,66,112,0.55) 100%)',
+          }}
+        />
 
-        {/* Headline */}
-        <h1
-          className="font-serif text-2xl sm:text-3xl leading-snug mb-2 max-w-2xl mx-auto"
-          style={{ color: '#614270' }}
-        >
-          {t('home.landing.heroLine1', {}, 'Little Bo Peep')}{' '}
-          <span style={{ color: '#7D8DCC' }}>{t('home.landing.heroLine2', {}, 'has lost her sheep.')}</span><br />
-          {t('home.landing.heroLine3', {}, 'Help find them and')}{' '}
-          {t('home.landing.heroLine4', {}, 'report anything along the way.')}
-        </h1>
+        {/* Content */}
+        <div className="relative mx-auto max-w-5xl px-5 pt-8 pb-10 sm:pt-12 sm:pb-14 text-center">
+          {/* Eyebrow */}
+          <p
+            className="inline-block rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-widest mb-4 backdrop-blur-sm"
+            style={{ backgroundColor: 'rgba(255,255,255,0.22)', color: '#fff' }}
+          >
+            {t('home.landing.eyebrow', {}, 'Real-Time Countryside Reporting')}
+          </p>
+
+          {/* Headline */}
+          <h1
+            className="font-serif text-2xl sm:text-4xl leading-snug mb-2 max-w-2xl mx-auto"
+            style={{ color: '#ffffff', textShadow: '0 2px 12px rgba(30,18,40,0.55)' }}
+          >
+            {t('home.landing.heroLine1', {}, 'Little Bo Peep')}{' '}
+            <span style={{ color: '#EADA69' }}>{t('home.landing.heroLine2', {}, 'has lost her sheep.')}</span><br />
+            {t('home.landing.heroLine3', {}, 'Help find them and')}{' '}
+            {t('home.landing.heroLine4', {}, 'report anything along the way.')}
+          </h1>
+        </div>
       </section>
 
       {/* ── Three steps (illustrated, on white for legibility) ───────────── */}
