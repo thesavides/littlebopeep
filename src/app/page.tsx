@@ -151,27 +151,62 @@ function LandingPage() {
         </h1>
       </section>
 
-      {/* ── Three cards ──────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-5xl px-5 pb-6">
-        <div className="grid grid-cols-3 gap-4">
-          {cards.map((card) => (
-            <div
-              key={card.step}
-              className="rounded-2xl p-5 flex flex-col items-center text-center gap-2"
-              style={{ backgroundColor: '#fff', border: '1px solid rgba(146,153,139,0.3)' }}
-            >
-              <div
-                className="text-xs font-bold uppercase tracking-widest"
-                style={{ color: '#92998B' }}
-              >
-                {t('home.landing.stepLabel', {}, 'Step')} {card.step}
-              </div>
-              <div className="text-3xl">{card.icon}</div>
-              <h3 className="font-semibold text-base" style={{ color: '#614270' }}>
-                {card.title}
-              </h3>
+      {/* ── Three steps (illustrated) ────────────────────────────────────── */}
+      <section className="mx-auto max-w-5xl px-5 pb-8">
+        <div className="grid grid-cols-3 gap-6 sm:gap-10">
+
+          {/* Step 1 — See it: walker illustration */}
+          <div className="flex flex-col items-center text-center gap-2">
+            <div className="mb-1 h-14 flex items-end justify-center">
+              <svg width="44" height="54" viewBox="0 0 44 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Head */}
+                <circle cx="26" cy="7" r="5" stroke="#614270" strokeWidth="2.5"/>
+                {/* Body */}
+                <line x1="26" y1="12" x2="23" y2="27" stroke="#614270" strokeWidth="2.5" strokeLinecap="round"/>
+                {/* Forward arm */}
+                <line x1="24" y1="17" x2="12" y2="23" stroke="#614270" strokeWidth="2.5" strokeLinecap="round"/>
+                {/* Back arm */}
+                <line x1="24" y1="19" x2="34" y2="25" stroke="#614270" strokeWidth="2.5" strokeLinecap="round"/>
+                {/* Walking stick */}
+                <line x1="12" y1="23" x2="8" y2="40" stroke="#92998B" strokeWidth="2" strokeLinecap="round"/>
+                {/* Forward leg */}
+                <line x1="23" y1="27" x2="14" y2="42" stroke="#614270" strokeWidth="2.5" strokeLinecap="round"/>
+                {/* Forward foot */}
+                <line x1="14" y1="42" x2="6" y2="44" stroke="#614270" strokeWidth="2.5" strokeLinecap="round"/>
+                {/* Back leg */}
+                <line x1="23" y1="27" x2="32" y2="43" stroke="#614270" strokeWidth="2.5" strokeLinecap="round"/>
+                {/* Back foot */}
+                <line x1="32" y1="43" x2="40" y2="41" stroke="#614270" strokeWidth="2.5" strokeLinecap="round"/>
+              </svg>
             </div>
-          ))}
+            <div className="text-4xl font-bold leading-none font-serif" style={{ color: '#D1D9C5' }}>01</div>
+            <h3 className="font-semibold text-base" style={{ color: '#614270' }}>{cards[0].title}</h3>
+            <p className="text-sm leading-relaxed" style={{ color: '#92998B' }}>{cards[0].desc}</p>
+          </div>
+
+          {/* Step 2 — Report it: brand map-pin logo */}
+          <div className="flex flex-col items-center text-center gap-2">
+            <div className="mb-1 h-14 flex items-end justify-center">
+              <img src="/logo-pin.svg" alt="" aria-hidden="true" className="w-12 h-12" />
+            </div>
+            <div className="text-4xl font-bold leading-none font-serif" style={{ color: '#D1D9C5' }}>02</div>
+            <h3 className="font-semibold text-base" style={{ color: '#614270' }}>{cards[1].title}</h3>
+            <p className="text-sm leading-relaxed" style={{ color: '#92998B' }}>{cards[1].desc}</p>
+          </div>
+
+          {/* Step 3 — Get it sorted: brand-green tick circle */}
+          <div className="flex flex-col items-center text-center gap-2">
+            <div className="mb-1 h-14 flex items-end justify-center">
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="24" cy="24" r="21" stroke="#9ED663" strokeWidth="2.5" fill="rgba(158,214,99,0.12)"/>
+                <polyline points="13,25 20,33 35,15" stroke="#9ED663" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div className="text-4xl font-bold leading-none font-serif" style={{ color: '#D1D9C5' }}>03</div>
+            <h3 className="font-semibold text-base" style={{ color: '#614270' }}>{cards[2].title}</h3>
+            <p className="text-sm leading-relaxed" style={{ color: '#92998B' }}>{cards[2].desc}</p>
+          </div>
+
         </div>
       </section>
 
@@ -204,7 +239,7 @@ function LandingPage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {steps.map((step) => (
-              <div key={step.num} className="flex flex-col items-start">
+              <div key={step.num} className="flex flex-col items-center text-center">
                 <div
                   className="text-4xl font-bold mb-3 leading-none font-serif"
                   style={{ color: '#D1D9C5' }}
