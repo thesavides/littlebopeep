@@ -62,7 +62,7 @@ function LandingPage() {
   ]
 
   return (
-    <div className="min-h-screen pb-[128px] sm:pb-0" style={{ backgroundColor: '#D1D9C5' }}>
+    <div className="min-h-screen pb-[160px] sm:pb-0" style={{ backgroundColor: '#D1D9C5' }}>
 
       {/* ── Nav ──────────────────────────────────────────────────────────── */}
       <nav className="sticky top-0 z-40 border-b" style={{ backgroundColor: '#D1D9C5', borderColor: 'rgba(97,66,112,0.12)' }}>
@@ -207,8 +207,8 @@ function LandingPage() {
       {/* Mobile: fixed to bottom (anchored); Desktop: normal flow under hero */}
       <section
         className="
-          fixed bottom-0 left-0 right-0 z-30 px-5 pt-3 pb-[max(env(safe-area-inset-bottom,0px),12px)] border-t flex flex-col items-stretch gap-2
-          sm:static sm:border-0 sm:px-5 sm:pt-0 sm:pb-10 sm:mx-auto sm:max-w-5xl sm:items-center sm:gap-3
+          fixed bottom-0 left-0 right-0 z-30 px-5 pt-4 pb-[max(env(safe-area-inset-bottom,0px),16px)] border-t flex flex-col items-stretch gap-2
+          sm:static sm:border-0 sm:px-5 sm:py-8 sm:mx-auto sm:max-w-5xl sm:items-center sm:gap-3
         "
         style={{ backgroundColor: '#D1D9C5', borderColor: 'rgba(146,153,139,0.35)' }}
       >
