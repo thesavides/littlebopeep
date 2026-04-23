@@ -20,66 +20,54 @@ export default function PhotoUpload({ reportId, onPhotosUploaded, maxPhotos = ge
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
+    // Clear the input value so selecting the same file again still fires onChange
+    if (e.target) e.target.value = ''
     setError(null)
 
-    // Check total count
-    if (selectedFiles.length + files.length > maxPhotos) {
+    if (files.length === 0) return
+
+    // Check total count (already uploaded + already selected + new)
+    if (uploadedUrls.length + selectedFiles.length + files.length > maxPhotos) {
       setError(t('walker.photoMaxExceeded', { max: maxPhotos }, `Maximum ${maxPhotos} photos allowed`))
       return
     }
 
     // Validate each file
     const validFiles: File[] = []
-    const newPreviews: string[] = []
-
     files.forEach(file => {
       const validation = validatePhoto(file)
       if (validation.valid) {
         validFiles.push(file)
-        // Create preview
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          newPreviews.push(reader.result as string)
-          if (newPreviews.length === validFiles.length) {
-            setPreviews([...previews, ...newPreviews])
-          }
-        }
-        reader.readAsDataURL(file)
       } else {
         setError(validation.error || 'Invalid file')
       }
     })
 
-    setSelectedFiles([...selectedFiles, ...validFiles])
-  }
+    if (validFiles.length === 0) return
 
-  const handleRemove = (index: number) => {
-    const newFiles = selectedFiles.filter((_, i) => i !== index)
-    const newPreviews = previews.filter((_, i) => i !== index)
-    setSelectedFiles(newFiles)
-    setPreviews(newPreviews)
-    setError(null)
-  }
-
-  const handleUpload = async () => {
-    if (selectedFiles.length === 0) {
-      setError(t('walker.noPhotosSelected', {}, 'No photos selected'))
-      return
+    // Build previews (data URLs) for the new files
+    const previewPromises = validFiles.map(file => new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onloadend = () => resolve(reader.result as string)
+      reader.onerror = () => reject(new Error('read failed'))
+      reader.readAsDataURL(file)
+    }))
+    try {
+      const newPreviews = await Promise.all(previewPromises)
+      setPreviews(prev => [...prev, ...newPreviews])
+    } catch {
+      // Non-fatal — upload still proceeds
     }
 
+    setSelectedFiles(prev => [...prev, ...validFiles])
+
+    // Auto-upload immediately so the user doesn't need a second tap
     setUploading(true)
-    setError(null)
-
     try {
-      const uploadPromises = selectedFiles.map(file => uploadPhoto(file, reportId))
-      const results = await Promise.all(uploadPromises)
-
-      const successfulUrls = results
-        .filter(r => r.success)
-        .map(r => r.url!)
-
+      const results = await Promise.all(validFiles.map(file => uploadPhoto(file, reportId)))
+      const successfulUrls = results.filter(r => r.success).map(r => r.url!)
       const failedCount = results.filter(r => !r.success).length
 
       if (failedCount > 0) {
@@ -87,14 +75,15 @@ export default function PhotoUpload({ reportId, onPhotosUploaded, maxPhotos = ge
       }
 
       if (successfulUrls.length > 0) {
-        setUploadedUrls([...uploadedUrls, ...successfulUrls])
-        onPhotosUploaded([...uploadedUrls, ...successfulUrls])
-        // Clear selected files and previews
+        const nextUploaded = [...uploadedUrls, ...successfulUrls]
+        setUploadedUrls(nextUploaded)
+        onPhotosUploaded(nextUploaded)
+        // Clear selected/preview state — the uploaded thumbnails show below
         setSelectedFiles([])
         setPreviews([])
       }
-    } catch (error) {
-      console.error('Upload error:', error)
+    } catch (err) {
+      console.error('Auto-upload error:', err)
       setError(t('walker.uploadFailed', {}, 'Upload failed. Please try again.'))
     } finally {
       setUploading(false)
@@ -157,38 +146,26 @@ export default function PhotoUpload({ reportId, onPhotosUploaded, maxPhotos = ge
         </div>
       )}
 
-      {/* Selected Photos Preview */}
-      {selectedFiles.length > 0 && (
+      {/* Uploading indicator with previews */}
+      {uploading && previews.length > 0 && (
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-[#614270]">
-              {t('walker.selectedPhotos', {}, 'Selected Photos')}
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 animate-spin text-[#7D8DCC]" fill="none" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
+              <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+            </svg>
+            <span className="text-sm text-[#614270]">
+              {t('walker.uploading', {}, 'Uploading...')}
             </span>
-            <button
-              onClick={handleUpload}
-              disabled={uploading}
-              className="px-4 py-2 bg-[#7D8DCC] text-white rounded-lg hover:bg-[#6b7bb8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-            >
-              {uploading ? t('walker.uploading', {}, 'Uploading...') : t('walker.uploadPhotos', {}, 'Upload Photos')}
-            </button>
           </div>
           <div className="grid grid-cols-3 gap-2">
             {previews.map((preview, index) => (
-              <div key={index} className="relative group">
+              <div key={index} className="relative">
                 <img
                   src={preview}
                   alt={`Preview ${index + 1}`}
-                  className="w-full h-24 object-cover rounded-lg"
+                  className="w-full h-24 object-cover rounded-lg opacity-60"
                 />
-                <button
-                  onClick={() => handleRemove(index)}
-                  disabled={uploading}
-                  className="absolute top-1 right-1 p-1 bg-[#FA9335] text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
               </div>
             ))}
           </div>
