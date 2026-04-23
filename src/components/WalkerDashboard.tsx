@@ -284,14 +284,14 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#D1D9C5]">
       {/* Admin reporting mode banner */}
       {onExitToAdmin && (
-        <div className="bg-slate-800 text-white px-4 py-2 flex items-center justify-between sticky top-0 z-[60]">
+        <div className="bg-[#614270] text-white px-4 py-2 flex items-center justify-between sticky top-0 z-[60]">
           <span className="text-sm">🛡️ Admin — reporting as walker</span>
           <button
             onClick={onExitToAdmin}
-            className="text-sm text-slate-300 hover:text-white font-medium flex items-center gap-1"
+            className="text-sm text-[#D1D9C5] hover:text-white font-medium flex items-center gap-1"
           >
             ← Back to Admin
           </button>
@@ -309,11 +309,11 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
             <button
               onClick={() => setViewState('my-reports')}
               aria-label="My Reports"
-              className="relative w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors"
+              className="relative w-9 h-9 rounded-full bg-[#D1D9C5] hover:bg-[#92998B]/30 flex items-center justify-center text-[#614270] transition-colors"
             >
               <span className="text-base leading-none">📋</span>
               {thankYouMessages.filter(m => !m.read_at).length > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-[#FA9335] text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
                   {thankYouMessages.filter(m => !m.read_at).length > 99 ? '99+' : thankYouMessages.filter(m => !m.read_at).length}
                 </span>
               )}
@@ -322,7 +322,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
             <button
               onClick={() => setProfileOpen(true)}
               aria-label="Profile"
-              className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors"
+              className="w-9 h-9 rounded-full bg-[#D1D9C5] hover:bg-[#92998B]/30 flex items-center justify-center text-[#614270] transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -334,16 +334,16 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
 
       {/* Thank You Notification Banner */}
       {showNotification && unreadNotifications.length > 0 && (
-        <div className="bg-green-50 border-b border-green-200 px-4 py-3">
+        <div className="bg-[#D1D9C5] border-b border-[#D1D9C5] px-4 py-3">
           <div className="max-w-4xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="text-2xl">🎉</span>
               <div>
-                <p className="font-medium text-green-800">{t('walker.thankYou', {}, 'Thank You!')}</p>
-                <p className="text-sm text-green-600">{unreadNotifications[0].message}</p>
+                <p className="font-medium text-[#614270]">{t('walker.thankYou', {}, 'Thank You!')}</p>
+                <p className="text-sm text-[#614270]">{unreadNotifications[0].message}</p>
               </div>
             </div>
-            <button onClick={handleDismissNotification} className="text-green-600 hover:text-green-800 text-xl">×</button>
+            <button onClick={handleDismissNotification} className="text-[#614270] hover:text-[#614270] text-xl">×</button>
           </div>
         </div>
       )}
@@ -352,13 +352,13 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
       {showSubmitSuccess && (
         <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-white/95 pointer-events-none">
           <div className="flex flex-col items-center gap-4 animate-pulse-once">
-            <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
-              <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-20 h-20 rounded-full bg-[#9ED663]/20 flex items-center justify-center">
+              <svg className="w-10 h-10 text-[#9ED663]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 className="text-xl font-bold text-slate-800">Report Submitted!</h2>
-            <p className="text-slate-500 text-sm">Thank you for helping local farmers.</p>
+            <h2 className="text-xl font-bold text-[#614270]">Report Submitted!</h2>
+            <p className="text-[#92998B] text-sm">Thank you for helping local farmers.</p>
           </div>
         </div>
       )}
@@ -369,9 +369,9 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
             <div className="text-center mb-4">
               <div className="text-4xl mb-2">⚠️</div>
-              <h3 className="text-lg font-bold text-slate-800">{t('walker.existingReportNearby', {}, 'Existing Report Nearby')}</h3>
+              <h3 className="text-lg font-bold text-[#614270]">{t('walker.existingReportNearby', {}, 'Existing Report Nearby')}</h3>
             </div>
-            <p className="text-slate-600 text-center mb-6">
+            <p className="text-[#614270] text-center mb-6">
               {nearbyReports.length === 1
                 ? `A ${nearbyReports[0].categoryName || 'report'} has already been submitted within 100m of this location in the past 12 hours. Do you still want to submit a new one?`
                 : `${nearbyReports.length} reports of this type have already been submitted within 100m of this location in the past 12 hours. Do you still want to submit a new one?`
@@ -380,13 +380,13 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
             <div className="space-y-3">
               <button
                 onClick={handleProceedAnyway}
-                className="w-full py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700"
+                className="w-full py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold hover:bg-[#7D8DCC]/90"
               >
                 {t('walker.yesSubmitReport', {}, 'Yes, Submit New Report')}
               </button>
               <button
                 onClick={() => setShowDuplicateWarning(false)}
-                className="w-full py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200"
+                className="w-full py-3 bg-[#D1D9C5] text-[#614270] rounded-xl font-semibold hover:bg-[#D1D9C5]/70"
               >
                 {t('walker.cancel', {}, 'Cancel')}
               </button>
@@ -401,9 +401,9 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
         const totalSteps = currentUserId ? 3 : 4
         const displayStep = currentUserId && currentReportStep === 4 ? 3 : currentReportStep
         return (
-          <div className="h-1 bg-slate-200">
+          <div className="h-1 bg-[#D1D9C5]">
             <div
-              className="h-full bg-green-500 transition-all"
+              className="h-full bg-[#7D8DCC] transition-all"
               style={{ width: `${(displayStep / totalSteps) * 100}%` }}
             />
           </div>
@@ -416,9 +416,9 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
           <>
             {/* Nearby reports warning */}
             {recentNearbyReports.length > 0 && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
-                <h3 className="font-semibold text-amber-800 mb-1">📍 {t('walker.reportsNearYou', {}, 'Reports Near You')}</h3>
-                <p className="text-amber-700 text-sm">
+              <div className="bg-[#EADA69]/20 border border-[#EADA69]/40 rounded-xl p-4 mb-4">
+                <h3 className="font-semibold text-[#614270] mb-1">📍 {t('walker.reportsNearYou', {}, 'Reports Near You')}</h3>
+                <p className="text-[#614270] text-sm">
                   {recentNearbyReports.length} {recentNearbyReports.length === 1 ? 'report has' : 'reports have'} been submitted within 100m of your location in the last 12 hours. Check the map to see if they already cover what you&apos;ve spotted.
                 </p>
               </div>
@@ -455,7 +455,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
             </div>
 
             {/* Legend */}
-            <div className="flex items-center gap-4 mb-6 text-sm text-slate-600">
+            <div className="flex items-center gap-4 mb-6 text-sm text-[#614270]">
               <div className="flex items-center gap-1">
                 <span>📍</span> {t('walker.yourLocation', {}, 'Your location')}
               </div>
@@ -468,29 +468,29 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
             {showCategoryPicker && (
               <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4" onClick={() => setShowCategoryPicker(false)}>
                 <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg shadow-xl animate-slide-up sm:animate-none" onClick={e => e.stopPropagation()}>
-                  <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-100">
-                    <h3 className="text-lg font-bold text-slate-800">What are you reporting?</h3>
-                    <button onClick={() => setShowCategoryPicker(false)} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">×</button>
+                  <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-[#D1D9C5]">
+                    <h3 className="text-lg font-bold text-[#614270]">What are you reporting?</h3>
+                    <button onClick={() => setShowCategoryPicker(false)} className="text-[#92998B] hover:text-[#614270] text-2xl leading-none">×</button>
                   </div>
                   <div className="p-4 space-y-2 max-h-[70vh] sm:max-h-[80vh] overflow-y-auto safe-area-pb">
                     {/* Sheep — always first */}
                     {(() => {
                       const isSheepDefault = !preferredCategoryId
                       return (
-                        <div className="flex items-center gap-3 p-3 rounded-xl border-2 border-green-200 bg-green-50">
+                        <div className="flex items-center gap-3 p-3 rounded-xl border-2 border-[#D1D9C5] bg-[#D1D9C5]/50">
                           <button
                             className="flex items-center gap-3 flex-1 text-left"
                             onClick={() => handleStartReportWithCategory(null)}
                           >
                             <span className="text-3xl w-10 text-center flex-shrink-0">🐑</span>
                             <div className="flex-1 min-w-0">
-                              <div className="font-semibold text-slate-800">Sheep</div>
-                              <div className="text-xs text-slate-500">Stray or loose sheep</div>
+                              <div className="font-semibold text-[#614270]">Sheep</div>
+                              <div className="text-xs text-[#92998B]">Stray or loose sheep</div>
                             </div>
                           </button>
                           <button
                             onClick={() => setDefaultCategory(isSheepDefault ? null : null)}
-                            className={`text-lg flex-shrink-0 ${isSheepDefault ? 'text-yellow-400' : 'text-slate-300 hover:text-yellow-300'}`}
+                            className={`text-lg flex-shrink-0 ${isSheepDefault ? 'text-[#EADA69]' : 'text-[#92998B] hover:text-[#EADA69]'}`}
                             title={isSheepDefault ? 'Your default' : 'Set as default'}
                           >
                             ★
@@ -502,7 +502,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                     {reportCategories.filter(c => c.isActive).sort((a, b) => a.sortOrder - b.sortOrder).map((cat) => {
                       const isDefault = preferredCategoryId === cat.id
                       return (
-                        <div key={cat.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-colors ${isDefault ? 'border-green-200 bg-green-50' : 'border-slate-200 bg-slate-50 hover:border-green-300 hover:bg-white'}`}>
+                        <div key={cat.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-colors ${isDefault ? 'border-[#D1D9C5] bg-[#D1D9C5]/50' : 'border-[#D1D9C5] bg-[#D1D9C5]/20 hover:border-[#92998B] hover:bg-white'}`}>
                           <button
                             className="flex items-center gap-3 flex-1 text-left"
                             onClick={() => handleStartReportWithCategory(cat)}
@@ -513,13 +513,13 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                               <span className="text-3xl w-10 text-center flex-shrink-0">{cat.emoji}</span>
                             )}
                             <div className="flex-1 min-w-0">
-                              <div className="font-semibold text-slate-800">{cat.name}</div>
-                              {cat.description && <div className="text-xs text-slate-500 truncate">{cat.description}</div>}
+                              <div className="font-semibold text-[#614270]">{cat.name}</div>
+                              {cat.description && <div className="text-xs text-[#92998B] truncate">{cat.description}</div>}
                             </div>
                           </button>
                           <button
                             onClick={() => setDefaultCategory(isDefault ? null : cat.id)}
-                            className={`text-lg flex-shrink-0 ${isDefault ? 'text-yellow-400' : 'text-slate-300 hover:text-yellow-300'}`}
+                            className={`text-lg flex-shrink-0 ${isDefault ? 'text-[#EADA69]' : 'text-[#92998B] hover:text-[#EADA69]'}`}
                             title={isDefault ? 'Your default' : 'Set as default'}
                           >
                             ★
@@ -528,7 +528,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                       )
                     })}
                     {reportCategories.filter(c => c.isActive).length === 0 && (
-                      <p className="text-center text-slate-500 text-sm py-4">Only sheep reporting is available.</p>
+                      <p className="text-center text-[#92998B] text-sm py-4">Only sheep reporting is available.</p>
                     )}
                   </div>
                 </div>
@@ -537,9 +537,9 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
 
 
             {/* Tips */}
-            <div className="mt-8 bg-green-50 rounded-xl p-4">
-              <h3 className="font-semibold text-green-800 mb-2">{t('walker.tipsForReporting', {}, 'Tips for reporting')}</h3>
-              <ul className="text-sm text-green-700 space-y-1">
+            <div className="mt-8 bg-[#D1D9C5] rounded-xl p-4">
+              <h3 className="font-semibold text-[#614270] mb-2">{t('walker.tipsForReporting', {}, 'Tips for reporting')}</h3>
+              <ul className="text-sm text-[#614270] space-y-1">
                 <li>• {t('walker.tip1', {}, 'Check the map for recent reports before submitting')}</li>
                 <li>• {t('walker.tip2', {}, 'Be as accurate as possible with the location')}</li>
                 <li>• {t('walker.tip3', {}, 'Note any markings or ear tags if visible')}</li>
@@ -556,10 +556,10 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
             {/* Step 1: Location */}
             {currentReportStep === 1 && (
               <div>
-                <h2 className="text-lg font-semibold text-slate-800 mb-2">
+                <h2 className="text-lg font-semibold text-[#614270] mb-2">
                   Where did you spot the {activeCategory ? activeCategory.name.toLowerCase() : 'sheep'}?
                 </h2>
-                <p className="text-slate-600 mb-4">
+                <p className="text-[#614270] mb-4">
                   Tap on the map to mark the location. Recent reports (last 12 hours) are shown as {activeCategory ? activeCategory.emoji : '🐑'} markers.
                 </p>
                 
@@ -610,7 +610,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                   />
                 </div>
                 {draftReport.location && (
-                  <p className="text-sm text-green-600 mb-2">
+                  <p className="text-sm text-[#63BD8F] mb-2">
                     📍 {t('walker.locationSelected', {}, 'Location selected')}
                   </p>
                 )}
@@ -620,13 +620,13 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
             {/* Step 2: Details */}
             {currentReportStep === 2 && (
               <div>
-                <h2 className="text-lg font-semibold text-slate-800 mb-4">
+                <h2 className="text-lg font-semibold text-[#614270] mb-4">
                   Tell us about the {activeCategory ? activeCategory.name.toLowerCase() : 'sheep'}
                 </h2>
                 <div className="space-y-4">
                   {/* Quantity — quick-pick 1-10 + stepper for larger */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                    <label className="block text-sm font-medium text-[#614270] mb-2">
                       {activeCategory ? (activeCategory.countLabel || 'Quantity') : t('walker.sheepCount', {}, 'Number of sheep')}
                     </label>
                     <div className="flex flex-wrap gap-2 mb-3">
@@ -637,8 +637,8 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                           onClick={() => updateDraftReport({ sheepCount: n })}
                           className={`w-11 h-11 rounded-lg font-semibold text-sm border-2 transition-colors ${
                             (draftReport.sheepCount || 1) === n
-                              ? 'bg-green-600 text-white border-green-600'
-                              : 'bg-white text-slate-700 border-slate-300 hover:border-green-400'
+                              ? 'bg-[#7D8DCC] text-white border-[#7D8DCC]'
+                              : 'bg-white text-[#614270] border-[#D1D9C5] hover:border-[#7D8DCC]'
                           }`}
                         >
                           {n}
@@ -649,26 +649,26 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                       <button
                         type="button"
                         onClick={() => updateDraftReport({ sheepCount: Math.max(1, (draftReport.sheepCount || 1) - 1) })}
-                        className="w-11 h-11 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xl flex items-center justify-center active:bg-slate-300"
+                        className="w-11 h-11 rounded-lg bg-[#D1D9C5] text-[#614270] hover:bg-[#D1D9C5]/70 font-bold text-xl flex items-center justify-center active:bg-[#92998B]/30"
                       >−</button>
                       <input
                         type="number"
                         min="1"
                         value={draftReport.sheepCount || 1}
                         onChange={(e) => updateDraftReport({ sheepCount: parseInt(e.target.value) || 1 })}
-                        className="w-20 text-center px-2 py-2 border border-slate-300 rounded-lg text-lg font-semibold focus:ring-2 focus:ring-green-500"
+                        className="w-20 text-center px-2 py-2 border border-[#D1D9C5] rounded-lg text-lg font-semibold focus:ring-2 focus:ring-[#7D8DCC]"
                       />
                       <button
                         type="button"
                         onClick={() => updateDraftReport({ sheepCount: (draftReport.sheepCount || 1) + 1 })}
-                        className="w-11 h-11 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xl flex items-center justify-center active:bg-slate-300"
+                        className="w-11 h-11 rounded-lg bg-[#D1D9C5] text-[#614270] hover:bg-[#D1D9C5]/70 font-bold text-xl flex items-center justify-center active:bg-[#92998B]/30"
                       >+</button>
                     </div>
                   </div>
                   {/* Conditions — multi-select chips */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      {t('walker.condition', {}, 'Condition')} <span className="text-slate-400 font-normal text-xs">— select all that apply</span>
+                    <label className="block text-sm font-medium text-[#614270] mb-2">
+                      {t('walker.condition', {}, 'Condition')} <span className="text-[#92998B] font-normal text-xs">— select all that apply</span>
                     </label>
                     {(() => {
                       const opts = activeCategory?.conditions?.length
@@ -700,8 +700,8 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                                 }}
                                 className={`px-3 py-2 rounded-full text-sm font-medium border-2 transition-colors ${
                                   isSelected
-                                    ? 'bg-green-600 text-white border-green-600'
-                                    : 'bg-white text-slate-700 border-slate-300 hover:border-green-400 active:bg-slate-50'
+                                    ? 'bg-[#7D8DCC] text-white border-[#7D8DCC]'
+                                    : 'bg-white text-[#614270] border-[#D1D9C5] hover:border-[#7D8DCC] active:bg-[#D1D9C5]/30'
                                 }`}
                               >
                                 {opt}
@@ -713,7 +713,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                     })()}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                    <label className="block text-sm font-medium text-[#614270] mb-1">
                       {t('walker.additionalDetails', {}, 'Additional details (optional)')}
                     </label>
                     <textarea
@@ -725,14 +725,14 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                    <label className="block text-sm font-medium text-[#614270] mb-2">
                       {t('walker.photos', {}, 'Photos (optional)')}
                     </label>
                     <PhotoUpload
                       reportId={draftReport.id || 'temp'}
                       onPhotosUploaded={(urls) => updateDraftReport({ photoUrls: urls })}
                     />
-                    <p className="text-xs text-slate-500 mt-2">
+                    <p className="text-xs text-[#92998B] mt-2">
                       {t('walker.photoHelp', {}, 'Photos help farmers identify the sheep. Max 3 photos.')}
                     </p>
                   </div>
@@ -743,10 +743,10 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
             {/* Step 3: Contact (optional for guests, shows notification benefit) */}
             {currentReportStep === 3 && (
               <div>
-                <h2 className="text-lg font-semibold text-slate-800 mb-2">
+                <h2 className="text-lg font-semibold text-[#614270] mb-2">
                   {t('walker.wantNotified', {}, 'Want to be notified? 🔔')}
                 </h2>
-                <p className="text-slate-600 mb-4">
+                <p className="text-[#614270] mb-4">
                   {currentUserId
                     ? t('walker.contactInstructionLoggedIn', {}, 'The farmer may want to reach out for more details about the location.')
                     : t('walker.contactInstructionGuest', {}, 'Leave your contact details to be notified when the sheep is successfully returned to the farmer!')
@@ -754,7 +754,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                 </p>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                    <label className="block text-sm font-medium text-[#614270] mb-1">
                       {currentUserId ? t('walker.name', {}, 'Name') : t('walker.nameOptional', {}, 'Name (optional)')}
                     </label>
                     <input
@@ -766,7 +766,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                    <label className="block text-sm font-medium text-[#614270] mb-1">
                       {t('walker.email', {}, 'Email (for thank you notification)')}
                     </label>
                     <input
@@ -778,7 +778,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                    <label className="block text-sm font-medium text-[#614270] mb-1">
                       {t('walker.phone', {}, 'Phone (optional)')}
                     </label>
                     <input
@@ -790,12 +790,12 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                     />
                   </div>
                 </div>
-                <div className="mt-4 bg-green-50 border border-green-200 rounded-xl p-3">
-                  <p className="text-green-800 text-sm">
+                <div className="mt-4 bg-[#D1D9C5] border border-[#D1D9C5] rounded-xl p-3">
+                  <p className="text-[#614270] text-sm">
                     💌 {t('walker.thankYouMessage', {}, "We'll send you a thank you message when the farmer claims your report and recovers the sheep!")}
                   </p>
                 </div>
-                <p className="text-xs text-slate-500 mt-3">
+                <p className="text-xs text-[#92998B] mt-3">
                   {t('walker.privacyNote', {}, 'Your contact info will only be used for notifications and may be shared with farmers in the area. Leave blank to report anonymously.')}
                 </p>
               </div>
@@ -804,42 +804,42 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
             {/* Step 4: Confirm */}
             {currentReportStep === 4 && (
               <div>
-                <h2 className="text-lg font-semibold text-slate-800 mb-4">
+                <h2 className="text-lg font-semibold text-[#614270] mb-4">
                   {t('walker.confirmReport', {}, 'Confirm your report')}
                 </h2>
-                <div className="bg-white rounded-xl p-4 shadow space-y-3 border border-slate-200">
+                <div className="bg-white rounded-xl p-4 shadow space-y-3 border border-[#D1D9C5]">
                   {activeCategory && (
                     <div className="flex justify-between">
-                      <span className="text-sm text-slate-500">Category</span>
-                      <span className="text-slate-800 font-medium">{activeCategory.emoji} {activeCategory.name}</span>
+                      <span className="text-sm text-[#92998B]">Category</span>
+                      <span className="text-[#614270] font-medium">{activeCategory.emoji} {activeCategory.name}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="text-sm text-slate-500">{t('walker.location', {}, 'Location')}</span>
-                    <span className="text-slate-800 font-medium">
+                    <span className="text-sm text-[#92998B]">{t('walker.location', {}, 'Location')}</span>
+                    <span className="text-[#614270] font-medium">
                       {draftReport.location?.lat.toFixed(5)}, {draftReport.location?.lng.toFixed(5)}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-slate-500">
+                    <span className="text-sm text-[#92998B]">
                       {activeCategory ? (activeCategory.countLabel || 'Quantity') : t('walker.sheepCount', {}, 'Sheep count')}
                     </span>
-                    <span className="text-slate-800 font-medium">{draftReport.sheepCount || 1}</span>
+                    <span className="text-[#614270] font-medium">{draftReport.sheepCount || 1}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-slate-500">{t('walker.condition', {}, 'Condition')}</span>
-                    <span className="text-slate-800 font-medium capitalize">{draftReport.condition || 'Unknown'}</span>
+                    <span className="text-sm text-[#92998B]">{t('walker.condition', {}, 'Condition')}</span>
+                    <span className="text-[#614270] font-medium capitalize">{draftReport.condition || 'Unknown'}</span>
                   </div>
                   {draftReport.description && (
                     <div>
-                      <span className="text-sm text-slate-500">{t('walker.details', {}, 'Details')}</span>
-                      <p className="text-slate-800 mt-1">{draftReport.description}</p>
+                      <span className="text-sm text-[#92998B]">{t('walker.details', {}, 'Details')}</span>
+                      <p className="text-[#614270] mt-1">{draftReport.description}</p>
                     </div>
                   )}
                   {draftReport.reporterContact && (
                     <div className="flex justify-between">
-                      <span className="text-sm text-slate-500">{t('walker.contact', {}, 'Contact')}</span>
-                      <span className="text-slate-800 font-medium">{draftReport.reporterContact}</span>
+                      <span className="text-sm text-[#92998B]">{t('walker.contact', {}, 'Contact')}</span>
+                      <span className="text-[#614270] font-medium">{draftReport.reporterContact}</span>
                     </div>
                   )}
                 </div>
@@ -848,7 +848,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
 
             {/* Navigation */}
             {currentReportStep === 2 ? (
-              <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3 flex gap-3 z-40 safe-area-pb">
+              <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#D1D9C5] px-4 py-3 flex gap-3 z-40 safe-area-pb">
                 <Button variant="ghost" onClick={handleBack} className="flex-1">
                   {t('walker.back', {}, '← Back')}
                 </Button>
@@ -878,9 +878,9 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
           <>
             {/* Thank You messages from farmers */}
             {thankYouMessages.length > 0 && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+              <div className="bg-[#EADA69]/20 border border-[#EADA69]/40 rounded-xl p-4 mb-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-amber-800">💌 Messages from Farmers ({thankYouMessages.length})</h3>
+                  <h3 className="font-semibold text-[#614270]">💌 Messages from Farmers ({thankYouMessages.length})</h3>
                   {thankYouMessages.some(m => !m.read_at) && (
                     <button
                       onClick={async () => {
@@ -889,7 +889,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                           setThankYouMessages(prev => prev.map(m => ({ ...m, read_at: m.read_at || new Date().toISOString() })))
                         }
                       }}
-                      className="text-xs text-amber-600 hover:underline"
+                      className="text-xs text-[#614270] hover:underline"
                     >
                       Mark all read
                     </button>
@@ -900,11 +900,11 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                     const report = myReports.find(r => r.id === msg.report_id)
                     const isUnread = !msg.read_at
                     return (
-                      <div key={msg.id} className={`rounded-lg p-3 text-sm ${isUnread ? 'bg-white border border-amber-300 shadow-sm' : 'bg-amber-50/60'}`}>
-                        {isUnread && <span className="inline-block w-2 h-2 bg-amber-500 rounded-full mr-2" />}
-                        <p className="text-slate-700 italic">&ldquo;{msg.message_text || 'Thank you!'}&rdquo;</p>
+                      <div key={msg.id} className={`rounded-lg p-3 text-sm ${isUnread ? 'bg-white border border-[#EADA69]/60 shadow-sm' : 'bg-[#EADA69]/10'}`}>
+                        {isUnread && <span className="inline-block w-2 h-2 bg-[#EADA69] rounded-full mr-2" />}
+                        <p className="text-[#614270] italic">&ldquo;{msg.message_text || 'Thank you!'}&rdquo;</p>
                         {report && (
-                          <p className="text-xs text-slate-400 mt-1">
+                          <p className="text-xs text-[#92998B] mt-1">
                             Re: {report.categoryEmoji} {report.categoryName} · {new Date(msg.sent_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
                           </p>
                         )}
@@ -918,13 +918,13 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
             {myReports.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">🐑</div>
-                <h3 className="text-lg font-semibold text-slate-800 mb-2">{t('walker.noReportsYet', {}, 'No reports yet')}</h3>
-                <p className="text-slate-600 mb-6">
+                <h3 className="text-lg font-semibold text-[#614270] mb-2">{t('walker.noReportsYet', {}, 'No reports yet')}</h3>
+                <p className="text-[#614270] mb-6">
                   {t('walker.noReportsMessage', {}, 'Spot some sheep and submit a report to help farmers!')}
                 </p>
                 <button
                   onClick={handleStartReport}
-                  className="px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700"
+                  className="px-6 py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold hover:bg-[#7D8DCC]/90"
                 >
                   {t('walker.reportASheep', {}, 'Report a Sheep')}
                 </button>
@@ -937,15 +937,15 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                     ? report.conditions
                     : report.condition ? [report.condition] : []
                   return (
-                    <div key={report.id} className="bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
+                    <div key={report.id} className="bg-white rounded-xl shadow border border-[#D1D9C5] overflow-hidden">
                       <div className="p-4">
                         <div className="flex justify-between items-start mb-1">
                           <div>
-                            <div className="font-semibold text-slate-800">
+                            <div className="font-semibold text-[#614270]">
                               {report.categoryEmoji || '🐑'} {report.sheepCount} {report.categoryName || 'sheep'}
                             </div>
-                            <div className="text-sm text-slate-500">
-                              <span className="font-mono text-slate-400 mr-1">#{report.id.slice(-6).toUpperCase()}</span>
+                            <div className="text-sm text-[#92998B]">
+                              <span className="font-mono text-[#92998B] mr-1">#{report.id.slice(-6).toUpperCase()}</span>
                               · {new Date(report.timestamp).toLocaleString()}
                             </div>
                           </div>
@@ -966,7 +966,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                                     })
                                   }
                                 }}
-                                className="px-2 py-1 text-xs bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200"
+                                className="px-2 py-1 text-xs bg-[#D1D9C5] text-[#614270] rounded-lg hover:bg-[#D1D9C5]/70"
                               >
                                 {isEditing ? 'Cancel' : 'Edit'}
                               </button>
@@ -976,12 +976,12 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                         {displayConditions.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-1">
                             {displayConditions.map(c => (
-                              <span key={c} className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs">{c}</span>
+                              <span key={c} className="px-2 py-0.5 bg-[#D1D9C5] text-[#614270] rounded-full text-xs">{c}</span>
                             ))}
                           </div>
                         )}
                         {report.description && (
-                          <p className="text-sm text-slate-600 mt-2">{report.description}</p>
+                          <p className="text-sm text-[#614270] mt-2">{report.description}</p>
                         )}
                         {report.photoUrls && report.photoUrls.length > 0 && (
                           <div className="mt-3">
@@ -991,24 +991,24 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                       </div>
 
                       {isEditing && (
-                        <div className="border-t border-slate-200 bg-slate-50 p-4 space-y-4">
-                          <h4 className="font-semibold text-slate-700 text-sm">Edit Report</h4>
+                        <div className="border-t border-[#D1D9C5] bg-[#D1D9C5]/20 p-4 space-y-4">
+                          <h4 className="font-semibold text-[#614270] text-sm">Edit Report</h4>
 
                           <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1">Quantity</label>
+                            <label className="block text-xs font-medium text-[#614270] mb-1">Quantity</label>
                             <div className="flex items-center gap-2">
                               <button type="button" onClick={() => setEditFields(f => ({ ...f, sheepCount: Math.max(1, f.sheepCount - 1) }))}
-                                className="w-9 h-9 rounded-lg bg-white border border-slate-300 font-bold text-lg flex items-center justify-center">−</button>
+                                className="w-9 h-9 rounded-lg bg-white border border-[#D1D9C5] font-bold text-lg flex items-center justify-center">−</button>
                               <input type="number" min="1" value={editFields.sheepCount}
                                 onChange={e => setEditFields(f => ({ ...f, sheepCount: parseInt(e.target.value) || 1 }))}
-                                className="w-16 text-center px-2 py-1 border border-slate-300 rounded-lg text-base font-semibold" />
+                                className="w-16 text-center px-2 py-1 border border-[#D1D9C5] rounded-lg text-base font-semibold" />
                               <button type="button" onClick={() => setEditFields(f => ({ ...f, sheepCount: f.sheepCount + 1 }))}
-                                className="w-9 h-9 rounded-lg bg-white border border-slate-300 font-bold text-lg flex items-center justify-center">+</button>
+                                className="w-9 h-9 rounded-lg bg-white border border-[#D1D9C5] font-bold text-lg flex items-center justify-center">+</button>
                             </div>
                           </div>
 
                           <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1">Conditions</label>
+                            <label className="block text-xs font-medium text-[#614270] mb-1">Conditions</label>
                             <div className="flex flex-wrap gap-2">
                               {['Healthy','Injured','Dead','In road','Lost / straying','Not sure'].map(opt => {
                                 const sel = editFields.conditions.includes(opt)
@@ -1018,7 +1018,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                                       ...f,
                                       conditions: sel ? f.conditions.filter(c => c !== opt) : [...f.conditions, opt]
                                     }))}
-                                    className={`px-3 py-1.5 rounded-full text-xs font-medium border-2 transition-colors ${sel ? 'bg-green-600 text-white border-green-600' : 'bg-white text-slate-700 border-slate-300'}`}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-medium border-2 transition-colors ${sel ? 'bg-[#7D8DCC] text-white border-[#7D8DCC]' : 'bg-white text-[#614270] border-[#D1D9C5]'}`}
                                   >{opt}</button>
                                 )
                               })}
@@ -1026,15 +1026,15 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                           </div>
 
                           <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1">Details</label>
+                            <label className="block text-xs font-medium text-[#614270] mb-1">Details</label>
                             <textarea value={editFields.description}
                               onChange={e => setEditFields(f => ({ ...f, description: e.target.value }))}
                               rows={2}
-                              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500" />
+                              className="w-full px-3 py-2 border border-[#D1D9C5] rounded-lg text-sm focus:ring-2 focus:ring-[#7D8DCC]" />
                           </div>
 
                           <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1">Photos</label>
+                            <label className="block text-xs font-medium text-[#614270] mb-1">Photos</label>
                             <PhotoUpload
                               reportId={report.id}
                               onPhotosUploaded={(urls) => setEditFields(f => ({ ...f, photoUrls: [...new Set([...f.photoUrls, ...urls])] }))}
@@ -1049,7 +1049,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                               setEditingReportId(null)
                             }}
                             disabled={savingEdit}
-                            className="w-full py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 disabled:opacity-50"
+                            className="w-full py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold hover:bg-[#7D8DCC]/90 disabled:opacity-50"
                           >
                             {savingEdit ? 'Saving…' : 'Save Changes'}
                           </button>
@@ -1067,10 +1067,10 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
       {/* Bottom Navigation — hidden during active report flow */}
       {viewState !== 'reporting' && (
         currentUserId ? (
-          <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 safe-area-pb px-4 py-3">
+          <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#D1D9C5] safe-area-pb px-4 py-3">
             <button
               onClick={() => setShowCategoryPicker(true)}
-              className="w-full py-4 bg-green-600 text-white rounded-xl font-semibold text-base hover:bg-green-700 active:scale-[0.98] transition-all focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 shadow-sm"
+              className="w-full py-4 bg-[#7D8DCC] text-white rounded-xl font-semibold text-base hover:bg-[#7D8DCC]/90 active:scale-[0.98] transition-all focus:outline-none focus:ring-2 focus:ring-[#7D8DCC] focus:ring-offset-2 shadow-sm"
             >
               Report
             </button>

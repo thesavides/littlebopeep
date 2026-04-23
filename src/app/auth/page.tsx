@@ -93,19 +93,27 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">
-          {t('header.appName', {}, 'Little Bo Peep')}
-        </h1>
+    <div className="min-h-screen bg-[#D1D9C5] flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
 
+        {/* Brand logo + wordmark */}
+        <div className="flex flex-col items-center gap-2 mb-6">
+          <img src="/logo-pin.svg" alt="" aria-hidden="true" className="w-12 h-12" />
+          <span className="font-serif font-semibold text-xl tracking-tight leading-none">
+            <span style={{ color: '#614270' }}>Little </span>
+            <span style={{ color: '#92998B' }}>Bo </span>
+            <span style={{ color: '#614270' }}>Peep</span>
+          </span>
+        </div>
+
+        {/* Sign in / Sign up tabs */}
         <div className="flex gap-2 mb-6">
           <button
             onClick={() => setMode('signin')}
             className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
               mode === 'signin'
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-[#7D8DCC] text-white'
+                : 'bg-[#D1D9C5] text-[#92998B] hover:bg-[#c5cdb9]'
             }`}
           >
             {t('auth.signIn', {}, 'Sign In')}
@@ -114,8 +122,8 @@ export default function AuthPage() {
             onClick={() => setMode('signup')}
             className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
               mode === 'signup'
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-[#7D8DCC] text-white'
+                : 'bg-[#D1D9C5] text-[#92998B] hover:bg-[#c5cdb9]'
             }`}
           >
             {t('auth.signUp', {}, 'Sign Up')}
@@ -126,7 +134,7 @@ export default function AuthPage() {
           {mode === 'signup' && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-[#614270] mb-2">
                   {t('auth.iAmA', {}, 'I am a:')}
                 </label>
                 <div className="flex gap-4">
@@ -136,9 +144,9 @@ export default function AuthPage() {
                       value="walker"
                       checked={role === 'walker'}
                       onChange={(e) => setRoleSelection(e.target.value as 'walker')}
-                      className="mr-2"
+                      className="mr-2 accent-[#7D8DCC]"
                     />
-                    <span>{t('auth.walker', {}, 'Walker')}</span>
+                    <span className="text-[#614270]">{t('auth.walker', {}, 'Walker')}</span>
                   </label>
                   <label className="flex items-center">
                     <input
@@ -146,15 +154,15 @@ export default function AuthPage() {
                       value="farmer"
                       checked={role === 'farmer'}
                       onChange={(e) => setRoleSelection(e.target.value as 'farmer')}
-                      className="mr-2"
+                      className="mr-2 accent-[#7D8DCC]"
                     />
-                    <span>{t('auth.farmer', {}, 'Farmer')}</span>
+                    <span className="text-[#614270]">{t('auth.farmer', {}, 'Farmer')}</span>
                   </label>
                 </div>
               </div>
 
               <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="fullName" className="block text-sm font-medium text-[#614270] mb-1">
                   {t('auth.fullName', {}, 'Full Name')}
                 </label>
                 <input
@@ -163,7 +171,7 @@ export default function AuthPage() {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-[#92998B] rounded-lg focus:ring-2 focus:ring-[#7D8DCC] focus:border-transparent"
                   placeholder={t('auth.fullNamePlaceholder', {}, 'John Smith')}
                 />
               </div>
@@ -171,7 +179,7 @@ export default function AuthPage() {
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="email" className="block text-sm font-medium text-[#614270] mb-1">
               {t('auth.email', {}, 'Email')}
             </label>
             <input
@@ -180,7 +188,7 @@ export default function AuthPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-[#92998B] rounded-lg focus:ring-2 focus:ring-[#7D8DCC] focus:border-transparent"
               placeholder={t('auth.emailPlaceholder', {}, 'you@example.com')}
             />
           </div>
@@ -196,7 +204,7 @@ export default function AuthPage() {
           />
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            <div className="bg-[#FA9335]/10 border border-[#FA9335]/30 text-[#a0522d] px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
           )}
@@ -204,7 +212,7 @@ export default function AuthPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-[#7D8DCC] text-white py-3 px-4 rounded-lg font-medium hover:bg-[#6b7bb8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading
               ? t('common.pleaseWait', {}, 'Please wait...')
@@ -219,17 +227,17 @@ export default function AuthPage() {
           <div className="mt-4 text-center">
             <button
               onClick={() => router.push('/auth/forgot-password')}
-              className="text-sm text-gray-600 hover:text-gray-800 underline"
+              className="text-sm text-[#92998B] hover:text-[#614270] underline transition-colors"
             >
               {t('auth.forgotPassword', {}, 'Forgot Password?')}
             </button>
           </div>
         )}
 
-        <div className="mt-6 text-center text-sm text-gray-600">
+        <div className="mt-6 text-center text-sm text-[#92998B]">
           <button
             onClick={() => router.push('/')}
-            className="text-green-600 hover:text-green-700 font-medium"
+            className="text-[#7D8DCC] hover:text-[#6b7bb8] font-medium transition-colors"
           >
             ← {t('common.backToHome', {}, 'Back to Home')}
           </button>

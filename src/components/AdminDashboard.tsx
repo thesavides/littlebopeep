@@ -384,9 +384,9 @@ export default function AdminDashboard() {
   const getDaysUnclaimedBadge = (report: typeof reports[0]) => {
     if (report.status !== 'reported') return null
     const days = getDaysSince(report.timestamp)
-    let colorClass = 'bg-green-100 text-green-700'
-    if (days >= 7) colorClass = 'bg-red-100 text-red-700'
-    else if (days >= 3) colorClass = 'bg-yellow-100 text-yellow-700'
+    let colorClass = 'bg-[#9ED663]/20 text-[#614270]'
+    if (days >= 7) colorClass = 'bg-[#FA9335]/10 text-[#FA9335]'
+    else if (days >= 3) colorClass = 'bg-[#EADA69]/20 text-[#614270]'
     return (
       <span className={`px-2 py-1 rounded text-xs font-medium ${colorClass}`}>
         {days}d unclaimed
@@ -396,12 +396,12 @@ export default function AdminDashboard() {
 
   const getSubscriptionBadge = (user: typeof users[0]) => {
     const status = user.subscriptionStatus
-    if (!status) return <span className="px-2 py-1 rounded text-xs bg-slate-100 text-slate-500">No sub</span>
+    if (!status) return <span className="px-2 py-1 rounded text-xs bg-[#D1D9C5] text-[#92998B]">No sub</span>
     const colors = {
-      trial: 'bg-blue-100 text-blue-700',
-      active: 'bg-green-100 text-green-700',
-      cancelled: 'bg-red-100 text-red-700',
-      expired: 'bg-slate-100 text-slate-500'
+      trial: 'bg-[#7D8DCC]/10 text-[#7D8DCC]',
+      active: 'bg-[#9ED663]/20 text-[#614270]',
+      cancelled: 'bg-[#FA9335]/10 text-[#FA9335]',
+      expired: 'bg-[#D1D9C5] text-[#92998B]'
     }
     return <span className={`px-2 py-1 rounded text-xs font-medium ${colors[status]}`}>{status}</span>
   }
@@ -534,7 +534,7 @@ export default function AdminDashboard() {
           (r.description || '').slice(0, 50),
         ]),
         styles: { fontSize: 7 },
-        headStyles: { fillColor: [22, 163, 74] },
+        headStyles: { fillColor: [97, 66, 112] },
       })
       for (const r of reportsToExport.slice(0, 30)) {
         doc.addPage()
@@ -579,7 +579,7 @@ export default function AdminDashboard() {
     <button
       onClick={() => setCurrentView(view)}
       className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
-        currentView === view ? 'bg-slate-800 text-white' : 'bg-white text-slate-700 hover:bg-slate-100'
+        currentView === view ? 'bg-[#614270] text-white' : 'bg-white text-[#614270] hover:bg-[#D1D9C5]'
       }`}
     >
       {label} {count !== undefined && <span className="ml-1 text-sm opacity-70">({count})</span>}
@@ -590,12 +590,12 @@ export default function AdminDashboard() {
     farm.fields.map(field => ({
       id: field.id,
       positions: field.fencePosts.map(p => [p.lat, p.lng] as [number, number]),
-      color: '#22c55e'
+      color: '#9ED663'
     }))
   )
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-[#D1D9C5]">
       <Header title="Admin Dashboard" onTitleClick={() => setCurrentView('overview')} />
 
       {/* Report Detail Panel — Workstream 5 */}
@@ -608,44 +608,44 @@ export default function AdminDashboard() {
           <div className="fixed inset-0 bg-black/60 flex items-center justify-end z-50">
             <div className="bg-white w-full max-w-xl h-full overflow-y-auto shadow-2xl flex flex-col">
               <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white z-10">
-                <h2 className="font-bold text-slate-800">Report Detail</h2>
-                <button onClick={() => { setDetailReportId(null); setEditingDetailReport(false); setDetailComments([]); setNewComment('') }} className="text-slate-500 hover:text-slate-700 text-2xl leading-none">×</button>
+                <h2 className="font-bold text-[#614270]">Report Detail</h2>
+                <button onClick={() => { setDetailReportId(null); setEditingDetailReport(false); setDetailComments([]); setNewComment('') }} className="text-[#92998B] hover:text-[#614270] text-2xl leading-none">×</button>
               </div>
               <div className="p-4 space-y-5 flex-1">
                 {loadingDetail ? (
-                  <div className="text-center text-slate-400 py-8">Loading…</div>
+                  <div className="text-center text-[#92998B] py-8">Loading…</div>
                 ) : (
                   <>
                     {/* Identity */}
                     <section>
-                      <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Submitter</h3>
-                      <div className="bg-slate-50 rounded-lg p-3 text-sm space-y-1">
-                        <div><span className="text-slate-500">Name:</span> <span className="font-medium">{report.submittedByUserName || <span className="text-red-500 italic">Unknown</span>}</span></div>
-                        <div><span className="text-slate-500">Role:</span> <span className="font-medium capitalize">{report.roleOfSubmitter || '—'}</span></div>
-                        <div><span className="text-slate-500">Reporter ID:</span> <span className="font-mono text-xs text-slate-400">{report.reporterId || '—'}</span></div>
+                      <h3 className="text-xs font-semibold text-[#92998B] uppercase tracking-wide mb-2">Submitter</h3>
+                      <div className="bg-[#D1D9C5] rounded-lg p-3 text-sm space-y-1">
+                        <div><span className="text-[#92998B]">Name:</span> <span className="font-medium">{report.submittedByUserName || <span className="text-[#FA9335] italic">Unknown</span>}</span></div>
+                        <div><span className="text-[#92998B]">Role:</span> <span className="font-medium capitalize">{report.roleOfSubmitter || '—'}</span></div>
+                        <div><span className="text-[#92998B]">Reporter ID:</span> <span className="font-mono text-xs text-[#92998B]">{report.reporterId || '—'}</span></div>
                       </div>
                     </section>
 
                     {/* Category & Content */}
                     <section>
-                      <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Report</h3>
-                      <div className="bg-slate-50 rounded-lg p-3 text-sm space-y-1">
-                        <div><span className="text-slate-500">Report ID:</span> <span className="font-mono text-xs text-slate-600">{report.id.length > 8 ? report.id.slice(0, 8).toUpperCase() : report.id}</span></div>
+                      <h3 className="text-xs font-semibold text-[#92998B] uppercase tracking-wide mb-2">Report</h3>
+                      <div className="bg-[#D1D9C5] rounded-lg p-3 text-sm space-y-1">
+                        <div><span className="text-[#92998B]">Report ID:</span> <span className="font-mono text-xs text-[#614270]">{report.id.length > 8 ? report.id.slice(0, 8).toUpperCase() : report.id}</span></div>
                         <div className="text-2xl">{report.categoryEmoji} <span className="text-base font-medium">{report.categoryName}</span></div>
-                        <div><span className="text-slate-500">Count:</span> {report.sheepCount}</div>
-                        <div><span className="text-slate-500">Condition:</span> {report.condition}</div>
-                        <div><span className="text-slate-500">Status:</span> <span className={`capitalize font-medium ${report.status === 'reported' ? 'text-yellow-600' : report.status === 'claimed' ? 'text-blue-600' : 'text-green-600'}`}>{report.status}</span></div>
-                        <div><span className="text-slate-500">Submitted:</span> {new Date(report.timestamp).toLocaleString('en-GB')}</div>
-                        {report.description && <div><span className="text-slate-500">Description:</span> {report.description}</div>}
+                        <div><span className="text-[#92998B]">Count:</span> {report.sheepCount}</div>
+                        <div><span className="text-[#92998B]">Condition:</span> {report.condition}</div>
+                        <div><span className="text-[#92998B]">Status:</span> <span className={`capitalize font-medium ${report.status === 'reported' ? 'text-[#614270]' : report.status === 'claimed' ? 'text-[#7D8DCC]' : 'text-[#9ED663]'}`}>{report.status}</span></div>
+                        <div><span className="text-[#92998B]">Submitted:</span> {new Date(report.timestamp).toLocaleString('en-GB')}</div>
+                        {report.description && <div><span className="text-[#92998B]">Description:</span> {report.description}</div>}
                       </div>
                     </section>
 
                     {/* GPS Location */}
                     <section>
-                      <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">GPS Location</h3>
-                      <div className="bg-slate-50 rounded-lg p-3 text-sm mb-2">
+                      <h3 className="text-xs font-semibold text-[#92998B] uppercase tracking-wide mb-2">GPS Location</h3>
+                      <div className="bg-[#D1D9C5] rounded-lg p-3 text-sm mb-2">
                         <div>{report.location.lat.toFixed(6)}, {report.location.lng.toFixed(6)}</div>
-                        {report.locationAccuracy && <div className="text-slate-500 text-xs">Accuracy: ±{report.locationAccuracy}m</div>}
+                        {report.locationAccuracy && <div className="text-[#92998B] text-xs">Accuracy: ±{report.locationAccuracy}m</div>}
                       </div>
                       <div className="rounded-lg overflow-hidden h-40">
                         <Map
@@ -666,7 +666,7 @@ export default function AdminDashboard() {
                     {/* Photos */}
                     {(report.photoUrls || []).length > 0 && (
                       <section>
-                        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Photos</h3>
+                        <h3 className="text-xs font-semibold text-[#92998B] uppercase tracking-wide mb-2">Photos</h3>
                         <div className="grid grid-cols-3 gap-2">
                           {(report.photoUrls || []).map((url, i) => (
                             <a key={i} href={url} target="_blank" rel="noopener noreferrer">
@@ -679,17 +679,17 @@ export default function AdminDashboard() {
 
                     {/* Affected Farms */}
                     <section>
-                      <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Affected Farms ({affectedFarms.length})</h3>
+                      <h3 className="text-xs font-semibold text-[#92998B] uppercase tracking-wide mb-2">Affected Farms ({affectedFarms.length})</h3>
                       {affectedFarms.length === 0 ? (
-                        <div className="text-sm text-slate-400 italic">No farms within alert range of this report.</div>
+                        <div className="text-sm text-[#92998B] italic">No farms within alert range of this report.</div>
                       ) : (
                         <div className="space-y-1">
                           {affectedFarms.map((farm: any) => {
                             const owner = allUsers.find((u: any) => u.id === farm.farmerId)
                             return (
-                              <div key={farm.id} className="bg-amber-50 rounded-lg p-3 text-sm">
+                              <div key={farm.id} className="bg-[#EADA69]/20 rounded-lg p-3 text-sm">
                                 <div className="font-medium">🏡 {farm.name}</div>
-                                {owner && <div className="text-slate-500 text-xs">Owner: {owner.full_name || owner.email}</div>}
+                                {owner && <div className="text-[#92998B] text-xs">Owner: {owner.full_name || owner.email}</div>}
                               </div>
                             )
                           })}
@@ -700,12 +700,12 @@ export default function AdminDashboard() {
                     {/* Affected Farmers */}
                     {affectedFarmerUsers.length > 0 && (
                       <section>
-                        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Notified Farmers</h3>
+                        <h3 className="text-xs font-semibold text-[#92998B] uppercase tracking-wide mb-2">Notified Farmers</h3>
                         <div className="space-y-1">
                           {affectedFarmerUsers.map((u: any) => (
-                            <div key={u.id} className="bg-green-50 rounded-lg p-3 text-sm">
+                            <div key={u.id} className="bg-[#9ED663]/10 rounded-lg p-3 text-sm">
                               <div className="font-medium">🧑‍🌾 {u.full_name || u.email}</div>
-                              <div className="text-slate-500 text-xs">{u.email}</div>
+                              <div className="text-[#92998B] text-xs">{u.email}</div>
                             </div>
                           ))}
                         </div>
@@ -714,26 +714,26 @@ export default function AdminDashboard() {
 
                     {/* Notification History */}
                     <section>
-                      <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Notification History ({detailNotifications.length})</h3>
+                      <h3 className="text-xs font-semibold text-[#92998B] uppercase tracking-wide mb-2">Notification History ({detailNotifications.length})</h3>
                       {detailNotifications.length === 0 ? (
-                        <div className="text-sm text-slate-400 italic">No notifications sent for this report.</div>
+                        <div className="text-sm text-[#92998B] italic">No notifications sent for this report.</div>
                       ) : (
                         <div className="space-y-1">
                           {detailNotifications.map((n: any) => {
                             const recipient = allUsers.find((u: any) => u.id === n.user_id)
                             return (
-                              <div key={n.id} className="bg-slate-50 rounded-lg p-3 text-sm">
+                              <div key={n.id} className="bg-[#D1D9C5] rounded-lg p-3 text-sm">
                                 <div className="flex items-center justify-between">
-                                  <span className={`font-medium ${n.type === 'thank_you' ? 'text-amber-700' : 'text-blue-700'}`}>
+                                  <span className={`font-medium ${n.type === 'thank_you' ? 'text-[#614270]' : 'text-[#7D8DCC]'}`}>
                                     {n.type === 'thank_you' ? '💌 Thank You' : n.type === 'new_report' ? '🔔 New report alert' : n.type}
                                   </span>
-                                  <span className="text-xs text-slate-400">{new Date(n.sent_at).toLocaleString('en-GB')}</span>
+                                  <span className="text-xs text-[#92998B]">{new Date(n.sent_at).toLocaleString('en-GB')}</span>
                                 </div>
-                                <div className="text-xs text-slate-500 mt-0.5">
+                                <div className="text-xs text-[#92998B] mt-0.5">
                                   To: {recipient?.full_name || recipient?.email || n.user_id}
-                                  {n.read_at ? <span className="ml-2 text-green-600">✓ Read {new Date(n.read_at).toLocaleDateString('en-GB')}</span> : <span className="ml-2 text-slate-400">Unread</span>}
+                                  {n.read_at ? <span className="ml-2 text-[#9ED663]">✓ Read {new Date(n.read_at).toLocaleDateString('en-GB')}</span> : <span className="ml-2 text-[#92998B]">Unread</span>}
                                 </div>
-                                {n.message_text && <div className="text-xs text-slate-600 mt-1 italic">&ldquo;{n.message_text}&rdquo;</div>}
+                                {n.message_text && <div className="text-xs text-[#614270] mt-1 italic">&ldquo;{n.message_text}&rdquo;</div>}
                               </div>
                             )
                           })}
@@ -743,18 +743,18 @@ export default function AdminDashboard() {
 
                     {/* Action History */}
                     <section>
-                      <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Action History ({detailAuditLogs.length})</h3>
+                      <h3 className="text-xs font-semibold text-[#92998B] uppercase tracking-wide mb-2">Action History ({detailAuditLogs.length})</h3>
                       {detailAuditLogs.length === 0 ? (
-                        <div className="text-sm text-slate-400 italic">No audit log entries for this report.</div>
+                        <div className="text-sm text-[#92998B] italic">No audit log entries for this report.</div>
                       ) : (
                         <div className="space-y-1">
                           {detailAuditLogs.map((log: any) => (
-                            <div key={log.id} className="bg-slate-50 rounded-lg p-3 text-sm">
+                            <div key={log.id} className="bg-[#D1D9C5] rounded-lg p-3 text-sm">
                               <div className="flex items-center justify-between">
                                 <span className="font-mono text-xs text-indigo-700 font-medium">{log.action}</span>
-                                <span className="text-xs text-slate-400">{new Date(log.created_at).toLocaleString('en-GB')}</span>
+                                <span className="text-xs text-[#92998B]">{new Date(log.created_at).toLocaleString('en-GB')}</span>
                               </div>
-                              <div className="text-slate-500 text-xs mt-0.5">{log.actor_email || log.actor_id}</div>
+                              <div className="text-[#92998B] text-xs mt-0.5">{log.actor_email || log.actor_id}</div>
                             </div>
                           ))}
                         </div>
@@ -763,20 +763,20 @@ export default function AdminDashboard() {
 
                     {/* Comments */}
                     <section>
-                      <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Comments ({detailComments.length})</h3>
+                      <h3 className="text-xs font-semibold text-[#92998B] uppercase tracking-wide mb-2">Comments ({detailComments.length})</h3>
                       <div className="space-y-2 mb-3">
                         {detailComments.length === 0 && (
-                          <div className="text-sm text-slate-400 italic">No comments yet.</div>
+                          <div className="text-sm text-[#92998B] italic">No comments yet.</div>
                         )}
                         {detailComments.map((c) => (
-                          <div key={c.id} className={`rounded-lg p-3 text-sm ${c.commentType === 'system' ? 'bg-slate-50 border-l-2 border-slate-300' : 'bg-blue-50 border-l-2 border-blue-400'}`}>
+                          <div key={c.id} className={`rounded-lg p-3 text-sm ${c.commentType === 'system' ? 'bg-[#D1D9C5] border-l-2 border-[#92998B]' : 'bg-[#7D8DCC]/10 border-l-2 border-[#7D8DCC]'}`}>
                             <div className="flex items-center justify-between mb-1">
-                              <span className={`text-xs font-medium ${c.commentType === 'system' ? 'text-slate-500' : 'text-blue-700'}`}>
+                              <span className={`text-xs font-medium ${c.commentType === 'system' ? 'text-[#92998B]' : 'text-[#7D8DCC]'}`}>
                                 {c.commentType === 'system' ? '⚙️ System' : `💬 ${c.authorEmail || 'Admin'}`}
                               </span>
-                              <span className="text-xs text-slate-400">{c.createdAt.toLocaleString('en-GB')}</span>
+                              <span className="text-xs text-[#92998B]">{c.createdAt.toLocaleString('en-GB')}</span>
                             </div>
-                            <p className="text-slate-700">{c.body}</p>
+                            <p className="text-[#614270]">{c.body}</p>
                           </div>
                         ))}
                       </div>
@@ -786,7 +786,7 @@ export default function AdminDashboard() {
                           onChange={(e) => setNewComment(e.target.value)}
                           placeholder="Add a comment…"
                           rows={2}
-                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-slate-400"
+                          className="w-full px-3 py-2 border border-[#D1D9C5] rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#7D8DCC]"
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                               e.preventDefault()
@@ -797,7 +797,7 @@ export default function AdminDashboard() {
                         <button
                           onClick={() => detailReportId && handleAddComment(detailReportId)}
                           disabled={!newComment.trim() || submittingComment}
-                          className="px-3 py-2 bg-slate-700 text-white rounded-lg text-sm hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                          className="px-3 py-2 bg-[#614270] text-white rounded-lg text-sm hover:bg-[#4e3359] disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           {submittingComment ? 'Saving…' : 'Add Comment'}
                         </button>
@@ -807,7 +807,7 @@ export default function AdminDashboard() {
                     {/* Admin Edit Report */}
                     <section>
                       <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Edit Report</h3>
+                        <h3 className="text-xs font-semibold text-[#92998B] uppercase tracking-wide">Edit Report</h3>
                         {!editingDetailReport && (
                           <button
                             onClick={() => {
@@ -819,33 +819,33 @@ export default function AdminDashboard() {
                                 photoUrls: report.photoUrls || [],
                               })
                             }}
-                            className="text-xs px-3 py-1 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200"
+                            className="text-xs px-3 py-1 bg-[#D1D9C5] text-[#614270] rounded-lg hover:bg-[#D1D9C5]"
                           >
                             ✏️ Edit
                           </button>
                         )}
                       </div>
                       {editingDetailReport && (
-                        <div className="bg-slate-50 rounded-xl p-4 space-y-4 border border-slate-200">
+                        <div className="bg-[#D1D9C5] rounded-xl p-4 space-y-4 border border-[#D1D9C5]">
                           {report.reporterId && report.reporterId !== currentUserId && (
-                            <div className="text-xs bg-amber-50 border border-amber-200 rounded-lg p-2 text-amber-700">
+                            <div className="text-xs bg-[#EADA69]/20 border border-[#EADA69]/40 rounded-lg p-2 text-[#614270]">
                               ⚠️ You are editing a report submitted by another user. Changes will be logged in the audit trail.
                             </div>
                           )}
                           <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1">Quantity</label>
+                            <label className="block text-xs font-medium text-[#614270] mb-1">Quantity</label>
                             <div className="flex items-center gap-2">
                               <button type="button" onClick={() => setDetailEditFields(f => ({ ...f, sheepCount: Math.max(1, f.sheepCount - 1) }))}
-                                className="w-9 h-9 rounded-lg bg-white border border-slate-300 font-bold text-lg flex items-center justify-center">−</button>
+                                className="w-9 h-9 rounded-lg bg-white border border-[#D1D9C5] font-bold text-lg flex items-center justify-center">−</button>
                               <input type="number" min="1" value={detailEditFields.sheepCount}
                                 onChange={e => setDetailEditFields(f => ({ ...f, sheepCount: parseInt(e.target.value) || 1 }))}
-                                className="w-16 text-center px-2 py-1 border border-slate-300 rounded-lg text-base font-semibold" />
+                                className="w-16 text-center px-2 py-1 border border-[#D1D9C5] rounded-lg text-base font-semibold" />
                               <button type="button" onClick={() => setDetailEditFields(f => ({ ...f, sheepCount: f.sheepCount + 1 }))}
-                                className="w-9 h-9 rounded-lg bg-white border border-slate-300 font-bold text-lg flex items-center justify-center">+</button>
+                                className="w-9 h-9 rounded-lg bg-white border border-[#D1D9C5] font-bold text-lg flex items-center justify-center">+</button>
                             </div>
                           </div>
                           <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1">Conditions</label>
+                            <label className="block text-xs font-medium text-[#614270] mb-1">Conditions</label>
                             <div className="flex flex-wrap gap-2">
                               {(reportCategories.find(c => c.id === report.categoryId)?.conditions || ['Healthy','Injured','Dead','In road','Lost / straying','Not sure']).map(opt => {
                                 const sel = detailEditFields.conditions.includes(opt)
@@ -855,21 +855,21 @@ export default function AdminDashboard() {
                                       ...f,
                                       conditions: sel ? f.conditions.filter(c => c !== opt) : [...f.conditions, opt]
                                     }))}
-                                    className={`px-3 py-1.5 rounded-full text-xs font-medium border-2 transition-colors ${sel ? 'bg-green-600 text-white border-green-600' : 'bg-white text-slate-700 border-slate-300'}`}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-medium border-2 transition-colors ${sel ? 'bg-[#7D8DCC] text-white border-[#7D8DCC]' : 'bg-white text-[#614270] border-[#D1D9C5]'}`}
                                   >{opt}</button>
                                 )
                               })}
                             </div>
                           </div>
                           <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1">Details</label>
+                            <label className="block text-xs font-medium text-[#614270] mb-1">Details</label>
                             <textarea value={detailEditFields.description}
                               onChange={e => setDetailEditFields(f => ({ ...f, description: e.target.value }))}
                               rows={3}
-                              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500" />
+                              className="w-full px-3 py-2 border border-[#D1D9C5] rounded-lg text-sm focus:ring-2 focus:ring-[#7D8DCC]" />
                           </div>
                           <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1">Add Photos</label>
+                            <label className="block text-xs font-medium text-[#614270] mb-1">Add Photos</label>
                             <PhotoUpload
                               reportId={report.id}
                               onPhotosUploaded={(urls) => setDetailEditFields(f => ({ ...f, photoUrls: [...new Set([...f.photoUrls, ...urls])] }))}
@@ -896,13 +896,13 @@ export default function AdminDashboard() {
                                 }
                               }}
                               disabled={savingDetailEdit}
-                              className="flex-1 py-2 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 disabled:opacity-50"
+                              className="flex-1 py-2 bg-[#7D8DCC] text-white rounded-xl text-sm font-semibold hover:bg-[#6b7db3] disabled:opacity-50"
                             >
                               {savingDetailEdit ? 'Saving…' : 'Save Changes'}
                             </button>
                             <button
                               onClick={() => setEditingDetailReport(false)}
-                              className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm hover:bg-slate-200"
+                              className="px-4 py-2 bg-[#D1D9C5] text-[#614270] rounded-xl text-sm hover:bg-[#D1D9C5]"
                             >
                               Cancel
                             </button>
@@ -914,35 +914,35 @@ export default function AdminDashboard() {
                     {/* Admin Actions */}
                     <section className="border-t pt-4">
                       {report.screeningRequired && !report.archived && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3 text-sm">
-                          <div className="font-medium text-red-700 mb-1">⚠️ Pending Screening Review</div>
-                          <div className="text-red-600 text-xs mb-2">This report was flagged for admin review before being visible to farmers.</div>
-                          <button onClick={() => { approveReportScreening(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm hover:bg-teal-700 font-medium">Approve &amp; Publish</button>
+                        <div className="bg-[#FA9335]/10 border border-[#FA9335]/30 rounded-lg p-3 mb-3 text-sm">
+                          <div className="font-medium text-[#FA9335] mb-1">⚠️ Pending Screening Review</div>
+                          <div className="text-[#FA9335] text-xs mb-2">This report was flagged for admin review before being visible to farmers.</div>
+                          <button onClick={() => { approveReportScreening(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-[#63BD8F] text-white rounded-lg text-sm hover:bg-[#52a87d] font-medium">Approve &amp; Publish</button>
                         </div>
                       )}
                       {report.flaggedByFarmer && report.status !== 'complete' && (
-                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3 text-sm">
-                          <div className="font-medium text-amber-700 mb-1">🚩 Flagged by Farmer</div>
-                          {report.farmerFlagNote && <div className="text-amber-800 italic text-xs mb-1">&ldquo;{report.farmerFlagNote}&rdquo;</div>}
+                        <div className="bg-[#EADA69]/20 border border-[#EADA69]/40 rounded-lg p-3 mb-3 text-sm">
+                          <div className="font-medium text-[#614270] mb-1">🚩 Flagged by Farmer</div>
+                          {report.farmerFlagNote && <div className="text-[#614270] italic text-xs mb-1">&ldquo;{report.farmerFlagNote}&rdquo;</div>}
                         </div>
                       )}
                       <div className="flex flex-wrap gap-2">
                         {!report.archived && report.status === 'reported' && !report.screeningRequired && (
-                          <button onClick={() => { setShowClaimReportModal(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm hover:bg-green-200">Claim for Farmer</button>
+                          <button onClick={() => { setShowClaimReportModal(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-[#9ED663]/20 text-[#614270] rounded-lg text-sm hover:bg-[#9ED663]/30">Claim for Farmer</button>
                         )}
                         {!report.archived && report.status === 'claimed' && (
-                          <button onClick={() => { resolveReport(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200">Resolve</button>
+                          <button onClick={() => { resolveReport(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-[#7D8DCC]/10 text-[#7D8DCC] rounded-lg text-sm hover:bg-[#7D8DCC]/20">Resolve</button>
                         )}
                         {!report.archived && (report.status === 'resolved' || report.status === 'escalated') && (
-                          <button onClick={() => { escalateReport(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-orange-100 text-orange-700 rounded-lg text-sm hover:bg-orange-200">Escalate</button>
+                          <button onClick={() => { escalateReport(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-[#FA9335]/10 text-[#FA9335] rounded-lg text-sm hover:bg-[#FA9335]/20">Escalate</button>
                         )}
                         {!report.archived && (report.status === 'resolved' || report.status === 'escalated') && (
-                          <button onClick={() => { setCompleteReportId(report.id); setCompleteNotes(''); setDetailReportId(null) }} className="px-3 py-2 bg-slate-700 text-white rounded-lg text-sm hover:bg-slate-800">Mark Complete</button>
+                          <button onClick={() => { setCompleteReportId(report.id); setCompleteNotes(''); setDetailReportId(null) }} className="px-3 py-2 bg-[#614270] text-white rounded-lg text-sm hover:bg-[#4e3359]">Mark Complete</button>
                         )}
                         {!report.archived && (
-                          <button onClick={() => { archiveReport(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm hover:bg-slate-200">Archive</button>
+                          <button onClick={() => { archiveReport(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-[#D1D9C5] text-[#614270] rounded-lg text-sm hover:bg-[#D1D9C5]">Archive</button>
                         )}
-                        <button onClick={() => { confirmDelete(report.id, 'report'); setDetailReportId(null) }} className="px-3 py-2 bg-red-100 text-red-700 rounded-lg text-sm hover:bg-red-200">Delete</button>
+                        <button onClick={() => { confirmDelete(report.id, 'report'); setDetailReportId(null) }} className="px-3 py-2 bg-[#FA9335]/10 text-[#FA9335] rounded-lg text-sm hover:bg-[#FA9335]/20">Delete</button>
                       </div>
                     </section>
                   </>
@@ -959,24 +959,24 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
             <div className="text-center mb-4">
               <div className="text-4xl mb-2">✅</div>
-              <h3 className="text-lg font-bold text-slate-800">Mark Report Complete</h3>
-              <p className="text-sm text-slate-500 mt-1">Optionally add admin notes before closing this report.</p>
+              <h3 className="text-lg font-bold text-[#614270]">Mark Report Complete</h3>
+              <p className="text-sm text-[#92998B] mt-1">Optionally add admin notes before closing this report.</p>
             </div>
             <textarea
               value={completeNotes}
               onChange={(e) => setCompleteNotes(e.target.value)}
               placeholder="Admin notes (optional)…"
               rows={4}
-              className="w-full px-3 py-2 border rounded-lg text-sm mb-4 resize-none focus:outline-none focus:ring-2 focus:ring-slate-400"
+              className="w-full px-3 py-2 border rounded-lg text-sm mb-4 resize-none focus:outline-none focus:ring-2 focus:ring-[#7D8DCC]"
             />
             <div className="space-y-3">
               <button
                 onClick={() => { markReportComplete(completeReportId, completeNotes || undefined); setCompleteReportId(null); setCompleteNotes('') }}
-                className="w-full py-3 bg-slate-800 text-white rounded-xl font-semibold hover:bg-slate-900"
+                className="w-full py-3 bg-[#614270] text-white rounded-xl font-semibold hover:bg-[#4e3359]"
               >
                 Mark Complete
               </button>
-              <button onClick={() => { setCompleteReportId(null); setCompleteNotes('') }} className="w-full py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200">Cancel</button>
+              <button onClick={() => { setCompleteReportId(null); setCompleteNotes('') }} className="w-full py-3 bg-[#D1D9C5] text-[#614270] rounded-xl font-semibold hover:bg-[#D1D9C5]">Cancel</button>
             </div>
           </div>
         </div>
@@ -988,14 +988,14 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
             <div className="text-center mb-4">
               <div className="text-4xl mb-2">⚠️</div>
-              <h3 className="text-lg font-bold text-slate-800">Confirm Delete</h3>
+              <h3 className="text-lg font-bold text-[#614270]">Confirm Delete</h3>
             </div>
-            <p className="text-slate-600 text-center mb-6">
+            <p className="text-[#614270] text-center mb-6">
               Are you sure you want to delete this {deleteType}? This cannot be undone.
             </p>
             <div className="space-y-3">
-              <button onClick={handleDelete} className="w-full py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700">Yes, Delete</button>
-              <button onClick={() => setShowDeleteConfirm(null)} className="w-full py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200">Cancel</button>
+              <button onClick={handleDelete} className="w-full py-3 bg-[#FA9335] text-white rounded-xl font-semibold hover:bg-[#e07d20]">Yes, Delete</button>
+              <button onClick={() => setShowDeleteConfirm(null)} className="w-full py-3 bg-[#D1D9C5] text-[#614270] rounded-xl font-semibold hover:bg-[#D1D9C5]">Cancel</button>
             </div>
           </div>
         </div>
@@ -1114,7 +1114,7 @@ export default function AdminDashboard() {
 
       {/* Walker Report Mode Overlay */}
       {showReportMode && (
-        <div className="fixed inset-0 z-[100] bg-slate-50 overflow-auto">
+        <div className="fixed inset-0 z-[100] bg-[#D1D9C5] overflow-auto">
           <WalkerDashboard onExitToAdmin={() => setShowReportMode(false)} />
         </div>
       )}
@@ -1134,14 +1134,14 @@ export default function AdminDashboard() {
             <div className="ml-auto flex-shrink-0 flex items-center gap-2">
               <button
                 onClick={() => setShowReportMode(true)}
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors whitespace-nowrap"
+                className="px-4 py-2 bg-[#7D8DCC] hover:bg-[#6b7db3] text-white rounded-lg font-medium transition-colors whitespace-nowrap"
               >
                 Report
               </button>
               <button
                 onClick={() => setProfileOpen(true)}
                 title="Account settings"
-                className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition-colors"
+                className="p-2 rounded-lg bg-[#4e3359] hover:bg-[#614270] text-[#D1D9C5] transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -1152,12 +1152,12 @@ export default function AdminDashboard() {
 
           {/* Mobile nav — hamburger */}
           <div className="flex md:hidden items-center justify-between">
-            <span className="font-semibold text-slate-700 capitalize">{currentView}</span>
+            <span className="font-semibold text-[#614270] capitalize">{currentView}</span>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setProfileOpen(true)}
                 title="Account settings"
-                className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition-colors"
+                className="p-2 rounded-lg bg-[#4e3359] hover:bg-[#614270] text-[#D1D9C5] transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -1166,7 +1166,7 @@ export default function AdminDashboard() {
               <button
                 onClick={() => setShowMobileMenu(v => !v)}
                 aria-label="Menu"
-                className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                className="p-2 rounded-lg bg-[#D1D9C5] hover:bg-[#D1D9C5] text-[#614270] transition-colors"
               >
                 {showMobileMenu ? (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1184,7 +1184,7 @@ export default function AdminDashboard() {
 
         {/* Mobile dropdown menu */}
         {showMobileMenu && (
-          <div className="md:hidden border-t border-slate-100 bg-white px-4 py-2 flex flex-col gap-1">
+          <div className="md:hidden border-t border-[#D1D9C5] bg-white px-4 py-2 flex flex-col gap-1">
             {([
               { view: 'walkers' as AdminView, label: 'Walkers', count: walkers.length },
               { view: 'farmers' as AdminView, label: 'Farmers', count: farmers.length },
@@ -1198,7 +1198,7 @@ export default function AdminDashboard() {
                 key={view}
                 onClick={() => { setCurrentView(view); setShowMobileMenu(false) }}
                 className={`w-full text-left px-3 py-2.5 rounded-lg font-medium transition-colors ${
-                  currentView === view ? 'bg-slate-800 text-white' : 'text-slate-700 hover:bg-slate-100'
+                  currentView === view ? 'bg-[#614270] text-white' : 'text-[#614270] hover:bg-[#D1D9C5]'
                 }`}
               >
                 {label}{count !== undefined && <span className="ml-1.5 text-sm opacity-60">({count})</span>}
@@ -1209,10 +1209,10 @@ export default function AdminDashboard() {
       </div>
 
       {/* Mobile fixed Report button */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white border-t border-slate-200 px-4 py-3 safe-area-pb">
+      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white border-t border-[#D1D9C5] px-4 py-3 safe-area-pb">
         <button
           onClick={() => setShowReportMode(true)}
-          className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition-colors"
+          className="w-full py-4 bg-[#7D8DCC] hover:bg-[#6b7db3] text-white rounded-xl font-semibold transition-colors"
         >
           Report
         </button>
@@ -1224,67 +1224,67 @@ export default function AdminDashboard() {
           <>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <button onClick={() => setCurrentView('admins')} className="bg-white rounded-xl p-4 shadow text-left hover:shadow-md transition-shadow">
-                <div className="text-3xl font-bold text-slate-800">{allUsers.length}</div>
-                <div className="text-sm text-slate-500">Total Users</div>
-                <div className="text-xs text-green-600 mt-1">{activeUsers} active</div>
+                <div className="text-3xl font-bold text-[#614270]">{allUsers.length}</div>
+                <div className="text-sm text-[#92998B]">Total Users</div>
+                <div className="text-xs text-[#9ED663] mt-1">{activeUsers} active</div>
               </button>
               <button onClick={() => setCurrentView('walkers')} className="bg-white rounded-xl p-4 shadow text-left hover:shadow-md transition-shadow">
-                <div className="text-3xl font-bold text-green-600">{walkers.length}</div>
-                <div className="text-sm text-slate-500">Walkers</div>
+                <div className="text-3xl font-bold text-[#9ED663]">{walkers.length}</div>
+                <div className="text-sm text-[#92998B]">Walkers</div>
               </button>
               <button onClick={() => setCurrentView('farmers')} className="bg-white rounded-xl p-4 shadow text-left hover:shadow-md transition-shadow">
-                <div className="text-3xl font-bold text-blue-600">{farmers.length}</div>
-                <div className="text-sm text-slate-500">Farmers</div>
+                <div className="text-3xl font-bold text-[#7D8DCC]">{farmers.length}</div>
+                <div className="text-sm text-[#92998B]">Farmers</div>
               </button>
               <button onClick={() => setCurrentView('farms')} className="bg-white rounded-xl p-4 shadow text-left hover:shadow-md transition-shadow">
-                <div className="text-3xl font-bold text-amber-600">{farms.length}</div>
-                <div className="text-sm text-slate-500">Farms ({totalFields} fields)</div>
+                <div className="text-3xl font-bold text-[#614270]">{farms.length}</div>
+                <div className="text-sm text-[#92998B]">Farms ({totalFields} fields)</div>
               </button>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
-              <button onClick={() => setCurrentView('reports')} className="bg-yellow-50 rounded-xl p-4 border border-yellow-200 text-left hover:shadow-md transition-shadow">
-                <div className="text-2xl font-bold text-yellow-700">{reportedCount}</div>
-                <div className="text-sm text-yellow-600">Reported</div>
+              <button onClick={() => setCurrentView('reports')} className="bg-[#EADA69]/20 rounded-xl p-4 border border-[#EADA69]/40 text-left hover:shadow-md transition-shadow">
+                <div className="text-2xl font-bold text-[#614270]">{reportedCount}</div>
+                <div className="text-sm text-[#614270]">Reported</div>
               </button>
-              <button onClick={() => setCurrentView('reports')} className="bg-blue-50 rounded-xl p-4 border border-blue-200 text-left hover:shadow-md transition-shadow">
-                <div className="text-2xl font-bold text-blue-700">{claimedCount}</div>
-                <div className="text-sm text-blue-600">Claimed</div>
+              <button onClick={() => setCurrentView('reports')} className="bg-[#7D8DCC]/10 rounded-xl p-4 border border-[#7D8DCC]/30 text-left hover:shadow-md transition-shadow">
+                <div className="text-2xl font-bold text-[#7D8DCC]">{claimedCount}</div>
+                <div className="text-sm text-[#7D8DCC]">Claimed</div>
               </button>
-              <button onClick={() => setCurrentView('reports')} className="bg-green-50 rounded-xl p-4 border border-green-200 text-left hover:shadow-md transition-shadow">
-                <div className="text-2xl font-bold text-green-700">{resolvedCount}</div>
-                <div className="text-sm text-green-600">Resolved</div>
+              <button onClick={() => setCurrentView('reports')} className="bg-[#9ED663]/10 rounded-xl p-4 border border-[#D1D9C5] text-left hover:shadow-md transition-shadow">
+                <div className="text-2xl font-bold text-[#614270]">{resolvedCount}</div>
+                <div className="text-sm text-[#9ED663]">Resolved</div>
               </button>
-              <button onClick={() => setCurrentView('reports')} className="bg-slate-50 rounded-xl p-4 border border-slate-200 text-left hover:shadow-md transition-shadow">
-                <div className="text-2xl font-bold text-slate-700">{archivedCount}</div>
-                <div className="text-sm text-slate-600">Archived</div>
+              <button onClick={() => setCurrentView('reports')} className="bg-[#D1D9C5] rounded-xl p-4 border border-[#D1D9C5] text-left hover:shadow-md transition-shadow">
+                <div className="text-2xl font-bold text-[#614270]">{archivedCount}</div>
+                <div className="text-sm text-[#614270]">Archived</div>
               </button>
             </div>
             {/* Action-required queue cards */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-              <button onClick={() => setCurrentView('reports')} className={`rounded-xl p-4 border text-left hover:shadow-md transition-shadow ${needsReviewCount > 0 ? 'bg-red-50 border-red-300' : 'bg-slate-50 border-slate-200'}`}>
-                <div className={`text-2xl font-bold ${needsReviewCount > 0 ? 'text-red-700' : 'text-slate-400'}`}>{needsReviewCount}</div>
-                <div className={`text-sm ${needsReviewCount > 0 ? 'text-red-600 font-medium' : 'text-slate-500'}`}>⚠️ Needs Review</div>
+              <button onClick={() => setCurrentView('reports')} className={`rounded-xl p-4 border text-left hover:shadow-md transition-shadow ${needsReviewCount > 0 ? 'bg-[#FA9335]/10 border-[#FA9335]/40' : 'bg-[#D1D9C5] border-[#D1D9C5]'}`}>
+                <div className={`text-2xl font-bold ${needsReviewCount > 0 ? 'text-[#FA9335]' : 'text-[#92998B]'}`}>{needsReviewCount}</div>
+                <div className={`text-sm ${needsReviewCount > 0 ? 'text-[#FA9335] font-medium' : 'text-[#92998B]'}`}>⚠️ Needs Review</div>
               </button>
-              <button onClick={() => setCurrentView('reports')} className={`rounded-xl p-4 border text-left hover:shadow-md transition-shadow ${escalatedCount > 0 ? 'bg-orange-50 border-orange-300' : 'bg-slate-50 border-slate-200'}`}>
-                <div className={`text-2xl font-bold ${escalatedCount > 0 ? 'text-orange-700' : 'text-slate-400'}`}>{escalatedCount}</div>
-                <div className={`text-sm ${escalatedCount > 0 ? 'text-orange-600 font-medium' : 'text-slate-500'}`}>🚨 Escalated</div>
+              <button onClick={() => setCurrentView('reports')} className={`rounded-xl p-4 border text-left hover:shadow-md transition-shadow ${escalatedCount > 0 ? 'bg-[#FA9335]/10 border-[#FA9335]/40' : 'bg-[#D1D9C5] border-[#D1D9C5]'}`}>
+                <div className={`text-2xl font-bold ${escalatedCount > 0 ? 'text-[#FA9335]' : 'text-[#92998B]'}`}>{escalatedCount}</div>
+                <div className={`text-sm ${escalatedCount > 0 ? 'text-[#FA9335] font-medium' : 'text-[#92998B]'}`}>🚨 Escalated</div>
               </button>
-              <button onClick={() => setCurrentView('reports')} className={`rounded-xl p-4 border text-left hover:shadow-md transition-shadow ${flaggedCount > 0 ? 'bg-amber-50 border-amber-300' : 'bg-slate-50 border-slate-200'}`}>
-                <div className={`text-2xl font-bold ${flaggedCount > 0 ? 'text-amber-700' : 'text-slate-400'}`}>{flaggedCount}</div>
-                <div className={`text-sm ${flaggedCount > 0 ? 'text-amber-600 font-medium' : 'text-slate-500'}`}>🚩 Flagged by Farmer</div>
+              <button onClick={() => setCurrentView('reports')} className={`rounded-xl p-4 border text-left hover:shadow-md transition-shadow ${flaggedCount > 0 ? 'bg-[#EADA69]/20 border-[#EADA69]/40' : 'bg-[#D1D9C5] border-[#D1D9C5]'}`}>
+                <div className={`text-2xl font-bold ${flaggedCount > 0 ? 'text-[#614270]' : 'text-[#92998B]'}`}>{flaggedCount}</div>
+                <div className={`text-sm ${flaggedCount > 0 ? 'text-[#614270] font-medium' : 'text-[#92998B]'}`}>🚩 Flagged by Farmer</div>
               </button>
             </div>
             <div className="grid grid-cols-1 mb-6">
-              <button onClick={() => setCurrentView('billing')} className="bg-purple-50 rounded-xl p-4 border border-purple-200 text-left hover:shadow-md transition-shadow">
-                <div className="text-2xl font-bold text-purple-700">{activeSubs}</div>
-                <div className="text-sm text-purple-600">Paid Subs</div>
+              <button onClick={() => setCurrentView('billing')} className="bg-[#614270]/10 rounded-xl p-4 border border-[#614270]/20 text-left hover:shadow-md transition-shadow">
+                <div className="text-2xl font-bold text-[#614270]">{activeSubs}</div>
+                <div className="text-sm text-[#614270]">Paid Subs</div>
               </button>
             </div>
 
             <div className="bg-white rounded-xl shadow mb-6">
               <div className="p-4 border-b">
-                <h2 className="font-semibold text-slate-800">Activity Map</h2>
+                <h2 className="font-semibold text-[#614270]">Activity Map</h2>
               </div>
               <div className="h-80">
                 <Map
@@ -1321,72 +1321,72 @@ export default function AdminDashboard() {
         {currentView === 'walkers' && (
           <div className="bg-white rounded-xl shadow overflow-x-auto">
             <div className="p-4 border-b">
-              <h2 className="font-semibold text-slate-800">Walkers ({walkers.length})</h2>
+              <h2 className="font-semibold text-[#614270]">Walkers ({walkers.length})</h2>
             </div>
             {walkers.length === 0 ? (
-              <div className="p-8 text-center text-slate-500">
+              <div className="p-8 text-center text-[#92998B]">
                 <div className="text-4xl mb-2">🚶</div>No walkers registered yet
               </div>
             ) : (
               <table className="w-full min-w-[700px]">
-                <thead className="bg-slate-50 border-b border-slate-200">
+                <thead className="bg-[#D1D9C5] border-b border-[#D1D9C5]">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Email</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Full Name</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Phone</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Last Login</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Reports</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#92998B] uppercase tracking-wider">Email</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#92998B] uppercase tracking-wider">Full Name</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#92998B] uppercase tracking-wider">Phone</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#92998B] uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#92998B] uppercase tracking-wider">Last Login</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#92998B] uppercase tracking-wider">Reports</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#92998B] uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200">
+                <tbody className="divide-y divide-[#D1D9C5]">
                   {walkers.map((user: any) => {
                     const userReports = reports.filter(r => r.reporterId === user.id)
                     const displayName = user.full_name || user.name || '-'
                     const isActive = user.status !== 'suspended'
                     return (
-                      <tr key={user.id} className={!isActive ? 'bg-slate-50 opacity-60' : ''}>
+                      <tr key={user.id} className={!isActive ? 'bg-[#D1D9C5] opacity-60' : ''}>
                         <td className="px-4 py-4 whitespace-nowrap">
-                          <button onClick={() => setViewingUser(user)} className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline text-left">{user.email || '-'}</button>
+                          <button onClick={() => setViewingUser(user)} className="text-sm font-medium text-[#7D8DCC] hover:text-[#7D8DCC] hover:underline text-left">{user.email || '-'}</button>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
-                          <div className="text-sm text-slate-600">{displayName}</div>
+                          <div className="text-sm text-[#614270]">{displayName}</div>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
-                          <div className="text-sm text-slate-600">{user.phone || '-'}</div>
+                          <div className="text-sm text-[#614270]">{user.phone || '-'}</div>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
                           {user.status === 'active' ? (
-                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-[#9ED663]/20 text-[#614270]">Active</span>
                           ) : user.status === 'suspended' ? (
-                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Suspended</span>
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-[#FA9335]/10 text-[#FA9335]">Suspended</span>
                           ) : user.status === 'password_reset_required' ? (
-                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">Reset Required</span>
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-[#FA9335]/10 text-[#FA9335]">Reset Required</span>
                           ) : (
-                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-[#EADA69]/20 text-[#614270]">Pending</span>
                           )}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
-                          <div className="text-sm text-slate-600">
+                          <div className="text-sm text-[#614270]">
                             {user.last_login_at ? new Date(user.last_login_at).toLocaleDateString() : 'Never'}
                           </div>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
-                          <div className="text-sm text-slate-600">{userReports.length}</div>
+                          <div className="text-sm text-[#614270]">{userReports.length}</div>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
-                            <button onClick={() => setViewingUser(user)} className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-medium hover:bg-slate-200">View</button>
+                            <button onClick={() => setViewingUser(user)} className="px-2 py-1 bg-[#D1D9C5] text-[#614270] rounded text-xs font-medium hover:bg-[#D1D9C5]">View</button>
                             {isActive ? (
-                              <button onClick={() => handleSuspend(user.id)} className="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-medium hover:bg-amber-200">Suspend</button>
+                              <button onClick={() => handleSuspend(user.id)} className="px-2 py-1 bg-[#EADA69]/20 text-[#614270] rounded text-xs font-medium hover:bg-[#EADA69]/30">Suspend</button>
                             ) : (
-                              <button onClick={() => handleActivate(user.id)} className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium hover:bg-green-200">Activate</button>
+                              <button onClick={() => handleActivate(user.id)} className="px-2 py-1 bg-[#9ED663]/20 text-[#614270] rounded text-xs font-medium hover:bg-[#9ED663]/30">Activate</button>
                             )}
                             {user.email && (
-                              <button onClick={() => handleResetUserPassword(user.id, user.email)} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium hover:bg-blue-200">Reset</button>
+                              <button onClick={() => handleResetUserPassword(user.id, user.email)} className="px-2 py-1 bg-[#7D8DCC]/10 text-[#7D8DCC] rounded text-xs font-medium hover:bg-[#7D8DCC]/20">Reset</button>
                             )}
-                            <button onClick={() => confirmDelete(user.id, 'user')} className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium hover:bg-red-200">Delete</button>
+                            <button onClick={() => confirmDelete(user.id, 'user')} className="px-2 py-1 bg-[#FA9335]/10 text-[#FA9335] rounded text-xs font-medium hover:bg-[#FA9335]/20">Delete</button>
                           </div>
                         </td>
                       </tr>
@@ -1402,78 +1402,78 @@ export default function AdminDashboard() {
         {currentView === 'farmers' && (
           <div className="bg-white rounded-xl shadow overflow-x-auto">
             <div className="p-4 border-b flex justify-between items-center">
-              <h2 className="font-semibold text-slate-800">Farmers ({farmers.length})</h2>
+              <h2 className="font-semibold text-[#614270]">Farmers ({farmers.length})</h2>
               <button
                 onClick={() => setShowCreateFarmerModal(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2"
+                className="px-4 py-2 bg-[#7D8DCC] text-white rounded-lg text-sm font-medium hover:bg-[#6b7db3] flex items-center gap-2"
               >
                 + Add Farmer
               </button>
             </div>
             {farmers.length === 0 ? (
-              <div className="p-8 text-center text-slate-500">
+              <div className="p-8 text-center text-[#92998B]">
                 <div className="text-4xl mb-2">🧑‍🌾</div>No farmers registered yet
               </div>
             ) : (
               <table className="w-full min-w-[750px]">
-                <thead className="bg-slate-50 border-b border-slate-200">
+                <thead className="bg-[#D1D9C5] border-b border-[#D1D9C5]">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Email</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Full Name</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Phone</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Last Login</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Farms</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#92998B] uppercase tracking-wider">Email</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#92998B] uppercase tracking-wider">Full Name</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#92998B] uppercase tracking-wider">Phone</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#92998B] uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#92998B] uppercase tracking-wider">Last Login</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#92998B] uppercase tracking-wider">Farms</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-[#92998B] uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200">
+                <tbody className="divide-y divide-[#D1D9C5]">
                   {farmers.map((user: any) => {
                     const userFarms = farms.filter(f => f.farmerId === user.id)
                     const displayName = user.full_name || user.name || '-'
                     const isActive = user.status !== 'suspended'
                     return (
-                      <tr key={user.id} className={!isActive ? 'bg-slate-50 opacity-60' : ''}>
+                      <tr key={user.id} className={!isActive ? 'bg-[#D1D9C5] opacity-60' : ''}>
                         <td className="px-4 py-4 whitespace-nowrap">
-                          <button onClick={() => setViewingUser(user)} className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline text-left">{user.email || '-'}</button>
+                          <button onClick={() => setViewingUser(user)} className="text-sm font-medium text-[#7D8DCC] hover:text-[#7D8DCC] hover:underline text-left">{user.email || '-'}</button>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
-                          <div className="text-sm text-slate-600">{displayName}</div>
+                          <div className="text-sm text-[#614270]">{displayName}</div>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
-                          <div className="text-sm text-slate-600">{user.phone || '-'}</div>
+                          <div className="text-sm text-[#614270]">{user.phone || '-'}</div>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
                           {user.status === 'active' ? (
-                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-[#9ED663]/20 text-[#614270]">Active</span>
                           ) : user.status === 'suspended' ? (
-                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Suspended</span>
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-[#FA9335]/10 text-[#FA9335]">Suspended</span>
                           ) : user.status === 'password_reset_required' ? (
-                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">Reset Required</span>
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-[#FA9335]/10 text-[#FA9335]">Reset Required</span>
                           ) : (
-                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-[#EADA69]/20 text-[#614270]">Pending</span>
                           )}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
-                          <div className="text-sm text-slate-600">
+                          <div className="text-sm text-[#614270]">
                             {user.last_login_at ? new Date(user.last_login_at).toLocaleDateString() : 'Never'}
                           </div>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
-                          <div className="text-sm text-slate-600">{userFarms.length}</div>
+                          <div className="text-sm text-[#614270]">{userFarms.length}</div>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
-                            <button onClick={() => setViewingUser(user)} className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-medium hover:bg-slate-200">View</button>
+                            <button onClick={() => setViewingUser(user)} className="px-2 py-1 bg-[#D1D9C5] text-[#614270] rounded text-xs font-medium hover:bg-[#D1D9C5]">View</button>
                             {isActive ? (
-                              <button onClick={() => handleSuspend(user.id)} className="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-medium hover:bg-amber-200">Suspend</button>
+                              <button onClick={() => handleSuspend(user.id)} className="px-2 py-1 bg-[#EADA69]/20 text-[#614270] rounded text-xs font-medium hover:bg-[#EADA69]/30">Suspend</button>
                             ) : (
-                              <button onClick={() => handleActivate(user.id)} className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium hover:bg-green-200">Activate</button>
+                              <button onClick={() => handleActivate(user.id)} className="px-2 py-1 bg-[#9ED663]/20 text-[#614270] rounded text-xs font-medium hover:bg-[#9ED663]/30">Activate</button>
                             )}
                             {user.email && (
-                              <button onClick={() => handleResetUserPassword(user.id, user.email)} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium hover:bg-blue-200">Reset</button>
+                              <button onClick={() => handleResetUserPassword(user.id, user.email)} className="px-2 py-1 bg-[#7D8DCC]/10 text-[#7D8DCC] rounded text-xs font-medium hover:bg-[#7D8DCC]/20">Reset</button>
                             )}
-                            <button onClick={() => confirmDelete(user.id, 'user')} className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium hover:bg-red-200">Delete</button>
+                            <button onClick={() => confirmDelete(user.id, 'user')} className="px-2 py-1 bg-[#FA9335]/10 text-[#FA9335] rounded text-xs font-medium hover:bg-[#FA9335]/20">Delete</button>
                           </div>
                         </td>
                       </tr>
@@ -1558,7 +1558,7 @@ export default function AdminDashboard() {
                   {(filterKeyword || filterDateFrom || filterDateTo) && (
                     <button
                       onClick={() => { setFilterKeyword(''); setFilterDateFrom(''); setFilterDateTo('') }}
-                      className="px-3 py-2 text-sm text-blue-600 hover:underline"
+                      className="px-3 py-2 text-sm text-[#7D8DCC] hover:underline"
                     >
                       Clear
                     </button>
@@ -1567,10 +1567,10 @@ export default function AdminDashboard() {
                 <div className="flex gap-2 mt-2">
                   {selectedReports.length > 0 && (
                     <>
-                      <button onClick={handleBatchArchive} className="px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm hover:bg-slate-200">
+                      <button onClick={handleBatchArchive} className="px-3 py-2 bg-[#D1D9C5] text-[#614270] rounded-lg text-sm hover:bg-[#D1D9C5]">
                         Archive ({selectedReports.length})
                       </button>
-                      <button onClick={handleBatchDelete} className="px-3 py-2 bg-red-100 text-red-700 rounded-lg text-sm hover:bg-red-200">
+                      <button onClick={handleBatchDelete} className="px-3 py-2 bg-[#FA9335]/10 text-[#FA9335] rounded-lg text-sm hover:bg-[#FA9335]/20">
                         Delete ({selectedReports.length})
                       </button>
                     </>
@@ -1583,15 +1583,15 @@ export default function AdminDashboard() {
             <div className="bg-white rounded-xl shadow">
               <div className="p-4 border-b flex flex-wrap items-center gap-3 justify-between">
                 <div className="flex items-center gap-3">
-                  <h2 className="font-semibold text-slate-800">Reports ({filteredReports.length})</h2>
-                  <label className="flex items-center gap-2 text-sm text-slate-600">
+                  <h2 className="font-semibold text-[#614270]">Reports ({filteredReports.length})</h2>
+                  <label className="flex items-center gap-2 text-sm text-[#614270]">
                     <input type="checkbox" checked={selectedReports.length === paginatedReports.length && paginatedReports.length > 0} onChange={handleSelectAllReports} className="rounded" />
                     Select all on page
                   </label>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <div className="flex items-center gap-1">
-                    <span className="text-xs text-slate-500">Per page:</span>
+                    <span className="text-xs text-[#92998B]">Per page:</span>
                     <select value={reportsPerPage} onChange={(e) => { setReportsPerPage(Number(e.target.value)); setReportsPage(1) }} className="px-2 py-1 border rounded-lg text-xs">
                       <option value={10}>10</option>
                       <option value={25}>25</option>
@@ -1601,17 +1601,17 @@ export default function AdminDashboard() {
                     </select>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-[#92998B]">
                       Export {selectedReports.length > 0 ? `${selectedReports.length} selected` : `all ${filteredReports.length}`}:
                     </span>
-                    <button onClick={handleExportCSV} disabled={exportLoading} className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-200 disabled:opacity-50">CSV</button>
-                    <button onClick={handleExportXLSX} disabled={exportLoading} className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-medium hover:bg-green-200 disabled:opacity-50">{exportLoading ? '…' : 'Excel'}</button>
-                    <button onClick={handleExportPDF} disabled={exportLoading} className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-200 disabled:opacity-50">{exportLoading ? '…' : 'PDF'}</button>
+                    <button onClick={handleExportCSV} disabled={exportLoading} className="px-3 py-1.5 bg-[#D1D9C5] text-[#614270] rounded-lg text-xs font-medium hover:bg-[#D1D9C5] disabled:opacity-50">CSV</button>
+                    <button onClick={handleExportXLSX} disabled={exportLoading} className="px-3 py-1.5 bg-[#9ED663]/20 text-[#614270] rounded-lg text-xs font-medium hover:bg-[#9ED663]/30 disabled:opacity-50">{exportLoading ? '…' : 'Excel'}</button>
+                    <button onClick={handleExportPDF} disabled={exportLoading} className="px-3 py-1.5 bg-[#7D8DCC]/10 text-[#7D8DCC] rounded-lg text-xs font-medium hover:bg-[#7D8DCC]/20 disabled:opacity-50">{exportLoading ? '…' : 'PDF'}</button>
                   </div>
                 </div>
               </div>
               {filteredReports.length === 0 ? (
-                <div className="p-8 text-center text-slate-500">
+                <div className="p-8 text-center text-[#92998B]">
                   <div className="text-4xl mb-2">🐑</div>No reports match filters
                 </div>
               ) : (
@@ -1621,12 +1621,12 @@ export default function AdminDashboard() {
                     const conditions = report.conditions?.length ? report.conditions : report.condition ? [report.condition] : []
                     const btnBase = 'px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors'
                     return (
-                    <div key={report.id} className={`p-4 flex items-start gap-3 ${report.archived ? 'bg-slate-50' : ''}`}>
+                    <div key={report.id} className={`p-4 flex items-start gap-3 ${report.archived ? 'bg-[#D1D9C5]' : ''}`}>
                       <input type="checkbox" checked={selectedReports.includes(report.id)} onChange={() => handleSelectReport(report.id)} className="rounded mt-1 flex-shrink-0" />
                       {/* Clickable category icon */}
                       <button
                         onClick={() => openReportDetail(report.id)}
-                        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 hover:ring-2 hover:ring-indigo-400 transition-all bg-yellow-100"
+                        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 hover:ring-2 hover:ring-indigo-400 transition-all bg-[#EADA69]/20"
                         title="View report detail"
                       >
                         {cat?.imageUrl
@@ -1637,57 +1637,57 @@ export default function AdminDashboard() {
                       {/* Info */}
                       <div className="flex-1 min-w-0">
                         <button onClick={() => openReportDetail(report.id)} className="text-left w-full hover:text-indigo-700 transition-colors">
-                          <div className="font-medium text-slate-800">{report.sheepCount} {report.categoryName || 'Sheep'}</div>
+                          <div className="font-medium text-[#614270]">{report.sheepCount} {report.categoryName || 'Sheep'}</div>
                         </button>
-                        <div className="text-xs text-slate-500 mt-0.5">
-                          <span className="font-mono text-slate-400">{report.id.length > 8 ? report.id.slice(0, 8).toUpperCase() : report.id}</span>
-                          {' · '}{report.submittedByUserName || report.reporterContact || <span className="italic text-slate-400">Anonymous</span>}
+                        <div className="text-xs text-[#92998B] mt-0.5">
+                          <span className="font-mono text-[#92998B]">{report.id.length > 8 ? report.id.slice(0, 8).toUpperCase() : report.id}</span>
+                          {' · '}{report.submittedByUserName || report.reporterContact || <span className="italic text-[#92998B]">Anonymous</span>}
                           {' · '}{new Date(report.timestamp).toLocaleString()}
                         </div>
                         {conditions.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {conditions.map(c => <span key={c} className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">{c}</span>)}
+                            {conditions.map(c => <span key={c} className="px-1.5 py-0.5 bg-[#D1D9C5] text-[#614270] rounded text-xs">{c}</span>)}
                           </div>
                         )}
-                        {report.description && <div className="text-xs text-slate-400 mt-1 truncate">{report.description}</div>}
+                        {report.description && <div className="text-xs text-[#92998B] mt-1 truncate">{report.description}</div>}
                       </div>
                       {/* Actions */}
                       <div className="flex items-center gap-1.5 flex-wrap justify-end flex-shrink-0">
                         {getDaysUnclaimedBadge(report)}
                         {report.screeningRequired && !report.archived && (
-                          <span className="px-2 py-1.5 rounded-lg text-xs font-medium bg-red-100 text-red-700">⚠️ Review</span>
+                          <span className="px-2 py-1.5 rounded-lg text-xs font-medium bg-[#FA9335]/10 text-[#FA9335]">⚠️ Review</span>
                         )}
                         {report.flaggedByFarmer && report.status !== 'complete' && (
-                          <span className="px-2 py-1.5 rounded-lg text-xs font-medium bg-amber-100 text-amber-700">🚩</span>
+                          <span className="px-2 py-1.5 rounded-lg text-xs font-medium bg-[#EADA69]/20 text-[#614270]">🚩</span>
                         )}
                         <span className={`px-2 py-1.5 rounded-lg text-xs font-medium capitalize ${
-                          report.status === 'complete' ? 'bg-slate-200 text-slate-700' :
-                          report.status === 'escalated' ? 'bg-orange-100 text-orange-700' :
-                          report.status === 'resolved' ? 'bg-green-100 text-green-700' :
-                          report.status === 'claimed' ? 'bg-blue-100 text-blue-700' :
-                          'bg-yellow-100 text-yellow-700'
+                          report.status === 'complete' ? 'bg-[#D1D9C5] text-[#614270]' :
+                          report.status === 'escalated' ? 'bg-[#FA9335]/10 text-[#FA9335]' :
+                          report.status === 'resolved' ? 'bg-[#9ED663]/20 text-[#614270]' :
+                          report.status === 'claimed' ? 'bg-[#7D8DCC]/10 text-[#7D8DCC]' :
+                          'bg-[#EADA69]/20 text-[#614270]'
                         }`}>{report.status}</span>
-                        {report.archived && <span className={`${btnBase} bg-slate-200 text-slate-600`}>Archived</span>}
+                        {report.archived && <span className={`${btnBase} bg-[#D1D9C5] text-[#614270]`}>Archived</span>}
                         <button onClick={() => openReportDetail(report.id)} className={`${btnBase} bg-indigo-100 text-indigo-700 hover:bg-indigo-200`}>View</button>
                         {!report.archived && report.screeningRequired && (
-                          <button onClick={() => approveReportScreening(report.id)} className={`${btnBase} bg-teal-100 text-teal-700 hover:bg-teal-200`}>Approve</button>
+                          <button onClick={() => approveReportScreening(report.id)} className={`${btnBase} bg-[#63BD8F]/20 text-[#614270] hover:bg-[#63BD8F]/30`}>Approve</button>
                         )}
                         {!report.archived && report.status === 'reported' && !report.screeningRequired && (
-                          <button onClick={() => setShowClaimReportModal(report.id)} className={`${btnBase} bg-green-100 text-green-700 hover:bg-green-200`}>Claim</button>
+                          <button onClick={() => setShowClaimReportModal(report.id)} className={`${btnBase} bg-[#9ED663]/20 text-[#614270] hover:bg-[#9ED663]/30`}>Claim</button>
                         )}
                         {!report.archived && report.status === 'claimed' && (
-                          <button onClick={() => resolveReport(report.id)} className={`${btnBase} bg-blue-100 text-blue-700 hover:bg-blue-200`}>Resolve</button>
+                          <button onClick={() => resolveReport(report.id)} className={`${btnBase} bg-[#7D8DCC]/10 text-[#7D8DCC] hover:bg-[#7D8DCC]/20`}>Resolve</button>
                         )}
                         {!report.archived && (report.status === 'resolved' || report.status === 'escalated') && (
-                          <button onClick={() => escalateReport(report.id)} className={`${btnBase} bg-orange-100 text-orange-700 hover:bg-orange-200`}>Escalate</button>
+                          <button onClick={() => escalateReport(report.id)} className={`${btnBase} bg-[#FA9335]/10 text-[#FA9335] hover:bg-[#FA9335]/20`}>Escalate</button>
                         )}
                         {!report.archived && (report.status === 'resolved' || report.status === 'escalated') && (
-                          <button onClick={() => { setCompleteReportId(report.id); setCompleteNotes('') }} className={`${btnBase} bg-slate-700 text-white hover:bg-slate-800`}>Complete</button>
+                          <button onClick={() => { setCompleteReportId(report.id); setCompleteNotes('') }} className={`${btnBase} bg-[#614270] text-white hover:bg-[#4e3359]`}>Complete</button>
                         )}
                         {!report.archived && (
-                          <button onClick={() => archiveReport(report.id)} className={`${btnBase} bg-slate-100 text-slate-600 hover:bg-slate-200`}>Archive</button>
+                          <button onClick={() => archiveReport(report.id)} className={`${btnBase} bg-[#D1D9C5] text-[#614270] hover:bg-[#D1D9C5]`}>Archive</button>
                         )}
-                        <button onClick={() => confirmDelete(report.id, 'report')} className={`${btnBase} bg-red-100 text-red-700 hover:bg-red-200`}>Delete</button>
+                        <button onClick={() => confirmDelete(report.id, 'report')} className={`${btnBase} bg-[#FA9335]/10 text-[#FA9335] hover:bg-[#FA9335]/20`}>Delete</button>
                       </div>
                     </div>
                     )
@@ -1697,15 +1697,15 @@ export default function AdminDashboard() {
               {/* Pagination */}
               {reportsPerPage > 0 && filteredReports.length > reportsPerPage && (
                 <div className="p-3 border-t flex flex-wrap items-center justify-between gap-3">
-                  <span className="text-sm text-slate-500">
+                  <span className="text-sm text-[#92998B]">
                     Showing {Math.min((reportsPage - 1) * reportsPerPage + 1, filteredReports.length)}–{Math.min(reportsPage * reportsPerPage, filteredReports.length)} of {filteredReports.length}
                   </span>
                   <div className="flex items-center gap-1">
-                    <button onClick={() => setReportsPage(1)} disabled={reportsPage === 1} className="px-2.5 py-1.5 rounded-lg text-xs border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed">First</button>
-                    <button onClick={() => setReportsPage(p => Math.max(1, p - 1))} disabled={reportsPage === 1} className="px-2.5 py-1.5 rounded-lg text-xs border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed">Prev</button>
-                    <span className="px-3 py-1.5 text-xs text-slate-700 font-medium">Page {reportsPage} of {totalReportPages}</span>
-                    <button onClick={() => setReportsPage(p => Math.min(totalReportPages, p + 1))} disabled={reportsPage === totalReportPages} className="px-2.5 py-1.5 rounded-lg text-xs border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed">Next</button>
-                    <button onClick={() => setReportsPage(totalReportPages)} disabled={reportsPage === totalReportPages} className="px-2.5 py-1.5 rounded-lg text-xs border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed">Last</button>
+                    <button onClick={() => setReportsPage(1)} disabled={reportsPage === 1} className="px-2.5 py-1.5 rounded-lg text-xs border border-[#D1D9C5] text-[#614270] hover:bg-[#D1D9C5] disabled:opacity-40 disabled:cursor-not-allowed">First</button>
+                    <button onClick={() => setReportsPage(p => Math.max(1, p - 1))} disabled={reportsPage === 1} className="px-2.5 py-1.5 rounded-lg text-xs border border-[#D1D9C5] text-[#614270] hover:bg-[#D1D9C5] disabled:opacity-40 disabled:cursor-not-allowed">Prev</button>
+                    <span className="px-3 py-1.5 text-xs text-[#614270] font-medium">Page {reportsPage} of {totalReportPages}</span>
+                    <button onClick={() => setReportsPage(p => Math.min(totalReportPages, p + 1))} disabled={reportsPage === totalReportPages} className="px-2.5 py-1.5 rounded-lg text-xs border border-[#D1D9C5] text-[#614270] hover:bg-[#D1D9C5] disabled:opacity-40 disabled:cursor-not-allowed">Next</button>
+                    <button onClick={() => setReportsPage(totalReportPages)} disabled={reportsPage === totalReportPages} className="px-2.5 py-1.5 rounded-lg text-xs border border-[#D1D9C5] text-[#614270] hover:bg-[#D1D9C5] disabled:opacity-40 disabled:cursor-not-allowed">Last</button>
                   </div>
                 </div>
               )}
@@ -1717,16 +1717,16 @@ export default function AdminDashboard() {
         {currentView === 'farms' && (
           <div className="bg-white rounded-xl shadow">
             <div className="p-4 border-b flex justify-between items-center">
-              <h2 className="font-semibold text-slate-800">All Farms ({farms.length})</h2>
+              <h2 className="font-semibold text-[#614270]">All Farms ({farms.length})</h2>
               <button
                 onClick={() => setShowCreateFarmModal(true)}
-                className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 flex items-center gap-2"
+                className="px-4 py-2 bg-[#7D8DCC] text-white rounded-lg text-sm font-medium hover:bg-[#6b7db3] flex items-center gap-2"
               >
                 + Add Farm
               </button>
             </div>
             {farms.length === 0 ? (
-              <div className="p-8 text-center text-slate-500">
+              <div className="p-8 text-center text-[#92998B]">
                 <div className="text-4xl mb-2">🏡</div>No farms registered yet
               </div>
             ) : (
@@ -1735,25 +1735,25 @@ export default function AdminDashboard() {
                   const owner = allUsers.find((u: any) => u.id === farm.farmerId)
                   const isOrphaned = !farm.farmerId || !owner
                   return (
-                    <div key={farm.id} className={`p-4 flex items-center justify-between ${isOrphaned ? 'bg-red-50' : ''}`}>
+                    <div key={farm.id} className={`p-4 flex items-center justify-between ${isOrphaned ? 'bg-[#FA9335]/10' : ''}`}>
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isOrphaned ? 'bg-red-100' : 'bg-amber-100'}`}>🏡</div>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isOrphaned ? 'bg-[#FA9335]/10' : 'bg-[#EADA69]/20'}`}>🏡</div>
                         <div>
-                          <div className="font-medium text-slate-800 flex items-center gap-2">
+                          <div className="font-medium text-[#614270] flex items-center gap-2">
                             {farm.name}
-                            {isOrphaned && <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-semibold">⚠️ No owner — click Edit to reassign</span>}
+                            {isOrphaned && <span className="text-xs bg-[#FA9335]/10 text-[#FA9335] px-2 py-0.5 rounded-full font-semibold">⚠️ No owner — click Edit to reassign</span>}
                           </div>
-                          <div className="text-sm text-slate-500">{farm.fields.length} fields • Buffer: {farm.alertBufferMeters}m</div>
-                          <div className="text-xs text-slate-400">Owner: {owner?.full_name || owner?.name || (isOrphaned ? 'Unassigned' : 'Unknown')}</div>
+                          <div className="text-sm text-[#92998B]">{farm.fields.length} fields • Buffer: {farm.alertBufferMeters}m</div>
+                          <div className="text-xs text-[#92998B]">Owner: {owner?.full_name || owner?.name || (isOrphaned ? 'Unassigned' : 'Unknown')}</div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${farm.alertsEnabled ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${farm.alertsEnabled ? 'bg-[#9ED663]/20 text-[#614270]' : 'bg-[#D1D9C5] text-[#92998B]'}`}>
                           {farm.alertsEnabled ? 'Alerts On' : 'Alerts Off'}
                         </span>
-                        <button onClick={() => setShowFarmDetailsModal(farm.id)} className="px-3 py-1 bg-purple-100 text-purple-700 rounded text-sm hover:bg-purple-200">View Fields</button>
-                        <button onClick={() => setShowEditFarmModal(farm.id)} className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200">Edit</button>
-                        <button onClick={() => confirmDelete(farm.id, 'farm')} className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200">Delete</button>
+                        <button onClick={() => setShowFarmDetailsModal(farm.id)} className="px-3 py-1 bg-[#614270]/10 text-[#614270] rounded text-sm hover:bg-[#614270]/20">View Fields</button>
+                        <button onClick={() => setShowEditFarmModal(farm.id)} className="px-3 py-1 bg-[#7D8DCC]/10 text-[#7D8DCC] rounded text-sm hover:bg-[#7D8DCC]/20">Edit</button>
+                        <button onClick={() => confirmDelete(farm.id, 'farm')} className="px-3 py-1 bg-[#FA9335]/10 text-[#FA9335] rounded text-sm hover:bg-[#FA9335]/20">Delete</button>
                       </div>
                     </div>
                   )
@@ -1767,46 +1767,46 @@ export default function AdminDashboard() {
         {currentView === 'billing' && (
           <>
             <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                <div className="text-2xl font-bold text-blue-700">{trialFarmers}</div>
-                <div className="text-sm text-blue-600">On Trial</div>
+              <div className="bg-[#7D8DCC]/10 rounded-xl p-4 border border-[#7D8DCC]/30">
+                <div className="text-2xl font-bold text-[#7D8DCC]">{trialFarmers}</div>
+                <div className="text-sm text-[#7D8DCC]">On Trial</div>
               </div>
-              <div className="bg-green-50 rounded-xl p-4 border border-green-200">
-                <div className="text-2xl font-bold text-green-700">{activeSubs}</div>
-                <div className="text-sm text-green-600">Active Subscriptions</div>
+              <div className="bg-[#9ED663]/10 rounded-xl p-4 border border-[#D1D9C5]">
+                <div className="text-2xl font-bold text-[#614270]">{activeSubs}</div>
+                <div className="text-sm text-[#9ED663]">Active Subscriptions</div>
               </div>
-              <div className="bg-red-50 rounded-xl p-4 border border-red-200">
-                <div className="text-2xl font-bold text-red-700">{cancelledSubs}</div>
-                <div className="text-sm text-red-600">Cancelled</div>
+              <div className="bg-[#FA9335]/10 rounded-xl p-4 border border-[#FA9335]/30">
+                <div className="text-2xl font-bold text-[#FA9335]">{cancelledSubs}</div>
+                <div className="text-sm text-[#FA9335]">Cancelled</div>
               </div>
             </div>
 
             <div className="bg-white rounded-xl shadow p-4 mb-6">
-              <h3 className="font-semibold text-slate-800 mb-2">Revenue Estimate</h3>
-              <div className="text-3xl font-bold text-green-600">£{(activeSubs * 29.99).toFixed(2)}<span className="text-sm font-normal text-slate-500">/month</span></div>
+              <h3 className="font-semibold text-[#614270] mb-2">Revenue Estimate</h3>
+              <div className="text-3xl font-bold text-[#9ED663]">£{(activeSubs * 29.99).toFixed(2)}<span className="text-sm font-normal text-[#92998B]">/month</span></div>
             </div>
 
             <div className="bg-white rounded-xl shadow">
               <div className="p-4 border-b">
-                <h2 className="font-semibold text-slate-800">Farmer Subscriptions</h2>
+                <h2 className="font-semibold text-[#614270]">Farmer Subscriptions</h2>
               </div>
               <div className="divide-y">
                 {farmers.map((user) => (
                   <div key={user.id} className="p-4 flex items-center justify-between">
                     <div>
-                      <div className="font-medium text-slate-800">{user.name}</div>
-                      <div className="text-sm text-slate-500">{user.email}</div>
+                      <div className="font-medium text-[#614270]">{user.name}</div>
+                      <div className="text-sm text-[#92998B]">{user.email}</div>
                       {user.trialEndsAt && user.subscriptionStatus === 'trial' && (
-                        <div className="text-xs text-blue-600">Trial ends: {new Date(user.trialEndsAt).toLocaleDateString()}</div>
+                        <div className="text-xs text-[#7D8DCC]">Trial ends: {new Date(user.trialEndsAt).toLocaleDateString()}</div>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
                       {getSubscriptionBadge(user)}
                       {user.subscriptionStatus === 'trial' && (
-                        <button onClick={() => activateSubscription(user.id)} className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200">Activate</button>
+                        <button onClick={() => activateSubscription(user.id)} className="px-3 py-1 bg-[#9ED663]/20 text-[#614270] rounded text-sm hover:bg-[#9ED663]/30">Activate</button>
                       )}
                       {user.subscriptionStatus === 'active' && (
-                        <button onClick={() => cancelSubscription(user.id)} className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200">Cancel</button>
+                        <button onClick={() => cancelSubscription(user.id)} className="px-3 py-1 bg-[#FA9335]/10 text-[#FA9335] rounded text-sm hover:bg-[#FA9335]/20">Cancel</button>
                       )}
                     </div>
                   </div>
@@ -1824,34 +1824,34 @@ export default function AdminDashboard() {
         {currentView === 'categories' && (
           <>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-slate-800">Report Categories</h2>
+              <h2 className="text-xl font-bold text-[#614270]">Report Categories</h2>
               <div className="flex gap-2">
                 {reportCategories.length > 1 && (
                   <button
                     onClick={() => setShowReorderModal(true)}
-                    className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg font-medium hover:bg-slate-200"
+                    className="px-4 py-2 bg-[#D1D9C5] text-[#614270] rounded-lg font-medium hover:bg-[#D1D9C5]"
                   >
                     ⇅ Reorder
                   </button>
                 )}
                 <button
                   onClick={() => setShowCreateCategoryModal(true)}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700"
+                  className="px-4 py-2 bg-[#7D8DCC] text-white rounded-lg font-medium hover:bg-[#6b7db3]"
                 >
                   + Add Category
                 </button>
               </div>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
-              <p className="text-sm text-blue-800">
+            <div className="bg-[#7D8DCC]/10 border border-[#7D8DCC]/30 rounded-xl p-4 mb-6">
+              <p className="text-sm text-[#7D8DCC]">
                 <strong>🐑 Sheep</strong> is the built-in default category and cannot be removed. Add custom categories below for reporting other issues such as damaged property or other animals.
               </p>
             </div>
 
             <div className="space-y-3">
               {reportCategories.length === 0 && (
-                <div className="bg-white rounded-xl p-8 shadow text-center text-slate-500">
+                <div className="bg-white rounded-xl p-8 shadow text-center text-[#92998B]">
                   No custom categories yet. Click "+ Add Category" to create one.
                 </div>
               )}
@@ -1864,14 +1864,14 @@ export default function AdminDashboard() {
                       <span className="text-3xl">{cat.emoji}</span>
                     )}
                     <div>
-                      <div className="font-semibold text-slate-800 flex items-center gap-2">
+                      <div className="font-semibold text-[#614270] flex items-center gap-2">
                         {cat.name}
-                        {!cat.isActive && <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">Inactive</span>}
+                        {!cat.isActive && <span className="text-xs bg-[#D1D9C5] text-[#92998B] px-2 py-0.5 rounded-full">Inactive</span>}
                       </div>
-                      {cat.description && <div className="text-sm text-slate-500">{cat.description}</div>}
+                      {cat.description && <div className="text-sm text-[#92998B]">{cat.description}</div>}
                       <div className="flex flex-wrap gap-1 mt-1">
                         {cat.conditions.map((c) => (
-                          <span key={c} className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{c}</span>
+                          <span key={c} className="text-xs bg-[#9ED663]/20 text-[#614270] px-2 py-0.5 rounded-full">{c}</span>
                         ))}
                       </div>
                     </div>
@@ -1879,7 +1879,7 @@ export default function AdminDashboard() {
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <button
                       onClick={() => setEditingCategory(cat)}
-                      className="px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg"
+                      className="px-3 py-1.5 text-sm bg-[#D1D9C5] hover:bg-[#D1D9C5] text-[#614270] rounded-lg"
                     >
                       Edit
                     </button>
@@ -1889,7 +1889,7 @@ export default function AdminDashboard() {
                           deleteReportCategory(cat.id)
                         }
                       }}
-                      className="px-3 py-1.5 text-sm bg-red-50 hover:bg-red-100 text-red-600 rounded-lg"
+                      className="px-3 py-1.5 text-sm bg-[#FA9335]/10 hover:bg-[#FA9335]/20 text-[#FA9335] rounded-lg"
                     >
                       Delete
                     </button>
@@ -1939,7 +1939,7 @@ export default function AdminDashboard() {
         {currentView === 'audit' && (
           <>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-slate-800">Audit Log</h2>
+              <h2 className="text-xl font-bold text-[#614270]">Audit Log</h2>
               <button
                 onClick={async () => {
                   setLoadingAudit(true)
@@ -1947,15 +1947,15 @@ export default function AdminDashboard() {
                   setAuditLogs(logs)
                   setLoadingAudit(false)
                 }}
-                className="px-4 py-2 bg-slate-600 text-white rounded-lg font-medium hover:bg-slate-700"
+                className="px-4 py-2 bg-[#614270] text-white rounded-lg font-medium hover:bg-[#4e3359]"
               >
                 Refresh
               </button>
             </div>
             {loadingAudit ? (
-              <div className="text-center py-8 text-slate-500">Loading…</div>
+              <div className="text-center py-8 text-[#92998B]">Loading…</div>
             ) : auditLogs.length === 0 ? (
-              <div className="bg-white rounded-xl p-8 shadow text-center text-slate-500">
+              <div className="bg-white rounded-xl p-8 shadow text-center text-[#92998B]">
                 <div className="text-4xl mb-2">📋</div>
                 No audit logs yet. Click Refresh to load.
               </div>
@@ -1963,21 +1963,21 @@ export default function AdminDashboard() {
               <div className="bg-white rounded-xl shadow divide-y overflow-hidden">
                 {auditLogs.map((log: any) => (
                   <div key={log.id} className="p-3 flex items-start gap-3 text-sm">
-                    <div className="text-xs text-slate-400 w-36 flex-shrink-0 pt-0.5">
+                    <div className="text-xs text-[#92998B] w-36 flex-shrink-0 pt-0.5">
                       {new Date(log.created_at).toLocaleString()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <span className="font-medium text-slate-800">{log.action}</span>
+                      <span className="font-medium text-[#614270]">{log.action}</span>
                       {log.entity_type && (
-                        <span className="ml-2 text-slate-500">· {log.entity_type} {log.entity_id ? `(${String(log.entity_id).slice(0, 8)}…)` : ''}</span>
+                        <span className="ml-2 text-[#92998B]">· {log.entity_type} {log.entity_id ? `(${String(log.entity_id).slice(0, 8)}…)` : ''}</span>
                       )}
                       {log.detail && Object.keys(log.detail).length > 0 && (
-                        <div className="text-xs text-slate-400 mt-0.5 truncate">
+                        <div className="text-xs text-[#92998B] mt-0.5 truncate">
                           {JSON.stringify(log.detail)}
                         </div>
                       )}
                     </div>
-                    <div className="text-xs text-slate-400 flex-shrink-0">
+                    <div className="text-xs text-[#92998B] flex-shrink-0">
                       {log.actor_email || log.actor_id?.slice(0, 8) || 'system'}
                     </div>
                   </div>
@@ -1987,7 +1987,7 @@ export default function AdminDashboard() {
           </>
         )}
 
-        <div className="mt-6 bg-slate-200 rounded-xl p-4 text-sm text-slate-600">
+        <div className="mt-6 bg-[#D1D9C5] rounded-xl p-4 text-sm text-[#614270]">
           <p>Little Bo Peep Admin Panel • Version 3.0.0</p>
         </div>
       </main>
@@ -2061,32 +2061,32 @@ function CreateFarmerModal({ onClose, onCreate }: { onClose: () => void; onCreat
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
       <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl my-8">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-slate-800">Add New Farmer</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+          <h3 className="text-xl font-bold text-[#614270]">Add New Farmer</h3>
+          <button onClick={onClose} className="text-[#92998B] hover:text-[#614270] text-2xl">&times;</button>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-600">{error}</p>
+          <div className="mb-4 p-3 bg-[#FA9335]/10 border border-[#FA9335]/30 rounded-lg">
+            <p className="text-sm text-[#FA9335]">{error}</p>
           </div>
         )}
 
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-xs text-blue-800">
+        <div className="mb-4 p-3 bg-[#7D8DCC]/10 border border-[#7D8DCC]/30 rounded-lg">
+          <p className="text-xs text-[#7D8DCC]">
             <strong>Note:</strong> The farmer will receive an email invitation with a password reset link. They must set their password before they can log in.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Full Name <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-[#614270] mb-1">
+              Full Name <span className="text-[#FA9335]">*</span>
             </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7D8DCC]"
               placeholder="John Smith"
               required
               disabled={loading}
@@ -2094,14 +2094,14 @@ function CreateFarmerModal({ onClose, onCreate }: { onClose: () => void; onCreat
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Email <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-[#614270] mb-1">
+              Email <span className="text-[#FA9335]">*</span>
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7D8DCC]"
               placeholder="john@farm.com"
               required
               disabled={loading}
@@ -2109,19 +2109,19 @@ function CreateFarmerModal({ onClose, onCreate }: { onClose: () => void; onCreat
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
+            <label className="block text-sm font-medium text-[#614270] mb-1">Phone</label>
             <input
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7D8DCC]"
               placeholder="07700 900123"
               disabled={loading}
             />
           </div>
 
           <div className="border-t pt-4">
-            <h4 className="font-medium text-slate-700 mb-3">Billing Address (Optional)</h4>
+            <h4 className="font-medium text-[#614270] mb-3">Billing Address (Optional)</h4>
 
             <div className="space-y-3">
               <input
@@ -2167,14 +2167,14 @@ function CreateFarmerModal({ onClose, onCreate }: { onClose: () => void; onCreat
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 py-3 bg-[#D1D9C5] text-[#614270] rounded-xl font-semibold hover:bg-[#D1D9C5] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold hover:bg-[#6b7db3] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Sending Invitation...' : 'Invite Farmer'}
             </button>
@@ -2220,44 +2220,44 @@ function EditFarmerModal({ farmer, onClose, onSave }: { farmer: any; onClose: ()
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
       <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl my-8">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-slate-800">Edit Farmer</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+          <h3 className="text-xl font-bold text-[#614270]">Edit Farmer</h3>
+          <button onClick={onClose} className="text-[#92998B] hover:text-[#614270] text-2xl">&times;</button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
+            <label className="block text-sm font-medium text-[#614270] mb-1">Name *</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7D8DCC]"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-[#614270] mb-1">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7D8DCC]"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
+            <label className="block text-sm font-medium text-[#614270] mb-1">Phone</label>
             <input
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7D8DCC]"
             />
           </div>
 
           <div className="border-t pt-4">
-            <h4 className="font-medium text-slate-700 mb-3">Billing Address</h4>
+            <h4 className="font-medium text-[#614270] mb-3">Billing Address</h4>
             <div className="space-y-3">
               <input type="text" value={billingAddress.line1} onChange={(e) => setBillingAddress({ ...billingAddress, line1: e.target.value })} className="w-full px-3 py-2 border rounded-lg" placeholder="Address Line 1" />
               <input type="text" value={billingAddress.line2 || ''} onChange={(e) => setBillingAddress({ ...billingAddress, line2: e.target.value })} className="w-full px-3 py-2 border rounded-lg" placeholder="Address Line 2" />
@@ -2268,8 +2268,8 @@ function EditFarmerModal({ farmer, onClose, onSave }: { farmer: any; onClose: ()
           </div>
 
           <div className="flex gap-3 pt-4">
-            <button type="button" onClick={onClose} className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200">Cancel</button>
-            <button type="submit" className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700">Save Changes</button>
+            <button type="button" onClick={onClose} className="flex-1 py-3 bg-[#D1D9C5] text-[#614270] rounded-xl font-semibold hover:bg-[#D1D9C5]">Cancel</button>
+            <button type="submit" className="flex-1 py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold hover:bg-[#6b7db3]">Save Changes</button>
           </div>
         </form>
       </div>
@@ -2307,17 +2307,17 @@ function CreateFarmModal({ farmers, onClose, onCreate }: { farmers: any[]; onClo
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-slate-800">Add New Farm</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+          <h3 className="text-xl font-bold text-[#614270]">Add New Farm</h3>
+          <button onClick={onClose} className="text-[#92998B] hover:text-[#614270] text-2xl">&times;</button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Farmer Owner *</label>
+            <label className="block text-sm font-medium text-[#614270] mb-1">Farmer Owner *</label>
             <select
               value={farmerId}
               onChange={(e) => setFarmerId(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7D8DCC]"
               required
             >
               <option value="">Select farmer...</option>
@@ -2330,28 +2330,28 @@ function CreateFarmModal({ farmers, onClose, onCreate }: { farmers: any[]; onClo
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Farm Name *</label>
+            <label className="block text-sm font-medium text-[#614270] mb-1">Farm Name *</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7D8DCC]"
               placeholder="Green Meadows Farm"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Alert Buffer (meters)</label>
+            <label className="block text-sm font-medium text-[#614270] mb-1">Alert Buffer (meters)</label>
             <input
               type="number"
               value={alertBufferMeters}
               onChange={(e) => setAlertBufferMeters(parseInt(e.target.value) || 0)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7D8DCC]"
               min="0"
               step="50"
             />
-            <p className="text-xs text-slate-500 mt-1">Distance outside field boundaries to receive alerts</p>
+            <p className="text-xs text-[#92998B] mt-1">Distance outside field boundaries to receive alerts</p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -2362,18 +2362,18 @@ function CreateFarmModal({ farmers, onClose, onCreate }: { farmers: any[]; onClo
               onChange={(e) => setAlertsEnabled(e.target.checked)}
               className="rounded"
             />
-            <label htmlFor="alertsEnabled" className="text-sm font-medium text-slate-700">
+            <label htmlFor="alertsEnabled" className="text-sm font-medium text-[#614270]">
               Enable alerts for this farm
             </label>
           </div>
 
-          <div className="bg-blue-50 rounded-lg p-3 text-sm text-blue-700">
+          <div className="bg-[#7D8DCC]/10 rounded-lg p-3 text-sm text-[#7D8DCC]">
             💡 You can add fields to this farm after creation
           </div>
 
           <div className="flex gap-3 pt-4">
-            <button type="button" onClick={onClose} className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200">Cancel</button>
-            <button type="submit" className="flex-1 py-3 bg-amber-600 text-white rounded-xl font-semibold hover:bg-amber-700">Create Farm</button>
+            <button type="button" onClick={onClose} className="flex-1 py-3 bg-[#D1D9C5] text-[#614270] rounded-xl font-semibold hover:bg-[#D1D9C5]">Cancel</button>
+            <button type="submit" className="flex-1 py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold hover:bg-[#6b7db3]">Create Farm</button>
           </div>
         </form>
       </div>
@@ -2410,34 +2410,34 @@ function EditFarmModal({ farm, allFarmers, onClose, onSave }: {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-slate-800">Edit Farm</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+          <h3 className="text-xl font-bold text-[#614270]">Edit Farm</h3>
+          <button onClick={onClose} className="text-[#92998B] hover:text-[#614270] text-2xl">&times;</button>
         </div>
 
         {!farm.farmerId && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          <div className="mb-4 p-3 bg-[#FA9335]/10 border border-[#FA9335]/30 rounded-lg text-sm text-[#FA9335]">
             ⚠️ This farm has no owner. Assign a farmer below.
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Farm Name *</label>
+            <label className="block text-sm font-medium text-[#614270] mb-1">Farm Name *</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7D8DCC]"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Farmer Owner</label>
+            <label className="block text-sm font-medium text-[#614270] mb-1">Farmer Owner</label>
             <select
               value={farmerId}
               onChange={(e) => setFarmerId(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7D8DCC]"
             >
               <option value="">— Unassigned —</option>
               {allFarmers.map((f: any) => (
@@ -2449,16 +2449,16 @@ function EditFarmModal({ farm, allFarmers, onClose, onSave }: {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Alert Buffer (meters)</label>
+            <label className="block text-sm font-medium text-[#614270] mb-1">Alert Buffer (meters)</label>
             <input
               type="number"
               value={alertBufferMeters}
               onChange={(e) => setAlertBufferMeters(parseInt(e.target.value) || 0)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7D8DCC]"
               min="0"
               step="50"
             />
-            <p className="text-xs text-slate-500 mt-1">Distance outside field boundaries to receive alerts</p>
+            <p className="text-xs text-[#92998B] mt-1">Distance outside field boundaries to receive alerts</p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -2469,14 +2469,14 @@ function EditFarmModal({ farm, allFarmers, onClose, onSave }: {
               onChange={(e) => setAlertsEnabled(e.target.checked)}
               className="rounded"
             />
-            <label htmlFor="alertsEnabledEdit" className="text-sm font-medium text-slate-700">
+            <label htmlFor="alertsEnabledEdit" className="text-sm font-medium text-[#614270]">
               Enable alerts for this farm
             </label>
           </div>
 
           <div className="flex gap-3 pt-4">
-            <button type="button" onClick={onClose} className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200">Cancel</button>
-            <button type="submit" className="flex-1 py-3 bg-amber-600 text-white rounded-xl font-semibold hover:bg-amber-700">Save Changes</button>
+            <button type="button" onClick={onClose} className="flex-1 py-3 bg-[#D1D9C5] text-[#614270] rounded-xl font-semibold hover:bg-[#D1D9C5]">Cancel</button>
+            <button type="submit" className="flex-1 py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold hover:bg-[#6b7db3]">Save Changes</button>
           </div>
         </form>
       </div>
@@ -2492,13 +2492,13 @@ function FarmDetailsModal({ farm, owner, onClose, onAddField, onEditField, onDel
       <div className="bg-white rounded-2xl p-6 max-w-3xl w-full shadow-xl my-8">
         <div className="flex justify-between items-center mb-4">
           <div>
-            <h3 className="text-xl font-bold text-slate-800">{farm.name}</h3>
-            <p className="text-sm text-slate-600">Owner: {owner?.name || 'Unknown'}</p>
+            <h3 className="text-xl font-bold text-[#614270]">{farm.name}</h3>
+            <p className="text-sm text-[#614270]">Owner: {owner?.name || 'Unknown'}</p>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+          <button onClick={onClose} className="text-[#92998B] hover:text-[#614270] text-2xl">&times;</button>
         </div>
 
-        <div className="mb-6 p-4 bg-slate-50 rounded-lg">
+        <div className="mb-6 p-4 bg-[#D1D9C5] rounded-lg">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div><span className="font-medium">Alert Buffer:</span> {farm.alertBufferMeters}m</div>
             <div><span className="font-medium">Alerts:</span> {farm.alertsEnabled ? '✅ Enabled' : '❌ Disabled'}</div>
@@ -2508,27 +2508,27 @@ function FarmDetailsModal({ farm, owner, onClose, onAddField, onEditField, onDel
         </div>
 
         <div className="mb-4 flex justify-between items-center">
-          <h4 className="font-semibold text-slate-800">Fields ({farm.fields.length})</h4>
+          <h4 className="font-semibold text-[#614270]">Fields ({farm.fields.length})</h4>
           <button
             onClick={() => onAddField(farm.id)}
-            className="px-3 py-1 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700"
+            className="px-3 py-1 bg-[#7D8DCC] text-white rounded-lg text-sm font-medium hover:bg-[#6b7db3]"
           >
             + Add Field
           </button>
         </div>
 
         {farm.fields.length === 0 ? (
-          <div className="p-8 text-center text-slate-500 bg-slate-50 rounded-lg">
+          <div className="p-8 text-center text-[#92998B] bg-[#D1D9C5] rounded-lg">
             <div className="text-4xl mb-2">📍</div>
             <p>No fields added yet</p>
           </div>
         ) : (
           <div className="space-y-3 max-h-64 overflow-y-auto">
             {farm.fields.map((field: any) => (
-              <div key={field.id} className="p-4 bg-slate-50 rounded-lg flex justify-between items-center">
+              <div key={field.id} className="p-4 bg-[#D1D9C5] rounded-lg flex justify-between items-center">
                 <div>
-                  <div className="font-medium text-slate-800">{field.name}</div>
-                  <div className="text-sm text-slate-600">
+                  <div className="font-medium text-[#614270]">{field.name}</div>
+                  <div className="text-sm text-[#614270]">
                     {field.fencePosts.length} fence posts
                     {field.sheepCount && ` • ${field.sheepCount} sheep`}
                   </div>
@@ -2536,13 +2536,13 @@ function FarmDetailsModal({ farm, owner, onClose, onAddField, onEditField, onDel
                 <div className="flex gap-2">
                   <button
                     onClick={() => onEditField(farm.id, field.id)}
-                    className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200"
+                    className="px-3 py-1 bg-[#7D8DCC]/10 text-[#7D8DCC] rounded text-sm hover:bg-[#7D8DCC]/20"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => onDeleteField(farm.id, field.id)}
-                    className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200"
+                    className="px-3 py-1 bg-[#FA9335]/10 text-[#FA9335] rounded text-sm hover:bg-[#FA9335]/20"
                   >
                     Delete
                   </button>
@@ -2554,8 +2554,8 @@ function FarmDetailsModal({ farm, owner, onClose, onAddField, onEditField, onDel
 
         {activeCategories.length > 0 && (
           <div className="mt-6 pt-4 border-t">
-            <h4 className="font-semibold text-slate-800 mb-3">Notification Preferences</h4>
-            <p className="text-xs text-slate-500 mb-3">Control which report types trigger alerts for this farm.</p>
+            <h4 className="font-semibold text-[#614270] mb-3">Notification Preferences</h4>
+            <p className="text-xs text-[#92998B] mb-3">Control which report types trigger alerts for this farm.</p>
             <div className="space-y-2">
               {activeCategories.map((cat: any) => {
                 const isCompulsory = cat.subscriptionMode === 'compulsory'
@@ -2565,7 +2565,7 @@ function FarmDetailsModal({ farm, owner, onClose, onAddField, onEditField, onDel
                     ? (farm.categorySubscriptions?.[cat.id] ?? true)
                     : (farm.categorySubscriptions?.[cat.id] ?? false)
                 return (
-                  <div key={cat.id} className={`flex items-center justify-between p-3 rounded-lg ${isCompulsory ? 'bg-red-50 border border-red-100' : 'bg-slate-50 border border-slate-200'}`}>
+                  <div key={cat.id} className={`flex items-center justify-between p-3 rounded-lg ${isCompulsory ? 'bg-[#FA9335]/10 border border-[#FA9335]/20' : 'bg-[#D1D9C5] border border-[#D1D9C5]'}`}>
                     <div className="flex items-center gap-2">
                       {cat.imageUrl ? (
                         <img src={cat.imageUrl} alt={cat.name} className="w-7 h-7 object-contain flex-shrink-0" />
@@ -2573,8 +2573,8 @@ function FarmDetailsModal({ farm, owner, onClose, onAddField, onEditField, onDel
                         <span className="text-xl">{cat.emoji}</span>
                       )}
                       <div>
-                        <div className="text-sm font-medium text-slate-700">{cat.name}</div>
-                        <div className="text-xs text-slate-500">
+                        <div className="text-sm font-medium text-[#614270]">{cat.name}</div>
+                        <div className="text-xs text-[#92998B]">
                           {isCompulsory ? '🔒 Compulsory — cannot be disabled' : cat.subscriptionMode === 'default_on' ? 'Default on' : 'Optional'}
                         </div>
                       </div>
@@ -2583,7 +2583,7 @@ function FarmDetailsModal({ farm, owner, onClose, onAddField, onEditField, onDel
                       onClick={() => !isCompulsory && onUpdateSubscription(farm.id, cat.id, !effective)}
                       disabled={isCompulsory}
                       className={`relative w-11 h-6 rounded-full transition-colors ${
-                        effective ? 'bg-green-500' : 'bg-slate-300'
+                        effective ? 'bg-[#9ED663]' : 'bg-[#D1D9C5]'
                       } ${isCompulsory ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                       title={isCompulsory ? 'Compulsory — cannot be changed' : undefined}
                     >
@@ -2597,7 +2597,7 @@ function FarmDetailsModal({ farm, owner, onClose, onAddField, onEditField, onDel
         )}
 
         <div className="mt-6 pt-4 border-t">
-          <button onClick={onClose} className="w-full py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200">
+          <button onClick={onClose} className="w-full py-3 bg-[#D1D9C5] text-[#614270] rounded-xl font-semibold hover:bg-[#D1D9C5]">
             Close
           </button>
         </div>
@@ -2638,7 +2638,7 @@ function CreateFieldModal({ farmId, farm, onClose, onCreate }: any) {
       name: name.trim(),
       fencePosts,
       sheepCount: sheepCount ? parseInt(sheepCount) : undefined,
-      color: '#22c55e'
+      color: '#9ED663'
     })
   }
 
@@ -2648,40 +2648,40 @@ function CreateFieldModal({ farmId, farm, onClose, onCreate }: any) {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
       <div className="bg-white rounded-2xl p-6 max-w-2xl w-full shadow-xl my-8">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-slate-800">Add Field to {farm.name}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+          <h3 className="text-xl font-bold text-[#614270]">Add Field to {farm.name}</h3>
+          <button onClick={onClose} className="text-[#92998B] hover:text-[#614270] text-2xl">&times;</button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Field Name *</label>
+            <label className="block text-sm font-medium text-[#614270] mb-1">Field Name *</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7D8DCC]"
               placeholder="North Field"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Sheep Count (Optional)</label>
+            <label className="block text-sm font-medium text-[#614270] mb-1">Sheep Count (Optional)</label>
             <input
               type="number"
               value={sheepCount}
               onChange={(e) => setSheepCount(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7D8DCC]"
               placeholder="150"
               min="0"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <label className="block text-sm font-medium text-[#614270] mb-2">
               Place Fence Posts ({fencePosts.length} placed, need 3+)
             </label>
-            <p className="text-xs text-slate-500 mb-2">Click on the map to place fence posts. The field boundary will be drawn automatically.</p>
+            <p className="text-xs text-[#92998B] mb-2">Click on the map to place fence posts. The field boundary will be drawn automatically.</p>
             <div className="h-96 rounded-lg overflow-hidden shadow border">
               <Map
                 center={fencePosts[0] ? [fencePosts[0].lat, fencePosts[0].lng] : MAP_CONFIG.DEFAULT_CENTER}
@@ -2696,7 +2696,7 @@ function CreateFieldModal({ farmId, farm, onClose, onCreate }: any) {
                 polygons={fencePosts.length >= 3 ? [{
                   id: 'new',
                   positions: fencePosts.map(p => [p.lat, p.lng] as [number, number]),
-                  color: '#22c55e'
+                  color: '#9ED663'
                 }] : []}
               />
             </div>
@@ -2707,14 +2707,14 @@ function CreateFieldModal({ farmId, farm, onClose, onCreate }: any) {
               <button
                 type="button"
                 onClick={handleUndoPost}
-                className="flex-1 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm hover:bg-slate-200"
+                className="flex-1 py-2 bg-[#D1D9C5] text-[#614270] rounded-lg text-sm hover:bg-[#D1D9C5]"
               >
                 Undo Last Post
               </button>
               <button
                 type="button"
                 onClick={handleClearPosts}
-                className="flex-1 py-2 bg-red-100 text-red-700 rounded-lg text-sm hover:bg-red-200"
+                className="flex-1 py-2 bg-[#FA9335]/10 text-[#FA9335] rounded-lg text-sm hover:bg-[#FA9335]/20"
               >
                 Clear All Posts
               </button>
@@ -2722,13 +2722,13 @@ function CreateFieldModal({ farmId, farm, onClose, onCreate }: any) {
           )}
 
           {fencePosts.length > 0 && fencePosts.length < 3 && (
-            <div className="bg-amber-50 rounded-lg p-3 text-sm text-amber-700">
+            <div className="bg-[#EADA69]/20 rounded-lg p-3 text-sm text-[#614270]">
               ⚠️ Place at least {3 - fencePosts.length} more post{3 - fencePosts.length > 1 ? 's' : ''} to create a field
             </div>
           )}
 
           {fencePosts.length >= 3 && (
-            <div className="bg-green-50 rounded-lg p-3 text-sm text-green-700">
+            <div className="bg-[#9ED663]/10 rounded-lg p-3 text-sm text-[#614270]">
               ✓ Field boundary ready! You can add more posts or save now.
             </div>
           )}
@@ -2737,14 +2737,14 @@ function CreateFieldModal({ farmId, farm, onClose, onCreate }: any) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200"
+              className="flex-1 py-3 bg-[#D1D9C5] text-[#614270] rounded-xl font-semibold hover:bg-[#D1D9C5]"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!canSave}
-              className="flex-1 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 disabled:bg-slate-300 disabled:cursor-not-allowed"
+              className="flex-1 py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold hover:bg-[#6b7db3] disabled:bg-[#92998B] disabled:cursor-not-allowed"
             >
               Create Field
             </button>
@@ -2776,37 +2776,37 @@ function EditFieldModal({ farmId, field, onClose, onSave }: any) {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-slate-800">Edit Field</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+          <h3 className="text-xl font-bold text-[#614270]">Edit Field</h3>
+          <button onClick={onClose} className="text-[#92998B] hover:text-[#614270] text-2xl">&times;</button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Field Name *</label>
+            <label className="block text-sm font-medium text-[#614270] mb-1">Field Name *</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7D8DCC]"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Sheep Count</label>
+            <label className="block text-sm font-medium text-[#614270] mb-1">Sheep Count</label>
             <input
               type="number"
               value={sheepCount}
               onChange={(e) => setSheepCount(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7D8DCC]"
               placeholder="150"
               min="0"
             />
           </div>
 
           <div className="flex gap-3 pt-4">
-            <button type="button" onClick={onClose} className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200">Cancel</button>
-            <button type="submit" className="flex-1 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700">Save Changes</button>
+            <button type="button" onClick={onClose} className="flex-1 py-3 bg-[#D1D9C5] text-[#614270] rounded-xl font-semibold hover:bg-[#D1D9C5]">Cancel</button>
+            <button type="submit" className="flex-1 py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold hover:bg-[#6b7db3]">Save Changes</button>
           </div>
         </form>
       </div>
@@ -2830,13 +2830,13 @@ function ClaimReportModal({ reportId, report, farmers, onClose, onClaim }: any) 
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-slate-800">Claim Report for Farmer</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+          <h3 className="text-xl font-bold text-[#614270]">Claim Report for Farmer</h3>
+          <button onClick={onClose} className="text-[#92998B] hover:text-[#614270] text-2xl">&times;</button>
         </div>
 
-        <div className="mb-6 p-4 bg-yellow-50 rounded-lg">
-          <div className="font-medium text-slate-800 mb-2">Report Details</div>
-          <div className="text-sm text-slate-600 space-y-1">
+        <div className="mb-6 p-4 bg-[#EADA69]/20 rounded-lg">
+          <div className="font-medium text-[#614270] mb-2">Report Details</div>
+          <div className="text-sm text-[#614270] space-y-1">
             <div>{report.categoryEmoji || '🐑'} {report.sheepCount} {report.categoryName || 'sheep'} ({report.condition})</div>
             <div>📅 {new Date(report.timestamp).toLocaleString()}</div>
             {report.description && <div>📝 {report.description}</div>}
@@ -2845,11 +2845,11 @@ function ClaimReportModal({ reportId, report, farmers, onClose, onClaim }: any) 
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Select Farmer *</label>
+            <label className="block text-sm font-medium text-[#614270] mb-1">Select Farmer *</label>
             <select
               value={selectedFarmerId}
               onChange={(e) => setSelectedFarmerId(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7D8DCC]"
               required
             >
               <option value="">Choose farmer...</option>
@@ -2861,13 +2861,13 @@ function ClaimReportModal({ reportId, report, farmers, onClose, onClaim }: any) 
             </select>
           </div>
 
-          <div className="bg-blue-50 rounded-lg p-3 text-sm text-blue-700">
+          <div className="bg-[#7D8DCC]/10 rounded-lg p-3 text-sm text-[#7D8DCC]">
             💡 This will mark the report as "claimed" and notify the walker that a farmer is responding.
           </div>
 
           <div className="flex gap-3 pt-4">
-            <button type="button" onClick={onClose} className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200">Cancel</button>
-            <button type="submit" className="flex-1 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700">Claim Report</button>
+            <button type="button" onClick={onClose} className="flex-1 py-3 bg-[#D1D9C5] text-[#614270] rounded-xl font-semibold hover:bg-[#D1D9C5]">Cancel</button>
+            <button type="submit" className="flex-1 py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold hover:bg-[#6b7db3]">Claim Report</button>
           </div>
         </form>
       </div>
@@ -2927,13 +2927,13 @@ function CategoryFormModal({ category, onClose, onSave }: {
       <div className="flex min-h-full items-center justify-center p-4">
       <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl my-8">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-slate-800">{category ? 'Edit Category' : 'New Category'}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">×</button>
+          <h3 className="text-lg font-bold text-[#614270]">{category ? 'Edit Category' : 'New Category'}</h3>
+          <button onClick={onClose} className="text-[#92998B] hover:text-[#614270] text-2xl leading-none">×</button>
         </div>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Category Icon</label>
+            <label className="block text-sm font-medium text-[#614270] mb-2">Category Icon</label>
             <CategoryImageUploader
               currentImageUrl={imageUrl || undefined}
               onUploaded={(url) => setImageUrl(url)}
@@ -2941,13 +2941,13 @@ function CategoryFormModal({ category, onClose, onSave }: {
             />
             {!imageUrl && (
               <div className="mt-3">
-                <p className="text-xs text-slate-500 mb-1.5">Or use an emoji instead:</p>
+                <p className="text-xs text-[#92998B] mb-1.5">Or use an emoji instead:</p>
                 <div className="flex items-center gap-2 mb-2">
                   <input
                     type="text"
                     value={emoji}
                     onChange={(e) => setEmoji(e.target.value)}
-                    className="w-16 px-2 py-2 border border-slate-300 rounded-lg text-center text-2xl"
+                    className="w-16 px-2 py-2 border border-[#D1D9C5] rounded-lg text-center text-2xl"
                     maxLength={2}
                   />
                 </div>
@@ -2957,7 +2957,7 @@ function CategoryFormModal({ category, onClose, onSave }: {
                       key={e}
                       type="button"
                       onClick={() => setEmoji(e)}
-                      className={`text-xl p-1 rounded hover:bg-slate-100 transition-colors ${emoji === e ? 'bg-green-100 ring-2 ring-green-400' : ''}`}
+                      className={`text-xl p-1 rounded hover:bg-[#D1D9C5] transition-colors ${emoji === e ? 'bg-[#9ED663]/20 ring-2 ring-[#9ED663]' : ''}`}
                     >
                       {e}
                     </button>
@@ -2968,35 +2968,35 @@ function CategoryFormModal({ category, onClose, onSave }: {
           </div>
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Name (English) *</label>
+              <label className="block text-sm font-medium text-[#614270] mb-1">Name (English) *</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Fence, Wall, Road"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-[#D1D9C5] rounded-lg focus:ring-2 focus:ring-[#7D8DCC] focus:border-transparent"
               />
             </div>
           </div>
 
           {otherLanguages.length > 0 && (
-            <div className="border border-slate-200 rounded-xl overflow-hidden">
+            <div className="border border-[#D1D9C5] rounded-xl overflow-hidden">
               <button
                 type="button"
                 onClick={() => setShowTranslations(v => !v)}
-                className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 text-sm font-medium text-slate-700 transition-colors"
+                className="w-full flex items-center justify-between px-4 py-3 bg-[#D1D9C5] hover:bg-[#D1D9C5] text-sm font-medium text-[#614270] transition-colors"
               >
-                <span>🌐 Translations <span className="text-slate-400 font-normal">(English is always the fallback)</span></span>
-                <span className="text-slate-400 text-lg leading-none">{showTranslations ? '−' : '+'}</span>
+                <span>🌐 Translations <span className="text-[#92998B] font-normal">(English is always the fallback)</span></span>
+                <span className="text-[#92998B] text-lg leading-none">{showTranslations ? '−' : '+'}</span>
               </button>
               {showTranslations && (
                 <div className="p-4 space-y-5">
                   {otherLanguages.map(lang => (
                     <div key={lang.code}>
-                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">{lang.flag_emoji} {lang.name_native} ({lang.code})</div>
+                      <div className="text-xs font-semibold text-[#92998B] uppercase tracking-wide mb-2">{lang.flag_emoji} {lang.name_native} ({lang.code})</div>
                       {/* Name */}
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs text-slate-500 w-20 flex-shrink-0">Name</span>
+                        <span className="text-xs text-[#92998B] w-20 flex-shrink-0">Name</span>
                         <input
                           type="text"
                           value={nameTranslations[lang.code] || ''}
@@ -3007,12 +3007,12 @@ function CategoryFormModal({ category, onClose, onSave }: {
                             return next
                           })}
                           placeholder={name || 'Translation…'}
-                          className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          className="flex-1 px-3 py-1.5 border border-[#D1D9C5] rounded-lg text-sm focus:ring-2 focus:ring-[#7D8DCC] focus:border-transparent"
                         />
                       </div>
                       {/* Description */}
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs text-slate-500 w-20 flex-shrink-0">Description</span>
+                        <span className="text-xs text-[#92998B] w-20 flex-shrink-0">Description</span>
                         <input
                           type="text"
                           value={descriptionTranslations[lang.code] || ''}
@@ -3023,17 +3023,17 @@ function CategoryFormModal({ category, onClose, onSave }: {
                             return next
                           })}
                           placeholder={description || 'Translation…'}
-                          className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          className="flex-1 px-3 py-1.5 border border-[#D1D9C5] rounded-lg text-sm focus:ring-2 focus:ring-[#7D8DCC] focus:border-transparent"
                         />
                       </div>
                       {/* Conditions */}
                       {conditions.length > 0 && (
                         <div>
-                          <span className="text-xs text-slate-500 block mb-1.5">Conditions</span>
+                          <span className="text-xs text-[#92998B] block mb-1.5">Conditions</span>
                           <div className="space-y-1.5 pl-0">
                             {conditions.map(cond => (
                               <div key={cond} className="flex items-center gap-2">
-                                <span className="text-xs text-slate-400 w-20 flex-shrink-0 truncate" title={cond}>{cond}</span>
+                                <span className="text-xs text-[#92998B] w-20 flex-shrink-0 truncate" title={cond}>{cond}</span>
                                 <input
                                   type="text"
                                   value={conditionTranslations[lang.code]?.[cond] || ''}
@@ -3048,7 +3048,7 @@ function CategoryFormModal({ category, onClose, onSave }: {
                                     return next
                                   })}
                                   placeholder={cond}
-                                  className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                  className="flex-1 px-3 py-1.5 border border-[#D1D9C5] rounded-lg text-sm focus:ring-2 focus:ring-[#7D8DCC] focus:border-transparent"
                                 />
                               </div>
                             ))}
@@ -3063,23 +3063,23 @@ function CategoryFormModal({ category, onClose, onSave }: {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Description (optional, English)</label>
+            <label className="block text-sm font-medium text-[#614270] mb-1">Description (optional, English)</label>
             <input
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Brief description for walkers"
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-[#D1D9C5] rounded-lg focus:ring-2 focus:ring-[#7D8DCC] focus:border-transparent"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Condition options *</label>
+            <label className="block text-sm font-medium text-[#614270] mb-1">Condition options *</label>
             <div className="flex flex-wrap gap-1 mb-2">
               {conditions.map((c) => (
-                <span key={c} className="flex items-center gap-1 bg-green-100 text-green-700 text-sm px-2 py-1 rounded-full">
+                <span key={c} className="flex items-center gap-1 bg-[#9ED663]/20 text-[#614270] text-sm px-2 py-1 rounded-full">
                   {c}
-                  <button onClick={() => removeCondition(c)} className="text-green-500 hover:text-green-700 leading-none">×</button>
+                  <button onClick={() => removeCondition(c)} className="text-[#9ED663] hover:text-[#614270] leading-none">×</button>
                 </span>
               ))}
             </div>
@@ -3090,12 +3090,12 @@ function CategoryFormModal({ category, onClose, onSave }: {
                 onChange={(e) => setNewCondition(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCondition())}
                 placeholder="e.g. Damaged, Collapsed..."
-                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+                className="flex-1 px-3 py-2 border border-[#D1D9C5] rounded-lg focus:ring-2 focus:ring-[#7D8DCC] focus:border-transparent text-sm"
               />
               <button
                 type="button"
                 onClick={addCondition}
-                className="px-3 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
+                className="px-3 py-2 bg-[#7D8DCC] text-white rounded-lg text-sm hover:bg-[#6b7db3]"
               >
                 Add
               </button>
@@ -3105,19 +3105,19 @@ function CategoryFormModal({ category, onClose, onSave }: {
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={showCount} onChange={(e) => setShowCount(e.target.checked)} className="rounded" />
-              <span className="text-sm font-medium text-slate-700">Ask for quantity</span>
+              <span className="text-sm font-medium text-[#614270]">Ask for quantity</span>
             </label>
           </div>
 
           {showCount && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Quantity label</label>
+              <label className="block text-sm font-medium text-[#614270] mb-1">Quantity label</label>
               <input
                 type="text"
                 value={countLabel}
                 onChange={(e) => setCountLabel(e.target.value)}
                 placeholder="e.g. Number of animals, Number of sections"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-[#D1D9C5] rounded-lg focus:ring-2 focus:ring-[#7D8DCC] focus:border-transparent"
               />
             </div>
           )}
@@ -3125,42 +3125,42 @@ function CategoryFormModal({ category, onClose, onSave }: {
           <div className="flex items-center gap-6">
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} className="rounded" />
-              <span className="text-sm font-medium text-slate-700">Active (visible to walkers)</span>
+              <span className="text-sm font-medium text-[#614270]">Active (visible to walkers)</span>
             </label>
             <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-slate-700">Order</label>
+              <label className="text-sm font-medium text-[#614270]">Order</label>
               <input
                 type="number"
                 value={sortOrder}
                 onChange={(e) => setSortOrder(Number(e.target.value))}
-                className="w-16 px-2 py-1 border border-slate-300 rounded-lg text-sm"
+                className="w-16 px-2 py-1 border border-[#D1D9C5] rounded-lg text-sm"
                 min={0}
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Farmer Notification Mode</label>
+            <label className="block text-sm font-medium text-[#614270] mb-2">Farmer Notification Mode</label>
             <div className="space-y-2">
-              <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <label className="flex items-start gap-3 p-3 rounded-lg border border-[#D1D9C5] cursor-pointer hover:bg-[#D1D9C5]">
                 <input type="radio" name="subscriptionMode" value="default_off" checked={subscriptionMode === 'default_off'} onChange={() => setSubscriptionMode('default_off')} className="mt-0.5" />
                 <div>
-                  <div className="text-sm font-medium text-slate-700">Optional</div>
-                  <div className="text-xs text-slate-500">Walkers can log it. Farmers must actively opt in to receive alerts.</div>
+                  <div className="text-sm font-medium text-[#614270]">Optional</div>
+                  <div className="text-xs text-[#92998B]">Walkers can log it. Farmers must actively opt in to receive alerts.</div>
                 </div>
               </label>
-              <label className="flex items-start gap-3 p-3 rounded-lg border border-blue-200 bg-blue-50 cursor-pointer hover:bg-blue-100">
+              <label className="flex items-start gap-3 p-3 rounded-lg border border-[#7D8DCC]/30 bg-[#7D8DCC]/10 cursor-pointer hover:bg-[#7D8DCC]/20">
                 <input type="radio" name="subscriptionMode" value="default_on" checked={subscriptionMode === 'default_on'} onChange={() => setSubscriptionMode('default_on')} className="mt-0.5" />
                 <div>
-                  <div className="text-sm font-medium text-blue-700">Default On</div>
-                  <div className="text-xs text-blue-600">All farmers are notified by default. They can choose to opt out.</div>
+                  <div className="text-sm font-medium text-[#7D8DCC]">Default On</div>
+                  <div className="text-xs text-[#7D8DCC]">All farmers are notified by default. They can choose to opt out.</div>
                 </div>
               </label>
-              <label className="flex items-start gap-3 p-3 rounded-lg border border-red-200 bg-red-50 cursor-pointer hover:bg-red-100">
+              <label className="flex items-start gap-3 p-3 rounded-lg border border-[#FA9335]/30 bg-[#FA9335]/10 cursor-pointer hover:bg-[#FA9335]/20">
                 <input type="radio" name="subscriptionMode" value="compulsory" checked={subscriptionMode === 'compulsory'} onChange={() => setSubscriptionMode('compulsory')} className="mt-0.5" />
                 <div>
-                  <div className="text-sm font-medium text-red-700">Compulsory</div>
-                  <div className="text-xs text-red-600">All farmers receive alerts. Cannot be turned off.</div>
+                  <div className="text-sm font-medium text-[#FA9335]">Compulsory</div>
+                  <div className="text-xs text-[#FA9335]">All farmers receive alerts. Cannot be turned off.</div>
                 </div>
               </label>
             </div>
@@ -3170,13 +3170,13 @@ function CategoryFormModal({ category, onClose, onSave }: {
         <div className="flex gap-3 mt-6">
           <button
             onClick={handleSave}
-            className="flex-1 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700"
+            className="flex-1 py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold hover:bg-[#6b7db3]"
           >
             {category ? 'Save Changes' : 'Create Category'}
           </button>
           <button
             onClick={onClose}
-            className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200"
+            className="flex-1 py-3 bg-[#D1D9C5] text-[#614270] rounded-xl font-semibold hover:bg-[#D1D9C5]"
           >
             Cancel
           </button>
@@ -3233,10 +3233,10 @@ function UserDetailModal({ user, reports, farms, onClose, onUpdate, onReset, onS
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <div>
-            <h3 className="text-lg font-bold text-slate-800">{user.full_name || user.email || 'User'}</h3>
-            <p className="text-sm text-slate-500">{roleLabel[user.role] || user.role}</p>
+            <h3 className="text-lg font-bold text-[#614270]">{user.full_name || user.email || 'User'}</h3>
+            <p className="text-sm text-[#92998B]">{roleLabel[user.role] || user.role}</p>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">×</button>
+          <button onClick={onClose} className="text-[#92998B] hover:text-[#614270] text-2xl leading-none">×</button>
         </div>
 
         <div className="p-6 space-y-5">
@@ -3244,34 +3244,34 @@ function UserDetailModal({ user, reports, farms, onClose, onUpdate, onReset, onS
           {editing ? (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+                <label className="block text-sm font-medium text-[#614270] mb-1">Full Name</label>
                 <input
                   type="text"
                   value={fullName}
                   onChange={e => setFullName(e.target.value)}
                   placeholder="Full name"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-[#D1D9C5] rounded-lg focus:ring-2 focus:ring-[#7D8DCC] focus:border-transparent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
+                <label className="block text-sm font-medium text-[#614270] mb-1">Phone</label>
                 <input
                   type="tel"
                   value={phone}
                   onChange={e => setPhone(e.target.value)}
                   placeholder="+44 7700 900000"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-[#D1D9C5] rounded-lg focus:ring-2 focus:ring-[#7D8DCC] focus:border-transparent"
                 />
               </div>
               <div className="flex gap-3 pt-1">
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="flex-1 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50"
+                  className="flex-1 py-2 bg-[#7D8DCC] text-white rounded-lg font-medium hover:bg-[#6b7db3] disabled:opacity-50"
                 >
                   {saving ? 'Saving…' : 'Save Changes'}
                 </button>
-                <button onClick={handleCancel} className="flex-1 py-2 bg-slate-100 text-slate-700 rounded-lg font-medium hover:bg-slate-200">
+                <button onClick={handleCancel} className="flex-1 py-2 bg-[#D1D9C5] text-[#614270] rounded-lg font-medium hover:bg-[#D1D9C5]">
                   Cancel
                 </button>
               </div>
@@ -3280,46 +3280,46 @@ function UserDetailModal({ user, reports, farms, onClose, onUpdate, onReset, onS
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                 <div>
-                  <p className="text-slate-500 text-xs uppercase tracking-wide mb-0.5">Email</p>
-                  <p className="font-medium text-slate-800 break-all">{user.email || '—'}</p>
+                  <p className="text-[#92998B] text-xs uppercase tracking-wide mb-0.5">Email</p>
+                  <p className="font-medium text-[#614270] break-all">{user.email || '—'}</p>
                 </div>
                 <div>
-                  <p className="text-slate-500 text-xs uppercase tracking-wide mb-0.5">Full Name</p>
-                  <p className="font-medium text-slate-800">{user.full_name || '—'}</p>
+                  <p className="text-[#92998B] text-xs uppercase tracking-wide mb-0.5">Full Name</p>
+                  <p className="font-medium text-[#614270]">{user.full_name || '—'}</p>
                 </div>
                 <div>
-                  <p className="text-slate-500 text-xs uppercase tracking-wide mb-0.5">Phone</p>
-                  <p className="font-medium text-slate-800">{user.phone || '—'}</p>
+                  <p className="text-[#92998B] text-xs uppercase tracking-wide mb-0.5">Phone</p>
+                  <p className="font-medium text-[#614270]">{user.phone || '—'}</p>
                 </div>
                 <div>
-                  <p className="text-slate-500 text-xs uppercase tracking-wide mb-0.5">Status</p>
-                  <p className="font-medium text-slate-800 capitalize">{user.status?.replace(/_/g, ' ') || '—'}</p>
+                  <p className="text-[#92998B] text-xs uppercase tracking-wide mb-0.5">Status</p>
+                  <p className="font-medium text-[#614270] capitalize">{user.status?.replace(/_/g, ' ') || '—'}</p>
                 </div>
                 <div>
-                  <p className="text-slate-500 text-xs uppercase tracking-wide mb-0.5">Last Login</p>
-                  <p className="font-medium text-slate-800">{user.last_login_at ? new Date(user.last_login_at).toLocaleDateString() : 'Never'}</p>
+                  <p className="text-[#92998B] text-xs uppercase tracking-wide mb-0.5">Last Login</p>
+                  <p className="font-medium text-[#614270]">{user.last_login_at ? new Date(user.last_login_at).toLocaleDateString() : 'Never'}</p>
                 </div>
                 <div>
-                  <p className="text-slate-500 text-xs uppercase tracking-wide mb-0.5">Member Since</p>
-                  <p className="font-medium text-slate-800">{user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}</p>
+                  <p className="text-[#92998B] text-xs uppercase tracking-wide mb-0.5">Member Since</p>
+                  <p className="font-medium text-[#614270]">{user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}</p>
                 </div>
                 {(user.role === 'walker') && (
                   <div>
-                    <p className="text-slate-500 text-xs uppercase tracking-wide mb-0.5">Reports Submitted</p>
-                    <p className="font-medium text-slate-800">{userReports.length}</p>
+                    <p className="text-[#92998B] text-xs uppercase tracking-wide mb-0.5">Reports Submitted</p>
+                    <p className="font-medium text-[#614270]">{userReports.length}</p>
                   </div>
                 )}
                 {(user.role === 'farmer') && (
                   <div>
-                    <p className="text-slate-500 text-xs uppercase tracking-wide mb-0.5">Farms</p>
-                    <p className="font-medium text-slate-800">{userFarms.length}</p>
+                    <p className="text-[#92998B] text-xs uppercase tracking-wide mb-0.5">Farms</p>
+                    <p className="font-medium text-[#614270]">{userFarms.length}</p>
                   </div>
                 )}
               </div>
 
               <button
                 onClick={() => setEditing(true)}
-                className="w-full py-2 bg-slate-100 text-slate-700 rounded-lg font-medium hover:bg-slate-200 text-sm"
+                className="w-full py-2 bg-[#D1D9C5] text-[#614270] rounded-lg font-medium hover:bg-[#D1D9C5] text-sm"
               >
                 ✏️ Edit Details
               </button>
@@ -3330,30 +3330,30 @@ function UserDetailModal({ user, reports, farms, onClose, onUpdate, onReset, onS
           {user.role === 'walker' && !editing && (
             <div>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                <p className="text-xs font-medium text-[#92998B] uppercase tracking-wide">
                   Reports ({userReports.length})
                 </p>
                 <button
                   onClick={() => onNavigate('reports')}
-                  className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                  className="text-xs text-[#7D8DCC] hover:text-[#7D8DCC] font-medium"
                 >
                   View all in Reports tab →
                 </button>
               </div>
               {userReports.length === 0 ? (
-                <p className="text-sm text-slate-400 italic">No reports submitted yet</p>
+                <p className="text-sm text-[#92998B] italic">No reports submitted yet</p>
               ) : (
                 <div className="space-y-1 max-h-48 overflow-y-auto">
                   {userReports.slice(0, 10).map((r: any) => (
                     <button
                       key={r.id}
                       onClick={() => onNavigate('reports')}
-                      className="w-full flex items-center justify-between text-sm bg-slate-50 hover:bg-blue-50 rounded-lg px-3 py-2 transition-colors text-left group"
+                      className="w-full flex items-center justify-between text-sm bg-[#D1D9C5] hover:bg-[#7D8DCC]/10 rounded-lg px-3 py-2 transition-colors text-left group"
                     >
-                      <span className="text-slate-700 group-hover:text-blue-700">
+                      <span className="text-[#614270] group-hover:text-[#7D8DCC]">
                         {r.categoryEmoji || '🐑'} {r.sheepCount || 1} × {r.categoryName || 'Sheep'} — <span className="capitalize">{r.condition}</span>
                       </span>
-                      <span className="text-slate-400 text-xs group-hover:text-blue-500 flex items-center gap-1">
+                      <span className="text-[#92998B] text-xs group-hover:text-[#7D8DCC] flex items-center gap-1">
                         {new Date(r.timestamp).toLocaleDateString()} <span>→</span>
                       </span>
                     </button>
@@ -3367,28 +3367,28 @@ function UserDetailModal({ user, reports, farms, onClose, onUpdate, onReset, onS
           {user.role === 'farmer' && !editing && (
             <div>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                <p className="text-xs font-medium text-[#92998B] uppercase tracking-wide">
                   Farms ({userFarms.length})
                 </p>
                 <button
                   onClick={() => onNavigate('farms')}
-                  className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                  className="text-xs text-[#7D8DCC] hover:text-[#7D8DCC] font-medium"
                 >
                   View all in Farms tab →
                 </button>
               </div>
               {userFarms.length === 0 ? (
-                <p className="text-sm text-slate-400 italic">No farms registered yet</p>
+                <p className="text-sm text-[#92998B] italic">No farms registered yet</p>
               ) : (
                 <div className="space-y-1">
                   {userFarms.map((f: any) => (
                     <button
                       key={f.id}
                       onClick={() => onNavigate('farms')}
-                      className="w-full flex items-center justify-between text-sm bg-slate-50 hover:bg-blue-50 rounded-lg px-3 py-2 transition-colors text-left group"
+                      className="w-full flex items-center justify-between text-sm bg-[#D1D9C5] hover:bg-[#7D8DCC]/10 rounded-lg px-3 py-2 transition-colors text-left group"
                     >
-                      <span className="text-slate-700 group-hover:text-blue-700">🏡 {f.name}</span>
-                      <span className="text-slate-400 text-xs group-hover:text-blue-500 flex items-center gap-1">
+                      <span className="text-[#614270] group-hover:text-[#7D8DCC]">🏡 {f.name}</span>
+                      <span className="text-[#92998B] text-xs group-hover:text-[#7D8DCC] flex items-center gap-1">
                         {f.fields?.length || 0} field(s) <span>→</span>
                       </span>
                     </button>
@@ -3402,16 +3402,16 @@ function UserDetailModal({ user, reports, farms, onClose, onUpdate, onReset, onS
           {!editing && (
             <div className="border-t pt-4 flex flex-wrap gap-2">
               {user.status === 'active' ? (
-                <button onClick={() => onSuspend(user.id)} className="px-3 py-1.5 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200">
+                <button onClick={() => onSuspend(user.id)} className="px-3 py-1.5 bg-[#EADA69]/20 text-[#614270] rounded-lg text-sm font-medium hover:bg-[#EADA69]/30">
                   Suspend Account
                 </button>
               ) : (
-                <button onClick={() => onActivate(user.id)} className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200">
+                <button onClick={() => onActivate(user.id)} className="px-3 py-1.5 bg-[#9ED663]/20 text-[#614270] rounded-lg text-sm font-medium hover:bg-[#9ED663]/30">
                   Activate Account
                 </button>
               )}
               {user.email && (
-                <button onClick={() => onReset(user.id, user.email)} className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200">
+                <button onClick={() => onReset(user.id, user.email)} className="px-3 py-1.5 bg-[#7D8DCC]/10 text-[#7D8DCC] rounded-lg text-sm font-medium hover:bg-[#7D8DCC]/20">
                   Send Password Reset
                 </button>
               )}
@@ -3448,10 +3448,10 @@ function ReorderCategoriesModal({ categories, onClose, onSave }: {
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-lg font-bold text-slate-800">Reorder Categories</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">×</button>
+          <h3 className="text-lg font-bold text-[#614270]">Reorder Categories</h3>
+          <button onClick={onClose} className="text-[#92998B] hover:text-[#614270] text-2xl leading-none">×</button>
         </div>
-        <p className="text-sm text-slate-500 mb-4">Drag items to set the display order.</p>
+        <p className="text-sm text-[#92998B] mb-4">Drag items to set the display order.</p>
         <div className="space-y-2 mb-5">
           {list.map((cat, idx) => (
             <div
@@ -3460,25 +3460,25 @@ function ReorderCategoriesModal({ categories, onClose, onSave }: {
               onDragStart={() => setDragIdx(idx)}
               onDragOver={(e) => handleDragOver(e, idx)}
               onDragEnd={() => setDragIdx(null)}
-              className={`flex items-center gap-3 p-3 bg-white border rounded-xl cursor-grab active:cursor-grabbing transition-shadow ${dragIdx === idx ? 'shadow-lg border-green-400 scale-[1.02]' : 'border-slate-200 hover:border-slate-300'}`}
+              className={`flex items-center gap-3 p-3 bg-white border rounded-xl cursor-grab active:cursor-grabbing transition-shadow ${dragIdx === idx ? 'shadow-lg border-[#63BD8F] scale-[1.02]' : 'border-[#D1D9C5] hover:border-[#D1D9C5]'}`}
             >
-              <span className="text-slate-400 text-lg select-none">⠿</span>
+              <span className="text-[#92998B] text-lg select-none">⠿</span>
               {cat.imageUrl ? <img src={cat.imageUrl} alt={cat.name} className="w-7 h-7 object-contain flex-shrink-0" /> : <span className="text-xl">{cat.emoji}</span>}
-              <span className="font-medium text-slate-700">{cat.name}</span>
-              <span className="ml-auto text-xs text-slate-400">#{idx + 1}</span>
+              <span className="font-medium text-[#614270]">{cat.name}</span>
+              <span className="ml-auto text-xs text-[#92998B]">#{idx + 1}</span>
             </div>
           ))}
-          {list.length === 0 && <p className="text-sm text-slate-400 text-center py-4">No categories to reorder.</p>}
+          {list.length === 0 && <p className="text-sm text-[#92998B] text-center py-4">No categories to reorder.</p>}
         </div>
         <div className="flex gap-3">
           <button
             onClick={async () => { setSaving(true); await onSave(list); setSaving(false) }}
             disabled={saving}
-            className="flex-1 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 disabled:opacity-60"
+            className="flex-1 py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold hover:bg-[#6b7db3] disabled:opacity-60"
           >
             {saving ? 'Saving…' : 'Save Order'}
           </button>
-          <button onClick={onClose} className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200">Cancel</button>
+          <button onClick={onClose} className="flex-1 py-3 bg-[#D1D9C5] text-[#614270] rounded-xl font-semibold hover:bg-[#D1D9C5]">Cancel</button>
         </div>
       </div>
     </div>

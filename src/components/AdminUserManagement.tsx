@@ -161,7 +161,7 @@ export default function AdminUserManagement() {
   if (!currentUser) {
     return (
       <div className="bg-white rounded-2xl shadow p-6 text-center">
-        <p className="text-slate-600">You must be logged in as an admin to view this page</p>
+        <p className="text-[#92998B]">You must be logged in as an admin to view this page</p>
       </div>
     )
   }
@@ -174,13 +174,13 @@ export default function AdminUserManagement() {
       <div className="bg-white rounded-2xl shadow p-6 mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">Admin User Management</h2>
-            <p className="text-slate-600">Manage admin accounts and permissions</p>
+            <h2 className="text-2xl font-semibold text-[#614270] mb-2">Admin User Management</h2>
+            <p className="text-[#92998B]">Manage admin accounts and permissions</p>
           </div>
           {isSuperAdmin && (
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700"
+              className="px-4 py-2 bg-[#7D8DCC] text-white rounded-lg font-semibold hover:bg-[#6b7bb8] transition-colors"
             >
               + Invite User
             </button>
@@ -188,14 +188,14 @@ export default function AdminUserManagement() {
         </div>
 
         {/* Current Admin Info */}
-        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
-          <p className="text-sm text-blue-800">
+        <div className="mt-4 p-4 bg-[#7D8DCC]/10 border border-[#7D8DCC]/30 rounded-lg flex items-center justify-between">
+          <p className="text-sm text-[#614270]">
             <strong>Logged in as:</strong> {currentUser.email}
             {isSuperAdmin && ' (Super Admin)'}
           </p>
           <button
             onClick={() => setShowChangePasswordModal(true)}
-            className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
+            className="px-3 py-1 text-sm bg-[#7D8DCC] text-white rounded-lg font-medium hover:bg-[#6b7bb8] transition-colors"
           >
             Change Password
           </button>
@@ -204,75 +204,75 @@ export default function AdminUserManagement() {
 
       {/* Messages */}
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-600">{error}</p>
+        <div className="mb-4 p-4 bg-[#FA9335]/10 border border-[#FA9335]/30 rounded-lg">
+          <p className="text-sm text-[#a0522d]">{error}</p>
         </div>
       )}
       {success && (
-        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-sm text-green-600">{success}</p>
+        <div className="mb-4 p-4 bg-[#9ED663]/15 border border-[#9ED663]/40 rounded-lg">
+          <p className="text-sm text-[#2a5200]">{success}</p>
         </div>
       )}
 
       {/* Admin List */}
       <div className="bg-white rounded-2xl shadow overflow-x-auto">
         {loading ? (
-          <div className="p-8 text-center text-slate-500">Loading admin users...</div>
+          <div className="p-8 text-center text-[#92998B]">Loading admin users...</div>
         ) : users.length === 0 ? (
-          <div className="p-8 text-center text-slate-500">No admin users found</div>
+          <div className="p-8 text-center text-[#92998B]">No admin users found</div>
         ) : (
           <table className="w-full min-w-[700px]">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-[#D1D9C5]/50 border-b border-[#92998B]/20">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Email</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Full Name</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Role</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Last Login</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[#92998B] uppercase tracking-wider">Email</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[#92998B] uppercase tracking-wider">Full Name</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[#92998B] uppercase tracking-wider">Role</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[#92998B] uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[#92998B] uppercase tracking-wider">Last Login</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[#92998B] uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200">
+            <tbody className="divide-y divide-[#92998B]/20">
               {users.map((user) => (
-                <tr key={user.id} className={user.status !== 'active' ? 'bg-slate-50 opacity-60' : ''}>
+                <tr key={user.id} className={user.status !== 'active' ? 'bg-[#D1D9C5]/30 opacity-60' : ''}>
                   <td className="px-4 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-slate-900">{user.email}</div>
+                    <div className="text-sm font-medium text-[#614270]">{user.email}</div>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap">
-                    <div className="text-sm text-slate-600">{user.full_name || '-'}</div>
+                    <div className="text-sm text-[#92998B]">{user.full_name || '-'}</div>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap">
                     {user.role === 'super_admin' ? (
-                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-[#614270]/15 text-[#614270]">
                         Super Admin
                       </span>
                     ) : (
-                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-[#7D8DCC]/15 text-[#4a5a9a]">
                         Admin
                       </span>
                     )}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap">
                     {user.status === 'active' ? (
-                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-[#9ED663]/20 text-[#2a5200]">
                         Active
                       </span>
                     ) : user.status === 'suspended' ? (
-                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-[#FA9335]/15 text-[#a0522d]">
                         Suspended
                       </span>
                     ) : user.status === 'pending_verification' ? (
-                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-[#EADA69]/20 text-[#7a6a1a]">
                         Pending
                       </span>
                     ) : (
-                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-[#FA9335]/15 text-[#a0522d]">
                         Reset Required
                       </span>
                     )}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap">
-                    <div className="text-sm text-slate-600">
+                    <div className="text-sm text-[#92998B]">
                       {user.last_login_at ? new Date(user.last_login_at).toLocaleDateString() : 'Never'}
                     </div>
                   </td>
@@ -283,21 +283,21 @@ export default function AdminUserManagement() {
                           {user.status === 'active' ? (
                             <button
                               onClick={() => handleSuspendUser(user.id, user.email)}
-                              className="px-2 py-1 rounded bg-amber-100 text-amber-700 hover:bg-amber-200 text-xs font-medium"
+                              className="px-2 py-1 rounded bg-[#EADA69]/20 text-[#7a6a1a] hover:bg-[#EADA69]/40 text-xs font-medium"
                             >
                               Suspend
                             </button>
                           ) : (
                             <button
                               onClick={() => handleActivateUser(user.id, user.email)}
-                              className="px-2 py-1 rounded bg-green-100 text-green-700 hover:bg-green-200 text-xs font-medium"
+                              className="px-2 py-1 rounded bg-[#9ED663]/20 text-[#2a5200] hover:bg-[#9ED663]/40 text-xs font-medium"
                             >
                               Activate
                             </button>
                           )}
                           <button
                             onClick={() => handleResetPassword(user.id, user.email)}
-                            className="px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs font-medium"
+                            className="px-2 py-1 rounded bg-[#7D8DCC]/15 text-[#4a5a9a] hover:bg-[#7D8DCC]/30 text-xs font-medium"
                           >
                             Reset
                           </button>
@@ -316,11 +316,11 @@ export default function AdminUserManagement() {
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-slate-800 mb-4">Invite New User</h3>
+            <h3 className="text-xl font-semibold text-[#614270] mb-4">Invite New User</h3>
 
             <form onSubmit={handleInviteUser} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
+                <label className="block text-sm font-medium text-[#614270] mb-1">
                   Email <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -328,13 +328,13 @@ export default function AdminUserManagement() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-[#92998B] rounded-lg focus:ring-2 focus:ring-[#7D8DCC] focus:border-transparent"
                   placeholder="user@example.com"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
+                <label className="block text-sm font-medium text-[#614270] mb-1">
                   Full Name <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -342,39 +342,39 @@ export default function AdminUserManagement() {
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   required
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-[#92998B] rounded-lg focus:ring-2 focus:ring-[#7D8DCC] focus:border-transparent"
                   placeholder="John Doe"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
+                <label className="block text-sm font-medium text-[#614270] mb-1">
                   Phone
                 </label>
                 <input
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-[#92998B] rounded-lg focus:ring-2 focus:ring-[#7D8DCC] focus:border-transparent"
                   placeholder="07700 900123"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
+                <label className="block text-sm font-medium text-[#614270] mb-1">
                   Role <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-[#92998B] rounded-lg focus:ring-2 focus:ring-[#7D8DCC] focus:border-transparent"
                 >
                   <option value="walker">Walker</option>
                   <option value="farmer">Farmer</option>
                   <option value="admin">Admin</option>
                   <option value="super_admin">Super Admin</option>
                 </select>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-[#92998B] mt-1">
                   {formData.role === 'super_admin' && 'Can create and manage all users'}
                   {formData.role === 'admin' && 'Can manage walkers and farmers'}
                   {formData.role === 'farmer' && 'Can manage farms and claim reports'}
@@ -382,8 +382,8 @@ export default function AdminUserManagement() {
                 </p>
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-xs text-blue-800">
+              <div className="bg-[#7D8DCC]/10 border border-[#7D8DCC]/30 rounded-lg p-3">
+                <p className="text-xs text-[#614270]">
                   <strong>Note:</strong> User will receive an email invitation with a password reset link. They must set their password before they can log in.
                 </p>
               </div>
@@ -391,7 +391,7 @@ export default function AdminUserManagement() {
               <div className="flex gap-3 mt-6">
                 <button
                   type="submit"
-                  className="flex-1 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700"
+                  className="flex-1 py-2 bg-[#7D8DCC] text-white rounded-lg font-semibold hover:bg-[#6b7bb8] transition-colors"
                 >
                   Send Invitation
                 </button>
@@ -406,7 +406,7 @@ export default function AdminUserManagement() {
                       role: 'admin',
                     })
                   }}
-                  className="flex-1 py-2 bg-slate-100 text-slate-700 rounded-lg font-semibold hover:bg-slate-200"
+                  className="flex-1 py-2 bg-[#D1D9C5] text-[#614270] rounded-lg font-semibold hover:bg-[#c5cdb9] transition-colors"
                 >
                   Cancel
                 </button>

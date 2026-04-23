@@ -34,7 +34,7 @@ export default function MapLayerControl() {
       <div className="absolute top-4 right-4 z-[1000] bg-white rounded-lg shadow-lg">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="px-3 py-2 flex items-center gap-2 hover:bg-slate-50 rounded-lg"
+          className="px-3 py-2 flex items-center gap-2 hover:bg-[#D1D9C5] rounded-lg text-[#614270]"
         >
           <span>🗺️</span>
           <span className="text-sm font-medium">Layers</span>
@@ -42,8 +42,8 @@ export default function MapLayerControl() {
         </button>
 
         {isOpen && (
-          <div className="border-t border-slate-200 p-3 space-y-2 min-w-[180px]">
-            <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-2 rounded">
+          <div className="border-t border-[#92998B]/30 p-3 space-y-2 min-w-[180px]">
+            <label className="flex items-center gap-2 cursor-pointer hover:bg-[#D1D9C5] p-2 rounded">
               <input
                 type="checkbox"
                 checked={mapPreferences.layersEnabled.footpaths}
@@ -53,7 +53,7 @@ export default function MapLayerControl() {
               <span className="text-sm">🥾 Footpaths</span>
             </label>
 
-            <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-2 rounded">
+            <label className="flex items-center gap-2 cursor-pointer hover:bg-[#D1D9C5] p-2 rounded">
               <input
                 type="checkbox"
                 checked={mapPreferences.layersEnabled.bridleways}
@@ -63,7 +63,7 @@ export default function MapLayerControl() {
               <span className="text-sm">🐴 Bridleways</span>
             </label>
 
-            <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-2 rounded">
+            <label className="flex items-center gap-2 cursor-pointer hover:bg-[#D1D9C5] p-2 rounded">
               <input
                 type="checkbox"
                 checked={mapPreferences.layersEnabled.trails}
@@ -73,7 +73,7 @@ export default function MapLayerControl() {
               <span className="text-sm">🚶 Trails</span>
             </label>
 
-            <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-2 rounded">
+            <label className="flex items-center gap-2 cursor-pointer hover:bg-[#D1D9C5] p-2 rounded">
               <input
                 type="checkbox"
                 checked={mapPreferences.layersEnabled.contours}
@@ -83,10 +83,10 @@ export default function MapLayerControl() {
               <span className="text-sm">📏 Contours</span>
             </label>
 
-            <div className="pt-2 border-t border-slate-200">
+            <div className="pt-2 border-t border-[#92998B]/30">
               <button
                 onClick={() => setShowDisclaimer(true)}
-                className="text-xs text-blue-600 hover:text-blue-800"
+                className="text-xs text-[#7D8DCC] hover:text-[#614270]"
               >
                 View disclaimer
               </button>
@@ -99,30 +99,30 @@ export default function MapLayerControl() {
       {showDisclaimer && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[2000] p-4">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
-            <h3 className="text-lg font-bold text-slate-800 mb-3">
+            <h3 className="text-lg font-semibold text-[#614270] mb-3">
               ⚠️ Rights of Way Disclaimer
             </h3>
-            <div className="text-sm text-slate-600 space-y-2 mb-4">
+            <div className="text-sm text-[#92998B] space-y-2 mb-4">
               <p>
                 Rights of way data is provided for <strong>reference only</strong>.
               </p>
               <p>
                 Always verify access rights with local authorities. Data may be incomplete or inaccurate.
               </p>
-              <p className="font-medium text-slate-800">
+              <p className="font-medium text-[#614270]">
                 Users are responsible for ensuring lawful access to all areas.
               </p>
             </div>
             <div className="flex gap-3">
               <button
                 onClick={handleAcceptDisclaimer}
-                className="flex-1 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
+                className="flex-1 py-2 bg-[#7D8DCC] text-white rounded-lg font-medium hover:bg-[#6b7bb8] transition-colors"
               >
                 I Understand
               </button>
               <button
                 onClick={() => setShowDisclaimer(false)}
-                className="flex-1 py-2 bg-slate-100 text-slate-700 rounded-lg font-medium hover:bg-slate-200"
+                className="flex-1 py-2 bg-[#D1D9C5] text-[#614270] rounded-lg font-medium hover:bg-[#c5cdb9] transition-colors"
               >
                 Cancel
               </button>

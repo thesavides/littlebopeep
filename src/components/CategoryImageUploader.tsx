@@ -132,15 +132,15 @@ export default function CategoryImageUploader({ currentImageUrl, onUploaded, onC
   if (!imgSrc && !currentImageUrl) {
     return (
       <div>
-        <label className="flex items-center gap-2 cursor-pointer border-2 border-dashed border-slate-300 rounded-xl p-4 hover:border-green-400 transition-colors">
+        <label className="flex items-center gap-2 cursor-pointer border-2 border-dashed border-[#92998B]/50 rounded-xl p-4 hover:border-[#7D8DCC] transition-colors">
           <span className="text-2xl">🖼️</span>
           <div>
-            <div className="text-sm font-medium text-slate-700">Upload category image</div>
-            <div className="text-xs text-slate-500">PNG, JPG or GIF — will be cropped to a square</div>
+            <div className="text-sm font-medium text-[#614270]">Upload category image</div>
+            <div className="text-xs text-[#92998B]">PNG, JPG or GIF — will be cropped to a square</div>
           </div>
           <input type="file" accept="image/*" onChange={handleFileChange} className="sr-only" />
         </label>
-        {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+        {error && <p className="text-xs text-[#FA9335] mt-1">{error}</p>}
       </div>
     )
   }
@@ -148,13 +148,13 @@ export default function CategoryImageUploader({ currentImageUrl, onUploaded, onC
   if (currentImageUrl && !imgSrc) {
     return (
       <div className="flex items-center gap-3">
-        <img src={currentImageUrl} alt="Category" className="w-16 h-16 object-contain rounded-lg border border-slate-200" />
+        <img src={currentImageUrl} alt="Category" className="w-16 h-16 object-contain rounded-lg border border-[#92998B]/30" />
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-green-700 font-medium cursor-pointer hover:text-green-900">
+          <label className="text-xs text-[#614270] font-medium cursor-pointer hover:text-[#4e3359]">
             Replace image
             <input type="file" accept="image/*" onChange={handleFileChange} className="sr-only" />
           </label>
-          <button type="button" onClick={onClear} className="text-xs text-red-500 hover:text-red-700 text-left">
+          <button type="button" onClick={onClear} className="text-xs text-[#FA9335] hover:text-[#c96a00] text-left">
             Remove image
           </button>
         </div>
@@ -168,10 +168,10 @@ export default function CategoryImageUploader({ currentImageUrl, onUploaded, onC
 
   return (
     <div className="space-y-3">
-      <div className="text-sm font-medium text-slate-700">Crop image — drag to reposition, use slider to zoom</div>
+      <div className="text-sm font-medium text-[#614270]">Crop image — drag to reposition, use slider to zoom</div>
       <div
         ref={viewportRef}
-        className="relative overflow-hidden rounded-xl border-2 border-green-500 bg-slate-100"
+        className="relative overflow-hidden rounded-xl border-2 border-[#7D8DCC] bg-[#D1D9C5]"
         style={{ width: CROP_SIZE, height: CROP_SIZE, cursor: dragging ? 'grabbing' : 'grab' }}
         onMouseDown={onMouseDown}
         onTouchStart={onTouchStart}
@@ -196,12 +196,12 @@ export default function CategoryImageUploader({ currentImageUrl, onUploaded, onC
           />
         )}
         {['top-0 left-0', 'top-0 right-0', 'bottom-0 left-0', 'bottom-0 right-0'].map((pos, i) => (
-          <div key={i} className={`absolute ${pos} w-4 h-4 border-green-500 ${i < 2 ? 'border-t-2' : 'border-b-2'} ${i % 2 === 0 ? 'border-l-2' : 'border-r-2'}`} />
+          <div key={i} className={`absolute ${pos} w-4 h-4 border-[#7D8DCC] ${i < 2 ? 'border-t-2' : 'border-b-2'} ${i % 2 === 0 ? 'border-l-2' : 'border-r-2'}`} />
         ))}
       </div>
 
       <div className="flex items-center gap-2">
-        <span className="text-xs text-slate-500">Zoom</span>
+        <span className="text-xs text-[#92998B]">Zoom</span>
         <input
           type="range"
           min={0.1}
@@ -211,24 +211,24 @@ export default function CategoryImageUploader({ currentImageUrl, onUploaded, onC
           onChange={e => setScale(Number(e.target.value))}
           className="flex-1"
         />
-        <span className="text-xs text-slate-500 w-10 text-right">{Math.round(scale * 100)}%</span>
+        <span className="text-xs text-[#92998B] w-10 text-right">{Math.round(scale * 100)}%</span>
       </div>
 
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-xs text-[#FA9335]">{error}</p>}
 
       <div className="flex gap-2">
         <button
           type="button"
           onClick={handleConfirm}
           disabled={uploading}
-          className="flex-1 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 disabled:opacity-60"
+          className="flex-1 py-2 bg-[#7D8DCC] text-white rounded-lg text-sm font-semibold hover:bg-[#6b7bb8] disabled:opacity-60 transition-colors"
         >
           {uploading ? 'Uploading…' : 'Use this crop'}
         </button>
         <button
           type="button"
           onClick={() => { setFile(null); setImgSrc('') }}
-          className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm hover:bg-slate-200"
+          className="px-4 py-2 bg-[#D1D9C5] text-[#614270] rounded-lg text-sm hover:bg-[#c5cdb9] transition-colors"
         >
           Cancel
         </button>

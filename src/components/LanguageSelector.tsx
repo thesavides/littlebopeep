@@ -22,17 +22,17 @@ export default function LanguageSelector() {
       {/* Current Language Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-[#D1D9C5] transition-colors"
         aria-label="Select language"
       >
         <span className="text-xl" role="img" aria-label={currentLang?.name_english || 'Language'}>
           {currentLang?.flag_emoji || '🌐'}
         </span>
-        <span className="hidden sm:inline text-sm font-medium text-slate-700 dark:text-slate-200">
+        <span className="hidden sm:inline text-sm font-medium text-[#614270]">
           {currentLang?.name_native || 'Language'}
         </span>
         <svg
-          className={`w-4 h-4 text-slate-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-[#92998B] transition-transform ${isOpen ? 'rotate-180' : ''}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -52,9 +52,9 @@ export default function LanguageSelector() {
           />
 
           {/* Menu */}
-          <div className="absolute right-0 mt-2 bg-white dark:bg-slate-800 rounded-lg shadow-lg py-2 min-w-[220px] z-50 border border-slate-200 dark:border-slate-700">
-            <div className="px-4 py-2 border-b border-slate-200 dark:border-slate-700">
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+          <div className="absolute right-0 mt-2 bg-white rounded-lg shadow-lg py-2 min-w-[220px] z-50 border border-[#92998B]/30">
+            <div className="px-4 py-2 border-b border-[#92998B]/30">
+              <p className="text-xs font-medium text-[#92998B] uppercase tracking-wide">
                 Select Language
               </p>
             </div>
@@ -68,8 +68,8 @@ export default function LanguageSelector() {
                   setIsOpen(false)
                   console.log('🔘 Dropdown closed')
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors ${
-                  lang.code === language ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-[#D1D9C5] transition-colors ${
+                  lang.code === language ? 'bg-[#7D8DCC]/10' : ''
                 }`}
                 aria-current={lang.code === language ? 'true' : 'false'}
               >
@@ -80,10 +80,10 @@ export default function LanguageSelector() {
 
                 {/* Language Names */}
                 <div className="flex-1 text-left">
-                  <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                  <div className="text-sm font-medium text-[#614270]">
                     {lang.name_native}
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                  <div className="text-xs text-[#92998B]">
                     {lang.name_english}
                   </div>
                 </div>
@@ -91,7 +91,7 @@ export default function LanguageSelector() {
                 {/* Selected Indicator */}
                 {lang.code === language && (
                   <svg
-                    className="w-5 h-5 text-blue-600 dark:text-blue-400"
+                    className="w-5 h-5 text-[#7D8DCC]"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >

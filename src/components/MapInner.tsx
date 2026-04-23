@@ -43,7 +43,7 @@ const sheepIcon = L.divIcon({
     width: 40px;
     height: 40px;
     background: white;
-    border: 3px solid #22c55e;
+    border: 3px solid #9ED663;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -102,7 +102,7 @@ const userLocationIcon = L.divIcon({
   html: `<div style="
     width: 20px;
     height: 20px;
-    background: #3b82f6;
+    background: #7D8DCC;
     border: 3px solid white;
     border-radius: 50%;
     box-shadow: 0 2px 6px rgba(0,0,0,0.3);
@@ -119,7 +119,7 @@ const walkerLocationIcon = L.divIcon({
     font-size: 18px;
     width: 34px;
     height: 34px;
-    background: #3b82f6;
+    background: #7D8DCC;
     border: 3px solid white;
     border-radius: 50%;
     display: flex;
@@ -139,7 +139,7 @@ const farmerLocationIcon = L.divIcon({
     font-size: 18px;
     width: 34px;
     height: 34px;
-    background: #16a34a;
+    background: #63BD8F;
     border: 3px solid white;
     border-radius: 50%;
     display: flex;
@@ -322,15 +322,15 @@ function LayerRenderer() {
       {/* Loading indicator */}
       {(loading.footpaths || loading.bridleways || loading.trails || loading.contours) && (
         <div className="absolute bottom-4 left-4 bg-white px-4 py-2 rounded-lg shadow-lg z-[1000] flex items-center gap-2">
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-          <span className="text-sm text-slate-600">Loading layers...</span>
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#7D8DCC]"></div>
+          <span className="text-sm text-[#614270]">Loading layers...</span>
         </div>
       )}
 
       {/* Error display */}
       {(errors.footpaths || errors.bridleways || errors.trails || errors.contours) && (
-        <div className="absolute bottom-4 left-4 bg-red-50 border border-red-200 px-4 py-2 rounded-lg shadow-lg z-[1000]">
-          <span className="text-sm text-red-600">
+        <div className="absolute bottom-4 left-4 bg-[#FA9335]/10 border border-[#FA9335]/30 px-4 py-2 rounded-lg shadow-lg z-[1000]">
+          <span className="text-sm text-[#a0522d]">
             {errors.footpaths || errors.bridleways || errors.trails || errors.contours}
           </span>
         </div>
@@ -356,7 +356,7 @@ function getMarkerIcon(type?: string, status?: string, emoji?: string, imageUrl?
         : (emoji || '📍')
       return L.divIcon({
         className: 'category-selected-marker',
-        html: `<div style="font-size: 26px; width: 44px; height: 44px; background: white; border: 3px solid #22c55e; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.35);">${inner}</div>`,
+        html: `<div style="font-size: 26px; width: 44px; height: 44px; background: white; border: 3px solid #9ED663; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.35);">${inner}</div>`,
         iconSize: [44, 44],
         iconAnchor: [22, 22],
         popupAnchor: [0, -22],
@@ -365,7 +365,7 @@ function getMarkerIcon(type?: string, status?: string, emoji?: string, imageUrl?
     case 'sheep':
     case 'existing': {
       // Use category image or emoji with status-coloured border
-      const borderColor = status === 'claimed' ? '#eab308' : status === 'resolved' ? '#64748b' : '#22c55e'
+      const borderColor = status === 'claimed' ? '#EADA69' : status === 'resolved' ? '#92998B' : '#9ED663'
       const opacity = status === 'resolved' ? 'opacity: 0.7;' : ''
       if (imageUrl) {
         return L.divIcon({

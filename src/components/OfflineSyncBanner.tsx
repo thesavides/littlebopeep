@@ -103,32 +103,32 @@ export default function OfflineSyncBanner() {
   if (syncResult && syncResult.failed === 0) {
     setTimeout(() => setDismissed(true), 3000)
     return (
-      <div className="mx-4 mb-4 rounded-2xl bg-green-600 p-4 flex items-center gap-3 shadow-lg">
+      <div className="mx-4 mb-4 rounded-2xl bg-[#9ED663] p-4 flex items-center gap-3 shadow-lg">
         <span className="text-2xl">✓</span>
         <div>
-          <p className="text-white font-semibold text-sm">
+          <p className="text-[#1a3a00] font-semibold text-sm">
             {syncResult.synced} offline {syncResult.synced === 1 ? 'report' : 'reports'} uploaded!
           </p>
-          <p className="text-green-100 text-xs">All your sightings are now live on the map</p>
+          <p className="text-[#2a5200] text-xs">All your sightings are now live on the map</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="mx-4 mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+    <div className="mx-4 mb-4 rounded-2xl border border-[#EADA69]/40 bg-[#EADA69]/10 p-4 shadow-sm">
       <div className="flex items-start gap-3">
         <span className="text-2xl flex-shrink-0">📡</span>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-amber-900 text-sm">
+          <p className="font-semibold text-[#614270] text-sm">
             {pendingCount} offline {pendingCount === 1 ? 'sighting' : 'sightings'} waiting to upload
           </p>
-          <p className="text-amber-700 text-xs mt-0.5">
+          <p className="text-[#92998B] text-xs mt-0.5">
             You're back online — your reports from the field are ready to sync
           </p>
 
           {syncResult?.failed && syncResult.failed > 0 && (
-            <p className="text-red-600 text-xs mt-1">
+            <p className="text-[#FA9335] text-xs mt-1">
               {syncResult.failed} failed to upload — tap Retry to try again
             </p>
           )}
@@ -137,7 +137,7 @@ export default function OfflineSyncBanner() {
             <button
               onClick={handleSync}
               disabled={syncing}
-              className="flex-1 py-2 bg-amber-600 text-white rounded-xl text-sm font-semibold hover:bg-amber-700 disabled:bg-amber-400 transition-colors flex items-center justify-center gap-2"
+              className="flex-1 py-2 bg-[#7D8DCC] text-white rounded-xl text-sm font-semibold hover:bg-[#6b7bb8] disabled:bg-[#7D8DCC]/50 transition-colors flex items-center justify-center gap-2"
             >
               {syncing ? (
                 <>
@@ -150,7 +150,7 @@ export default function OfflineSyncBanner() {
             </button>
             <button
               onClick={() => setDismissed(true)}
-              className="px-3 py-2 text-amber-700 text-xs hover:text-amber-900"
+              className="px-3 py-2 text-[#614270] text-xs hover:opacity-70 transition-opacity"
             >
               Later
             </button>

@@ -69,7 +69,7 @@ function LandingPage() {
         <div className="mx-auto max-w-5xl flex items-center justify-between px-5 py-3">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 no-underline">
-            <img src="/logo-pin.png" alt="" aria-hidden="true" className="w-8 h-8" />
+            <img src="/logo-pin.svg" alt="" aria-hidden="true" className="w-8 h-8" />
             <span className="font-serif font-semibold text-lg tracking-tight leading-none">
               <span style={{ color: '#614270' }}>Little </span>
               <span style={{ color: '#92998B' }}>Bo </span>
@@ -261,7 +261,7 @@ function LandingPage() {
         <div className="mx-auto max-w-5xl px-5 flex flex-col sm:flex-row items-center justify-between gap-4">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 no-underline opacity-70 hover:opacity-100 transition-opacity">
-            <img src="/logo-pin.png" alt="" aria-hidden="true" className="w-5 h-5" />
+            <img src="/logo-pin.svg" alt="" aria-hidden="true" className="w-5 h-5" />
             <span className="text-xs font-serif font-semibold tracking-tight leading-none">
               <span style={{ color: '#614270' }}>Little </span>
               <span style={{ color: '#92998B' }}>Bo </span>

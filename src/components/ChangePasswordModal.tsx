@@ -51,10 +51,10 @@ export default function ChangePasswordModal({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-slate-800">Change Password</h3>
+          <h3 className="text-xl font-semibold text-[#614270]">Change Password</h3>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 transition-colors"
+            className="text-[#92998B] hover:text-[#614270] transition-colors"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -63,8 +63,8 @@ export default function ChangePasswordModal({
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-600">{error}</p>
+          <div className="mb-4 p-3 bg-[#FA9335]/10 border border-[#FA9335]/30 rounded-lg">
+            <p className="text-sm text-[#a0522d]">{error}</p>
           </div>
         )}
 
@@ -96,7 +96,7 @@ export default function ChangePasswordModal({
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed"
+              className="flex-1 py-2 bg-[#7D8DCC] text-white rounded-lg font-semibold hover:bg-[#6b7bb8] disabled:bg-[#D1D9C5] disabled:text-[#92998B] disabled:cursor-not-allowed transition-colors"
             >
               {loading ? 'Changing...' : 'Change Password'}
             </button>
@@ -104,15 +104,15 @@ export default function ChangePasswordModal({
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="flex-1 py-2 bg-slate-100 text-slate-700 rounded-lg font-semibold hover:bg-slate-200 disabled:opacity-50"
+              className="flex-1 py-2 bg-[#D1D9C5] text-[#614270] rounded-lg font-semibold hover:bg-[#c5cdb9] disabled:opacity-50 transition-colors"
             >
               Cancel
             </button>
           </div>
         </form>
 
-        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-xs text-yellow-800">
+        <div className="mt-4 p-3 bg-[#EADA69]/10 border border-[#EADA69]/40 rounded-lg">
+          <p className="text-xs text-[#614270]">
             <strong>Security tip:</strong> Use a strong password with a mix of letters, numbers, and symbols.
           </p>
         </div>

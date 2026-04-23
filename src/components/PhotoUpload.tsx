@@ -118,7 +118,7 @@ export default function PhotoUpload({ reportId, onPhotosUploaded, maxPhotos = ge
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="w-full px-4 py-3 border-2 border-dashed border-slate-300 rounded-lg text-slate-600 hover:border-blue-500 hover:text-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-4 py-3 border-2 border-dashed border-[#92998B]/50 rounded-lg text-[#92998B] hover:border-[#7D8DCC] hover:text-[#7D8DCC] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="flex flex-col items-center gap-2">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,7 +127,7 @@ export default function PhotoUpload({ reportId, onPhotosUploaded, maxPhotos = ge
               <span className="text-sm">
                 {t('walker.addPhotos', {}, 'Add Photos')} ({uploadedUrls.length + selectedFiles.length}/{maxPhotos})
               </span>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-[#92998B]">
                 {t('walker.photoFormats', {}, 'Any photo format • Max 20MB')}
               </span>
             </div>
@@ -137,7 +137,7 @@ export default function PhotoUpload({ reportId, onPhotosUploaded, maxPhotos = ge
 
       {/* Error Message */}
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+        <div className="p-3 bg-[#FA9335]/10 border border-[#FA9335]/30 rounded-lg text-sm text-[#a0522d]">
           {error}
         </div>
       )}
@@ -146,13 +146,13 @@ export default function PhotoUpload({ reportId, onPhotosUploaded, maxPhotos = ge
       {selectedFiles.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-slate-700">
+            <span className="text-sm font-medium text-[#614270]">
               {t('walker.selectedPhotos', {}, 'Selected Photos')}
             </span>
             <button
               onClick={handleUpload}
               disabled={uploading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              className="px-4 py-2 bg-[#7D8DCC] text-white rounded-lg hover:bg-[#6b7bb8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
               {uploading ? t('walker.uploading', {}, 'Uploading...') : t('walker.uploadPhotos', {}, 'Upload Photos')}
             </button>
@@ -168,7 +168,7 @@ export default function PhotoUpload({ reportId, onPhotosUploaded, maxPhotos = ge
                 <button
                   onClick={() => handleRemove(index)}
                   disabled={uploading}
-                  className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                  className="absolute top-1 right-1 p-1 bg-[#FA9335] text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -183,7 +183,7 @@ export default function PhotoUpload({ reportId, onPhotosUploaded, maxPhotos = ge
       {/* Uploaded Photos */}
       {uploadedUrls.length > 0 && (
         <div className="space-y-2">
-          <span className="text-sm font-medium text-green-700">
+          <span className="text-sm font-medium text-[#2a5200]">
             ✓ {t('walker.uploadedPhotos', { count: uploadedUrls.length }, `${uploadedUrls.length} photo(s) uploaded`)}
           </span>
           <div className="grid grid-cols-3 gap-2">
@@ -192,7 +192,7 @@ export default function PhotoUpload({ reportId, onPhotosUploaded, maxPhotos = ge
                 <img
                   src={url}
                   alt={`Uploaded ${index + 1}`}
-                  className="w-full h-24 object-cover rounded-lg border-2 border-green-500"
+                  className="w-full h-24 object-cover rounded-lg border-2 border-[#9ED663]"
                 />
               </div>
             ))}

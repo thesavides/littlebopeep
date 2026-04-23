@@ -54,10 +54,10 @@ export default function LocationButton({
           disabled={loading || done}
           className={`w-full flex items-center justify-center gap-2 py-4 rounded-xl font-semibold transition-colors shadow-sm
             ${done
-              ? 'bg-green-100 text-green-700 cursor-default'
+              ? 'bg-[#9ED663]/20 text-[#2a5200] cursor-default'
               : loading
-                ? 'bg-blue-100 text-blue-600 cursor-wait'
-                : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.98]'
+                ? 'bg-[#7D8DCC]/20 text-[#614270] cursor-wait'
+                : 'bg-[#7D8DCC] text-white hover:bg-[#6b7bb8] active:scale-[0.98]'
             }`}
         >
           {loading ? (
@@ -76,7 +76,7 @@ export default function LocationButton({
             </>
           )}
         </button>
-        {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
+        {error && <p className="text-xs text-[#FA9335] mt-2">{error}</p>}
       </div>
     )
   }
@@ -88,8 +88,8 @@ export default function LocationButton({
         disabled={loading || done}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors shadow-sm
           ${done
-            ? 'bg-green-100 text-green-700 cursor-default text-sm'
-            : 'bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed'
+            ? 'bg-[#9ED663]/20 text-[#2a5200] cursor-default text-sm'
+            : 'bg-[#7D8DCC] text-white hover:bg-[#6b7bb8] disabled:bg-[#7D8DCC]/50 disabled:cursor-not-allowed'
           }`}
       >
         {loading ? (
@@ -100,7 +100,7 @@ export default function LocationButton({
           <><span>📍</span> Use My Location</>
         )}
       </button>
-      {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+      {error && <p className="text-xs text-[#FA9335] mt-1">{error}</p>}
     </div>
   )
 }

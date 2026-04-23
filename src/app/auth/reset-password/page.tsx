@@ -110,17 +110,17 @@ function ResetPasswordForm() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md">
+      <div className="min-h-screen bg-[#D1D9C5] flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
           <div className="text-center">
             <div className="text-5xl mb-4">✅</div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">
+            <h1 className="text-2xl font-serif font-semibold text-[#614270] mb-2">
               Password {isNewUser ? 'Set' : 'Reset'} Successfully
             </h1>
-            <p className="text-gray-600 mb-6">
+            <p className="text-[#92998B] mb-6">
               Redirecting you to login...
             </p>
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7D8DCC] mx-auto"></div>
           </div>
         </div>
       </div>
@@ -128,14 +128,17 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md">
+    <div className="min-h-screen bg-[#D1D9C5] flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="text-5xl mb-4">🔐</div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">
+          {/* Brand logo */}
+          <div className="flex justify-center mb-3">
+            <img src="/logo-pin.svg" alt="" aria-hidden="true" className="w-12 h-12" />
+          </div>
+          <h1 className="text-2xl font-serif font-semibold text-[#614270] mb-2">
             {isNewUser ? 'Set Your Password' : 'Reset Password'}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-[#92998B]">
             {isNewUser
               ? 'Welcome! Please set a secure password for your account.'
               : 'Enter your new password below.'
@@ -144,14 +147,14 @@ function ResetPasswordForm() {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-600 text-center">{error}</p>
+          <div className="mb-6 p-4 bg-[#FA9335]/10 border border-[#FA9335]/30 rounded-xl">
+            <p className="text-sm text-[#a0522d] text-center">{error}</p>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="password" className="block text-sm font-medium text-[#614270] mb-1">
               New Password
             </label>
             <div className="relative">
@@ -163,13 +166,13 @@ function ResetPasswordForm() {
                 required
                 minLength={8}
                 autoComplete="new-password"
-                className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-3 pr-12 border border-[#92998B] rounded-xl focus:ring-2 focus:ring-[#7D8DCC] focus:border-transparent"
                 placeholder="Minimum 8 characters"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#92998B] hover:text-[#614270] transition-colors"
               >
                 {showPassword ? (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -183,11 +186,11 @@ function ResetPasswordForm() {
                 )}
               </button>
             </div>
-            <p className="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
+            <p className="text-xs text-[#92998B] mt-1">Minimum 8 characters</p>
           </div>
 
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-[#614270] mb-1">
               Confirm New Password
             </label>
             <div className="relative">
@@ -199,13 +202,13 @@ function ResetPasswordForm() {
                 required
                 minLength={8}
                 autoComplete="new-password"
-                className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-3 pr-12 border border-[#92998B] rounded-xl focus:ring-2 focus:ring-[#7D8DCC] focus:border-transparent"
                 placeholder="Re-enter password"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirm(!showConfirm)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#92998B] hover:text-[#614270] transition-colors"
               >
                 {showConfirm ? (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -224,17 +227,17 @@ function ResetPasswordForm() {
           <button
             type="submit"
             disabled={loading || !sessionReady}
-            className="w-full py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            className="w-full py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold hover:bg-[#6b7bb8] disabled:bg-[#D1D9C5] disabled:text-[#92998B] disabled:cursor-not-allowed transition-colors"
           >
             {loading ? 'Resetting...' : !sessionReady ? 'Verifying link...' : `${isNewUser ? 'Set' : 'Reset'} Password`}
           </button>
         </form>
 
-        <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-xs text-yellow-800">
+        <div className="mt-6 p-4 bg-[#EADA69]/10 border border-[#EADA69]/40 rounded-xl">
+          <p className="text-xs text-[#614270]">
             <strong>Password Requirements:</strong>
           </p>
-          <ul className="text-xs text-yellow-700 mt-2 space-y-1">
+          <ul className="text-xs text-[#92998B] mt-2 space-y-1">
             <li>• At least 8 characters long</li>
             <li>• Mix of letters, numbers, and symbols recommended</li>
             <li>• Avoid common words or phrases</li>
@@ -248,8 +251,8 @@ function ResetPasswordForm() {
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      <div className="min-h-screen bg-[#D1D9C5] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D8DCC]"></div>
       </div>
     }>
       <ResetPasswordForm />
