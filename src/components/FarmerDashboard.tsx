@@ -38,6 +38,7 @@ export default function FarmerDashboard() {
     cancelSubscription,
     reportCategories,
     updateFarmCategorySubscription,
+    updateFieldCategorySubscription,
     loadReports,
     loadFarms,
   } = useAppStore()
@@ -101,6 +102,7 @@ export default function FarmerDashboard() {
   // Field creation state
   const [fieldName, setFieldName] = useState('')
   const [fencePosts, setFencePosts] = useState<Array<{ lat: number; lng: number }>>([])
+  const [fieldCategorySubscriptions, setFieldCategorySubscriptions] = useState<Record<string, boolean>>({})
   
   const [farmerLocation, setFarmerLocation] = useState<[number, number] | null>(null)
 
@@ -289,9 +291,10 @@ export default function FarmerDashboard() {
 
   const handleSaveField = () => {
     if (selectedFarmId && fieldName.trim() && fencePosts.length >= 3) {
-      addField(selectedFarmId, { name: fieldName.trim(), fencePosts })
+      addField(selectedFarmId, { name: fieldName.trim(), fencePosts, categorySubscriptions: fieldCategorySubscriptions })
       setFieldName('')
       setFencePosts([])
+      setFieldCategorySubscriptions({})
       setViewState('view-farm')
     }
   }
@@ -1057,6 +1060,34 @@ export default function FarmerDashboard() {
             <div className="bg-[#D1D9C5] border border-[#D1D9C5] rounded-xl p-3 text-sm text-[#614270]">
               {t('farmer.fencePostTip', {}, '🪵 Tap on the map to place fence posts around your field boundary.')}
             </div>
+            {reportCategories.filter(c => c.isActive).length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-[#614270] mb-2">{t('farmer.fieldAlerts', {}, 'Alert me about (for this field)')}</label>
+                <div className="flex flex-wrap gap-2">
+                  {reportCategories.filter(c => c.isActive).map(cat => {
+                    const isCompulsory = cat.subscriptionMode === 'compulsory'
+                    const enabled = isCompulsory || (fieldCategorySubscriptions[cat.id] ?? (cat.subscriptionMode === 'default_on'))
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        disabled={isCompulsory}
+                        onClick={() => !isCompulsory && setFieldCategorySubscriptions(prev => ({ ...prev, [cat.id]: !enabled }))}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                          enabled
+                            ? 'bg-[#614270] text-white border-[#614270]'
+                            : 'bg-white text-[#92998B] border-[#D1D9C5]'
+                        } ${isCompulsory ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                      >
+                        <span>{cat.emoji}</span>
+                        <span>{cat.name}</span>
+                        {isCompulsory && <span className="text-xs opacity-70">🔒</span>}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
             <button onClick={handleSaveField} disabled={!canSaveField} className="w-full py-4 bg-[#7D8DCC] text-white rounded-xl font-semibold disabled:bg-[#D1D9C5]">{t('farmer.saveField', {}, 'Save Field')}</button>
           </div>
         )}
@@ -1183,7 +1214,7 @@ export default function FarmerDashboard() {
               </div>
             )}
 
-            <p className="text-sm text-[#92998B]">Choose which report types you want to be alerted about for your farms.</p>
+            <p className="text-sm text-[#92998B]">Choose which report types you want to be alerted about — you can set different alerts per field.</p>
             {myFarms.length === 0 ? (
               <div className="p-8 text-center text-[#92998B] bg-white rounded-xl shadow">
                 <div className="text-4xl mb-2">🏡</div>
@@ -1192,48 +1223,53 @@ export default function FarmerDashboard() {
             ) : myFarms.map((farm) => {
               const activeCategories = reportCategories.filter((c) => c.isActive)
               return (
-                <div key={farm.id} className="bg-white rounded-xl shadow p-4">
-                  <h3 className="font-semibold text-[#614270] mb-3">🏡 {farm.name}</h3>
+                <div key={farm.id} className="bg-white rounded-xl shadow p-4 space-y-3">
+                  <h3 className="font-semibold text-[#614270]">🏡 {farm.name}</h3>
                   {activeCategories.length === 0 ? (
-                    <p className="text-sm text-[#92998B]">No custom report categories configured yet.</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {activeCategories.map((cat) => {
-                        const isCompulsory = cat.subscriptionMode === 'compulsory'
-                        const effective = isCompulsory
-                          ? true
-                          : cat.subscriptionMode === 'default_on'
-                            ? (farm.categorySubscriptions?.[cat.id] ?? true)
-                            : (farm.categorySubscriptions?.[cat.id] ?? false)
-                        return (
-                          <div key={cat.id} className={`flex items-center justify-between p-3 rounded-lg ${isCompulsory ? 'bg-[#FA9335]/10 border border-[#FA9335]/20' : 'bg-[#D1D9C5] border border-[#D1D9C5]'}`}>
-                            <div className="flex items-center gap-2">
-                              {cat.imageUrl ? (
-                                <img src={cat.imageUrl} alt={cat.name} className="w-7 h-7 object-contain flex-shrink-0 rounded" />
-                              ) : (
-                                <span className="text-xl">{cat.emoji}</span>
-                              )}
-                              <div>
-                                <div className="text-sm font-medium text-[#614270]">{cat.name}</div>
-                                <div className="text-xs text-[#92998B]">
-                                  {isCompulsory ? '🔒 Required — cannot be disabled' : effective ? 'Receiving alerts' : 'Not receiving alerts'}
+                    <p className="text-sm text-[#92998B]">No report categories configured yet.</p>
+                  ) : farm.fields.length === 0 ? (
+                    <p className="text-sm text-[#92998B]">Add fields to this farm to set per-field alert preferences.</p>
+                  ) : farm.fields.map((field) => (
+                    <div key={field.id} className="border border-[#D1D9C5] rounded-lg overflow-hidden">
+                      <div className="bg-[#D1D9C5] px-3 py-2 text-sm font-medium text-[#614270]">📍 {field.name}</div>
+                      <div className="divide-y divide-[#D1D9C5]">
+                        {activeCategories.map((cat) => {
+                          const isCompulsory = cat.subscriptionMode === 'compulsory'
+                          const effective = isCompulsory
+                            ? true
+                            : cat.subscriptionMode === 'default_on'
+                              ? (field.categorySubscriptions?.[cat.id] ?? true)
+                              : (field.categorySubscriptions?.[cat.id] ?? false)
+                          return (
+                            <div key={cat.id} className={`flex items-center justify-between px-3 py-2.5 ${isCompulsory ? 'bg-[#FA9335]/5' : 'bg-white'}`}>
+                              <div className="flex items-center gap-2">
+                                {cat.imageUrl ? (
+                                  <img src={cat.imageUrl} alt={cat.name} className="w-6 h-6 object-contain flex-shrink-0 rounded" />
+                                ) : (
+                                  <span className="text-lg">{cat.emoji}</span>
+                                )}
+                                <div>
+                                  <div className="text-sm font-medium text-[#614270]">{cat.name}</div>
+                                  <div className="text-xs text-[#92998B]">
+                                    {isCompulsory ? '🔒 Required' : effective ? 'Alerts on' : 'Alerts off'}
+                                  </div>
                                 </div>
                               </div>
+                              <button
+                                onClick={() => !isCompulsory && updateFieldCategorySubscription(farm.id, field.id, cat.id, !effective)}
+                                disabled={isCompulsory}
+                                className={`relative w-11 h-6 rounded-full transition-colors ${
+                                  effective ? 'bg-[#63BD8F]' : 'bg-[#D1D9C5]'
+                                } ${isCompulsory ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                              >
+                                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${effective ? 'translate-x-5' : 'translate-x-0'}`} />
+                              </button>
                             </div>
-                            <button
-                              onClick={() => !isCompulsory && updateFarmCategorySubscription(farm.id, cat.id, !effective)}
-                              disabled={isCompulsory}
-                              className={`relative w-11 h-6 rounded-full transition-colors ${
-                                effective ? 'bg-[#63BD8F]' : 'bg-[#D1D9C5]'
-                              } ${isCompulsory ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                            >
-                              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${effective ? 'translate-x-5' : 'translate-x-0'}`} />
-                            </button>
-                          </div>
-                        )
-                      })}
+                          )
+                        })}
+                      </div>
                     </div>
-                  )}
+                  ))}
                 </div>
               )
             })}

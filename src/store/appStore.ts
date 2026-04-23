@@ -211,6 +211,7 @@ export interface FarmField {
   fencePosts: Array<{ lat: number; lng: number }> // Polygon vertices
   sheepCount?: number
   color?: string
+  categorySubscriptions?: Record<string, boolean>
 }
 
 // The farmer's farm with fields and alert settings
@@ -326,6 +327,8 @@ interface AppState {
   claimReport: (reportId: string) => void
   claimReportForFarmer: (reportId: string, farmerId: string) => void
   unclaimReport: (reportId: string) => void
+  unclaimReportForFarmer: (reportId: string, farmerId: string) => void
+  reassignReport: (reportId: string, farmerId: string) => void
   resolveReport: (reportId: string, reason?: string) => void
   reopenReport: (reportId: string) => void
   markReportComplete: (reportId: string, notes?: string) => void
@@ -362,6 +365,7 @@ interface AppState {
   updateReportCategory: (id: string, data: Partial<Omit<ReportCategory, 'id' | 'createdAt'>>) => void
   deleteReportCategory: (id: string) => void
   updateFarmCategorySubscription: (farmId: string, categoryId: string, subscribed: boolean) => void
+  updateFieldCategorySubscription: (farmId: string, fieldId: string, categoryId: string, subscribed: boolean) => void
 
   // Helpers
   getCurrentUser: () => User | undefined
@@ -704,6 +708,52 @@ export const useAppStore = create<AppState>()(
         })
       },
 
+      unclaimReportForFarmer: (reportId, farmerId) => {
+        const { currentUserId, reports } = get()
+        const report = reports.find(r => r.id === reportId)
+        const remaining = (report?.claimedByFarmerIds || []).filter(id => id !== farmerId)
+        const newStatus = remaining.length > 0 ? 'claimed' : 'reported'
+        const newPrimary = remaining[0] || null
+        set((state) => ({
+          reports: state.reports.map((r) =>
+            r.id === reportId
+              ? { ...r, status: newStatus as any, claimedByFarmerId: newPrimary || undefined, claimedByFarmerIds: remaining }
+              : r
+          )
+        }))
+        import('@/lib/supabase-client').then(({ updateReport }) => {
+          updateReport(reportId, { status: newStatus, claimedByFarmerId: newPrimary, claimedByFarmerIds: remaining }).catch(() => {})
+        })
+        writeAuditLog({
+          actorId: currentUserId,
+          action: 'report.unclaim',
+          entityType: 'report',
+          entityId: reportId,
+          detail: { removedFarmer: farmerId, remaining },
+        })
+      },
+
+      reassignReport: (reportId, farmerId) => {
+        const { currentUserId } = get()
+        set((state) => ({
+          reports: state.reports.map((r) =>
+            r.id === reportId
+              ? { ...r, status: 'claimed' as any, claimedByFarmerId: farmerId, claimedByFarmerIds: [farmerId], claimedAt: r.claimedAt || new Date() }
+              : r
+          )
+        }))
+        import('@/lib/supabase-client').then(({ updateReport }) => {
+          updateReport(reportId, { status: 'claimed', claimedByFarmerId: farmerId, claimedByFarmerIds: [farmerId], claimedAt: new Date() }).catch(() => {})
+        })
+        writeAuditLog({
+          actorId: currentUserId,
+          action: 'report.claim',
+          entityType: 'report',
+          entityId: reportId,
+          detail: { reassignedTo: farmerId },
+        })
+      },
+
       claimReportForFarmer: (reportId, farmerId) => {
         const { currentUserId, reports } = get()
         const report = reports.find(r => r.id === reportId)
@@ -1038,6 +1088,31 @@ export const useAppStore = create<AppState>()(
         if (updatedFarm) {
           updateFarmInSupabase(farmId, { categorySubscriptions: updatedFarm.categorySubscriptions }).catch((err) => {
             console.error('Failed to update farm subscriptions in Supabase:', err)
+          })
+        }
+      },
+
+      updateFieldCategorySubscription: (farmId, fieldId, categoryId, subscribed) => {
+        set((state) => ({
+          farms: state.farms.map((f) =>
+            f.id === farmId
+              ? {
+                  ...f,
+                  fields: f.fields.map((fld) =>
+                    fld.id === fieldId
+                      ? { ...fld, categorySubscriptions: { ...(fld.categorySubscriptions || {}), [categoryId]: subscribed } }
+                      : fld
+                  ),
+                }
+              : f
+          )
+        }))
+        const updatedField = get().farms.find(f => f.id === farmId)?.fields.find(fld => fld.id === fieldId)
+        if (updatedField) {
+          import('@/lib/supabase-client').then(({ updateFieldInFarm }) => {
+            updateFieldInFarm(fieldId, { categorySubscriptions: updatedField.categorySubscriptions }).catch((err) => {
+              console.error('Failed to update field subscriptions in Supabase:', err)
+            })
           })
         }
       },

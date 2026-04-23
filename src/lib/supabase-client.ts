@@ -477,6 +477,7 @@ export interface FarmDB {
     farm_id: string
     name: string
     fence_posts: Array<{ lat: number; lng: number }>
+    category_subscriptions: Record<string, boolean> | null
     created_at: string
   }[]
 }
@@ -495,6 +496,7 @@ export function dbToAppFarm(dbFarm: FarmDB) {
       id: f.id,
       name: f.name,
       fencePosts: f.fence_posts,
+      categorySubscriptions: f.category_subscriptions || {},
     })),
   }
 }
@@ -585,6 +587,7 @@ export async function deleteFarmInSupabase(id: string) {
 export async function addFieldToFarm(farmId: string, field: {
   name: string
   fencePosts: Array<{ lat: number; lng: number }>
+  categorySubscriptions?: Record<string, boolean>
 }) {
   const { data, error } = await supabase
     .from('farm_fields')
@@ -592,6 +595,7 @@ export async function addFieldToFarm(farmId: string, field: {
       farm_id: farmId,
       name: field.name,
       fence_posts: field.fencePosts,
+      category_subscriptions: field.categorySubscriptions || {},
     }])
     .select()
     .single()
@@ -600,16 +604,18 @@ export async function addFieldToFarm(farmId: string, field: {
     console.error('Error adding field:', error)
     throw error
   }
-  return { id: data.id, name: data.name, fencePosts: data.fence_posts as Array<{ lat: number; lng: number }> }
+  return { id: data.id, name: data.name, fencePosts: data.fence_posts as Array<{ lat: number; lng: number }>, categorySubscriptions: (data.category_subscriptions as Record<string, boolean>) || {} }
 }
 
 export async function updateFieldInFarm(fieldId: string, updates: {
   name?: string
   fencePosts?: Array<{ lat: number; lng: number }>
+  categorySubscriptions?: Record<string, boolean>
 }) {
   const dbUpdates: Record<string, unknown> = {}
   if (updates.name !== undefined) dbUpdates.name = updates.name
   if (updates.fencePosts !== undefined) dbUpdates.fence_posts = updates.fencePosts
+  if (updates.categorySubscriptions !== undefined) dbUpdates.category_subscriptions = updates.categorySubscriptions
 
   const { data, error } = await supabase
     .from('farm_fields')
@@ -622,7 +628,7 @@ export async function updateFieldInFarm(fieldId: string, updates: {
     console.error('Error updating field:', error)
     throw error
   }
-  return data ? { id: data.id, name: data.name, fencePosts: data.fence_posts as Array<{ lat: number; lng: number }> } : null
+  return data ? { id: data.id, name: data.name, fencePosts: data.fence_posts as Array<{ lat: number; lng: number }>, categorySubscriptions: (data.category_subscriptions as Record<string, boolean>) || {} } : null
 }
 
 export async function deleteFieldFromFarm(fieldId: string) {

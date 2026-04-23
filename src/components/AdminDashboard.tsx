@@ -10,8 +10,8 @@ import WalkerDashboard from './WalkerDashboard'
 import ProfileDrawer from './ProfileDrawer'
 import CategoryImageUploader from './CategoryImageUploader'
 import { inviteUser, getAllUsers, adminResetUserPassword, updateUserProfile, deleteUser as deleteUserFromSupabase, suspendUser as suspendUserInSupabase, activateUser as activateUserInSupabase } from '@/lib/unified-auth'
-import { fetchAuditLogs } from '@/lib/audit'
-import { fetchNotificationsForReport, approveReportScreening, updateReport as updateReportInDB, fetchReportComments, type ReportComment } from '@/lib/supabase-client'
+import { fetchAuditLogs, writeAuditLog } from '@/lib/audit'
+import { fetchNotificationsForReport, approveReportScreening, updateReport as updateReportInDB, fetchReportComments, sendThankYouMessage, type ReportComment } from '@/lib/supabase-client'
 import PhotoUpload from './PhotoUpload'
 
 type AdminView = 'overview' | 'walkers' | 'farmers' | 'reports' | 'farms' | 'billing' | 'admins' | 'categories' | 'audit'
@@ -44,6 +44,8 @@ export default function AdminDashboard() {
     deleteField,
     claimReport,
     claimReportForFarmer,
+    unclaimReportForFarmer,
+    reassignReport,
     resolveReport,
     escalateReport,
     markReportComplete,
@@ -76,6 +78,7 @@ export default function AdminDashboard() {
   const [showCreateFieldModal, setShowCreateFieldModal] = useState<string | null>(null) // farmId
   const [showEditFieldModal, setShowEditFieldModal] = useState<{farmId: string, fieldId: string} | null>(null)
   const [showClaimReportModal, setShowClaimReportModal] = useState<string | null>(null) // reportId
+  const [showReassignReportModal, setShowReassignReportModal] = useState<string | null>(null) // reportId
   const [showFarmDetailsModal, setShowFarmDetailsModal] = useState<string | null>(null) // farmId
   const [showCreateCategoryModal, setShowCreateCategoryModal] = useState(false)
   const [showReorderModal, setShowReorderModal] = useState(false)
@@ -120,6 +123,11 @@ export default function AdminDashboard() {
   const [detailEditFields, setDetailEditFields] = useState<{ description: string; sheepCount: number; conditions: string[]; photoUrls: string[] }>({ description: '', sheepCount: 1, conditions: [], photoUrls: [] })
   const [savingDetailEdit, setSavingDetailEdit] = useState(false)
   const [exportLoading, setExportLoading] = useState(false)
+  // Thank You modal (admin → walker on behalf of farmer)
+  const [thankYouReportId, setThankYouReportId] = useState<string | null>(null)
+  const [thankYouText, setThankYouText] = useState('')
+  const [sendingThankYou, setSendingThankYou] = useState(false)
+  const [thankYouSent, setThankYouSent] = useState<Set<string>>(new Set())
   // Complete modal
   const [completeReportId, setCompleteReportId] = useState<string | null>(null)
   const [completeNotes, setCompleteNotes] = useState('')
@@ -640,6 +648,29 @@ export default function AdminDashboard() {
                       </div>
                     </section>
 
+                    {/* Claimants */}
+                    {(report.claimedByFarmerIds?.length ?? 0) > 0 && (
+                      <section>
+                        <h3 className="text-xs font-semibold text-[#92998B] uppercase tracking-wide mb-2">Claimed By ({report.claimedByFarmerIds!.length})</h3>
+                        <div className="space-y-1">
+                          {report.claimedByFarmerIds!.map(fid => {
+                            const farmer = allUsers.find((u: any) => u.id === fid)
+                            return (
+                              <div key={fid} className="flex items-center justify-between bg-[#7D8DCC]/10 rounded-lg px-3 py-2 text-sm">
+                                <span className="text-[#614270] font-medium">🧑‍🌾 {farmer?.full_name || farmer?.email || fid.slice(0, 8)}</span>
+                                <button
+                                  onClick={() => unclaimReportForFarmer(report.id, fid)}
+                                  className="text-xs text-[#FA9335] hover:text-[#e07820] font-medium"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </section>
+                    )}
+
                     {/* GPS Location */}
                     <section>
                       <h3 className="text-xs font-semibold text-[#92998B] uppercase tracking-wide mb-2">GPS Location</h3>
@@ -868,6 +899,24 @@ export default function AdminDashboard() {
                               rows={3}
                               className="w-full px-3 py-2 border border-[#D1D9C5] rounded-lg text-sm focus:ring-2 focus:ring-[#7D8DCC]" />
                           </div>
+                          {detailEditFields.photoUrls.length > 0 && (
+                            <div>
+                              <label className="block text-xs font-medium text-[#614270] mb-1">Current Photos</label>
+                              <div className="grid grid-cols-3 gap-2">
+                                {detailEditFields.photoUrls.map((url, i) => (
+                                  <div key={url} className="relative group">
+                                    <img src={url} alt={`Photo ${i + 1}`} className="rounded-lg object-cover w-full h-24" />
+                                    <button
+                                      type="button"
+                                      onClick={() => setDetailEditFields(f => ({ ...f, photoUrls: f.photoUrls.filter(u => u !== url) }))}
+                                      className="absolute top-1 right-1 w-6 h-6 bg-[#FA9335] text-white rounded-full text-xs font-bold flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                      title="Remove photo"
+                                    >×</button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                           <div>
                             <label className="block text-xs font-medium text-[#614270] mb-1">Add Photos</label>
                             <PhotoUpload
@@ -882,6 +931,7 @@ export default function AdminDashboard() {
                                 try {
                                   const conditions = detailEditFields.conditions
                                   const condition = conditions[0] || ''
+                                  const removedPhotos = (report.photoUrls || []).filter(u => !detailEditFields.photoUrls.includes(u))
                                   await updateReportInDB(report.id, {
                                     description: detailEditFields.description,
                                     sheepCount: detailEditFields.sheepCount,
@@ -889,6 +939,17 @@ export default function AdminDashboard() {
                                     condition,
                                     photoUrls: detailEditFields.photoUrls,
                                   })
+                                  const currentAdminEmail = allUsers.find((u: any) => u.id === currentUserId)?.email
+                                  for (const url of removedPhotos) {
+                                    await writeAuditLog({
+                                      actorId: currentUserId,
+                                      actorEmail: currentAdminEmail,
+                                      action: 'report.photo_delete',
+                                      entityType: 'report',
+                                      entityId: report.id,
+                                      detail: { photoUrl: url },
+                                    })
+                                  }
                                   await loadReports()
                                   setEditingDetailReport(false)
                                 } finally {
@@ -929,6 +990,18 @@ export default function AdminDashboard() {
                       <div className="flex flex-wrap gap-2">
                         {!report.archived && report.status === 'reported' && !report.screeningRequired && (
                           <button onClick={() => { setShowClaimReportModal(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-[#9ED663]/20 text-[#614270] rounded-lg text-sm hover:bg-[#9ED663]/30">Claim for Farmer</button>
+                        )}
+                        {!report.archived && report.status === 'claimed' && (
+                          <button onClick={() => { setShowClaimReportModal(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-[#9ED663]/20 text-[#614270] rounded-lg text-sm hover:bg-[#9ED663]/30">Add Farmer</button>
+                        )}
+                        {!report.archived && report.status === 'claimed' && (
+                          <button onClick={() => { setShowReassignReportModal(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-[#7D8DCC]/10 text-[#7D8DCC] rounded-lg text-sm hover:bg-[#7D8DCC]/20">Reassign</button>
+                        )}
+                        {report.reporterId && report.status === 'claimed' && !thankYouSent.has(report.id) && (
+                          <button onClick={() => { setThankYouReportId(report.id); setThankYouText('') }} className="px-3 py-2 bg-[#EADA69]/20 text-[#614270] rounded-lg text-sm hover:bg-[#EADA69]/40">💌 Thank Walker</button>
+                        )}
+                        {thankYouSent.has(report.id) && (
+                          <span className="px-3 py-2 text-[#9ED663] text-sm font-medium">✓ Thanks Sent</span>
                         )}
                         {!report.archived && report.status === 'claimed' && (
                           <button onClick={() => { resolveReport(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-[#7D8DCC]/10 text-[#7D8DCC] rounded-lg text-sm hover:bg-[#7D8DCC]/20">Resolve</button>
@@ -981,6 +1054,50 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* Thank Walker Modal */}
+      {thankYouReportId && (() => {
+        const tyReport = reports.find(r => r.id === thankYouReportId)
+        return (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+              <h3 className="text-lg font-bold text-[#614270] mb-1">💌 Thank the Walker</h3>
+              <p className="text-sm text-[#92998B] mb-3">Send a thank you message to the walker who filed this report.</p>
+              <textarea
+                value={thankYouText}
+                onChange={(e) => setThankYouText(e.target.value)}
+                placeholder="Thank you for reporting this — the animals have been safely recovered!"
+                rows={4}
+                className="w-full px-3 py-2 border border-[#D1D9C5] rounded-lg text-sm mb-4 resize-none focus:outline-none focus:ring-2 focus:ring-[#7D8DCC]"
+              />
+              <div className="space-y-3">
+                <button
+                  disabled={sendingThankYou}
+                  onClick={async () => {
+                    if (!tyReport?.reporterId) return
+                    setSendingThankYou(true)
+                    try {
+                      const msg = thankYouText.trim() || 'Thank you for reporting this — the animals have been safely recovered!'
+                      await sendThankYouMessage(tyReport.reporterId, thankYouReportId, msg)
+                      setThankYouSent(prev => new Set(prev).add(thankYouReportId))
+                      setThankYouReportId(null)
+                      setThankYouText('')
+                    } catch {
+                      alert('Failed to send message. Please try again.')
+                    } finally {
+                      setSendingThankYou(false)
+                    }
+                  }}
+                  className="w-full py-3 bg-[#614270] text-white rounded-xl font-semibold hover:bg-[#4e3359] disabled:opacity-50"
+                >
+                  {sendingThankYou ? 'Sending…' : 'Send Thank You'}
+                </button>
+                <button onClick={() => { setThankYouReportId(null); setThankYouText('') }} className="w-full py-3 bg-[#D1D9C5] text-[#614270] rounded-xl font-semibold hover:bg-[#D1D9C5]">Cancel</button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
@@ -1085,7 +1202,7 @@ export default function AdminDashboard() {
         }}
       />}
 
-      {/* Claim Report Modal */}
+      {/* Claim / Add Farmer Modal */}
       {showClaimReportModal && <ClaimReportModal
         reportId={showClaimReportModal}
         report={reports.find(r => r.id === showClaimReportModal)!}
@@ -1094,6 +1211,21 @@ export default function AdminDashboard() {
         onClaim={(reportId: string, farmerId: string) => {
           claimReportForFarmer(reportId, farmerId)
           setShowClaimReportModal(null)
+        }}
+      />}
+
+      {/* Reassign Modal */}
+      {showReassignReportModal && <ClaimReportModal
+        reportId={showReassignReportModal}
+        report={reports.find(r => r.id === showReassignReportModal)!}
+        farmers={[...farmers, ...admins]}
+        title="Reassign to Farmer"
+        description="Select a farmer to reassign this report to. All existing claimants will be replaced."
+        actionLabel="Reassign"
+        onClose={() => setShowReassignReportModal(null)}
+        onClaim={(reportId: string, farmerId: string) => {
+          reassignReport(reportId, farmerId)
+          setShowReassignReportModal(null)
         }}
       />}
 
@@ -1109,6 +1241,15 @@ export default function AdminDashboard() {
           onSuspend={handleSuspend}
           onActivate={handleActivate}
           onNavigate={(view) => { setViewingUser(null); setCurrentView(view) }}
+          onOpenReport={(reportId) => {
+            setViewingUser(null)
+            setCurrentView('reports')
+            setDetailReportId(reportId)
+          }}
+          onViewAllReports={(userId) => {
+            setCurrentView('reports')
+            setFilterKeyword(userId)
+          }}
         />
       )}
 
@@ -2607,9 +2748,11 @@ function FarmDetailsModal({ farm, owner, onClose, onAddField, onEditField, onDel
 }
 
 function CreateFieldModal({ farmId, farm, onClose, onCreate }: any) {
+  const { reportCategories } = useAppStore()
   const [name, setName] = useState('')
   const [sheepCount, setSheepCount] = useState('')
   const [fencePosts, setFencePosts] = useState<{lat: number, lng: number}[]>([])
+  const [categorySubscriptions, setCategorySubscriptions] = useState<Record<string, boolean>>({})
 
   const handleMapClick = (lat: number, lng: number) => {
     setFencePosts([...fencePosts, { lat, lng }])
@@ -2638,7 +2781,8 @@ function CreateFieldModal({ farmId, farm, onClose, onCreate }: any) {
       name: name.trim(),
       fencePosts,
       sheepCount: sheepCount ? parseInt(sheepCount) : undefined,
-      color: '#9ED663'
+      color: '#9ED663',
+      categorySubscriptions,
     })
   }
 
@@ -2733,6 +2877,33 @@ function CreateFieldModal({ farmId, farm, onClose, onCreate }: any) {
             </div>
           )}
 
+          {reportCategories.filter(c => c.isActive).length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-[#614270] mb-2">Alert Categories for this Field</label>
+              <div className="flex flex-wrap gap-2">
+                {reportCategories.filter(c => c.isActive).map(cat => {
+                  const isCompulsory = cat.subscriptionMode === 'compulsory'
+                  const enabled = isCompulsory || (categorySubscriptions[cat.id] ?? (cat.subscriptionMode === 'default_on'))
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      disabled={isCompulsory}
+                      onClick={() => !isCompulsory && setCategorySubscriptions(prev => ({ ...prev, [cat.id]: !enabled }))}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                        enabled ? 'bg-[#614270] text-white border-[#614270]' : 'bg-white text-[#92998B] border-[#D1D9C5]'
+                      } ${isCompulsory ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                    >
+                      <span>{cat.emoji}</span>
+                      <span>{cat.name}</span>
+                      {isCompulsory && <span className="text-xs opacity-70">🔒</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-3 pt-4">
             <button
               type="button"
@@ -2756,8 +2927,10 @@ function CreateFieldModal({ farmId, farm, onClose, onCreate }: any) {
 }
 
 function EditFieldModal({ farmId, field, onClose, onSave }: any) {
+  const { reportCategories } = useAppStore()
   const [name, setName] = useState(field.name)
   const [sheepCount, setSheepCount] = useState(field.sheepCount?.toString() || '')
+  const [categorySubscriptions, setCategorySubscriptions] = useState<Record<string, boolean>>(field.categorySubscriptions || {})
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -2768,7 +2941,8 @@ function EditFieldModal({ farmId, field, onClose, onSave }: any) {
 
     onSave(farmId, field.id, {
       name: name.trim(),
-      sheepCount: sheepCount ? parseInt(sheepCount) : undefined
+      sheepCount: sheepCount ? parseInt(sheepCount) : undefined,
+      categorySubscriptions,
     })
   }
 
@@ -2804,6 +2978,33 @@ function EditFieldModal({ farmId, field, onClose, onSave }: any) {
             />
           </div>
 
+          {reportCategories.filter((c: any) => c.isActive).length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-[#614270] mb-2">Alert Categories for this Field</label>
+              <div className="flex flex-wrap gap-2">
+                {reportCategories.filter((c: any) => c.isActive).map((cat: any) => {
+                  const isCompulsory = cat.subscriptionMode === 'compulsory'
+                  const enabled = isCompulsory || (categorySubscriptions[cat.id] ?? (cat.subscriptionMode === 'default_on'))
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      disabled={isCompulsory}
+                      onClick={() => !isCompulsory && setCategorySubscriptions((prev: Record<string, boolean>) => ({ ...prev, [cat.id]: !enabled }))}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                        enabled ? 'bg-[#614270] text-white border-[#614270]' : 'bg-white text-[#92998B] border-[#D1D9C5]'
+                      } ${isCompulsory ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                    >
+                      <span>{cat.emoji}</span>
+                      <span>{cat.name}</span>
+                      {isCompulsory && <span className="text-xs opacity-70">🔒</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-3 pt-4">
             <button type="button" onClick={onClose} className="flex-1 py-3 bg-[#D1D9C5] text-[#614270] rounded-xl font-semibold hover:bg-[#D1D9C5]">Cancel</button>
             <button type="submit" className="flex-1 py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold hover:bg-[#6b7db3]">Save Changes</button>
@@ -2814,7 +3015,7 @@ function EditFieldModal({ farmId, field, onClose, onSave }: any) {
   )
 }
 
-function ClaimReportModal({ reportId, report, farmers, onClose, onClaim }: any) {
+function ClaimReportModal({ reportId, report, farmers, onClose, onClaim, title, description, actionLabel }: any) {
   const [selectedFarmerId, setSelectedFarmerId] = useState(farmers[0]?.id || '')
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -2830,18 +3031,21 @@ function ClaimReportModal({ reportId, report, farmers, onClose, onClaim }: any) 
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-[#614270]">Claim Report for Farmer</h3>
+          <h3 className="text-xl font-bold text-[#614270]">{title || 'Claim Report for Farmer'}</h3>
           <button onClick={onClose} className="text-[#92998B] hover:text-[#614270] text-2xl">&times;</button>
         </div>
 
-        <div className="mb-6 p-4 bg-[#EADA69]/20 rounded-lg">
-          <div className="font-medium text-[#614270] mb-2">Report Details</div>
+        <div className="mb-4 p-4 bg-[#EADA69]/20 rounded-lg">
           <div className="text-sm text-[#614270] space-y-1">
             <div>{report.categoryEmoji || '🐑'} {report.sheepCount} {report.categoryName || 'sheep'} ({report.condition})</div>
             <div>📅 {new Date(report.timestamp).toLocaleString()}</div>
             {report.description && <div>📝 {report.description}</div>}
           </div>
         </div>
+
+        {description && (
+          <p className="text-sm text-[#92998B] mb-4">{description}</p>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -2861,13 +3065,9 @@ function ClaimReportModal({ reportId, report, farmers, onClose, onClaim }: any) 
             </select>
           </div>
 
-          <div className="bg-[#7D8DCC]/10 rounded-lg p-3 text-sm text-[#7D8DCC]">
-            💡 This will mark the report as "claimed" and notify the walker that a farmer is responding.
-          </div>
-
           <div className="flex gap-3 pt-4">
             <button type="button" onClick={onClose} className="flex-1 py-3 bg-[#D1D9C5] text-[#614270] rounded-xl font-semibold hover:bg-[#D1D9C5]">Cancel</button>
-            <button type="submit" className="flex-1 py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold hover:bg-[#6b7db3]">Claim Report</button>
+            <button type="submit" className="flex-1 py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold hover:bg-[#6b7db3]">{actionLabel || 'Claim Report'}</button>
           </div>
         </form>
       </div>
@@ -3188,7 +3388,7 @@ function CategoryFormModal({ category, onClose, onSave }: {
 }
 
 // ─── User Detail / Edit Modal ───────────────────────────────────────────────
-function UserDetailModal({ user, reports, farms, onClose, onUpdate, onReset, onSuspend, onActivate, onNavigate }: {
+function UserDetailModal({ user, reports, farms, onClose, onUpdate, onReset, onSuspend, onActivate, onNavigate, onOpenReport, onViewAllReports }: {
   user: any
   reports: any[]
   farms: any[]
@@ -3198,6 +3398,8 @@ function UserDetailModal({ user, reports, farms, onClose, onUpdate, onReset, onS
   onSuspend: (id: string) => void
   onActivate: (id: string) => void
   onNavigate: (view: 'reports' | 'farms') => void
+  onOpenReport: (reportId: string) => void
+  onViewAllReports: (userId: string) => void
 }) {
   const [editing, setEditing] = useState(false)
   const [fullName, setFullName] = useState(user.full_name || '')
@@ -3334,7 +3536,7 @@ function UserDetailModal({ user, reports, farms, onClose, onUpdate, onReset, onS
                   Reports ({userReports.length})
                 </p>
                 <button
-                  onClick={() => onNavigate('reports')}
+                  onClick={() => { onClose(); onViewAllReports(user.id) }}
                   className="text-xs text-[#7D8DCC] hover:text-[#7D8DCC] font-medium"
                 >
                   View all in Reports tab →
@@ -3347,7 +3549,7 @@ function UserDetailModal({ user, reports, farms, onClose, onUpdate, onReset, onS
                   {userReports.slice(0, 10).map((r: any) => (
                     <button
                       key={r.id}
-                      onClick={() => onNavigate('reports')}
+                      onClick={() => { onClose(); onOpenReport(r.id) }}
                       className="w-full flex items-center justify-between text-sm bg-[#D1D9C5] hover:bg-[#7D8DCC]/10 rounded-lg px-3 py-2 transition-colors text-left group"
                     >
                       <span className="text-[#614270] group-hover:text-[#7D8DCC]">

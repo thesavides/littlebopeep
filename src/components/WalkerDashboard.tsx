@@ -932,7 +932,28 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                         <div className="flex justify-between items-start mb-1">
                           <div>
                             <div className="font-semibold text-[#614270]">
-                              {report.categoryEmoji || '🐑'} {report.sheepCount} {report.categoryName || 'sheep'}
+                              {(report.status === 'reported' || report.status === 'claimed') ? (
+                                <button
+                                  onClick={() => {
+                                    if (isEditing) {
+                                      setEditingReportId(null)
+                                    } else {
+                                      setEditingReportId(report.id)
+                                      setEditFields({
+                                        description: report.description || '',
+                                        sheepCount: report.sheepCount,
+                                        conditions: report.conditions?.length ? report.conditions : report.condition ? [report.condition] : [],
+                                        photoUrls: report.photoUrls || [],
+                                      })
+                                    }
+                                  }}
+                                  className="text-left hover:opacity-70 active:opacity-50"
+                                >
+                                  {report.categoryEmoji || '🐑'} {report.sheepCount} {report.categoryName || 'sheep'}
+                                </button>
+                              ) : (
+                                <>{report.categoryEmoji || '🐑'} {report.sheepCount} {report.categoryName || 'sheep'}</>
+                              )}
                             </div>
                             <div className="text-sm text-[#92998B]">
                               <span className="font-mono text-[#92998B] mr-1">#{report.id.slice(-6).toUpperCase()}</span>

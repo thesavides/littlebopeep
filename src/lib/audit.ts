@@ -34,6 +34,7 @@ export type AuditAction =
   | 'report.flag'
   | 'report.archive'
   | 'report.delete'
+  | 'report.photo_delete'
   // Auth actions
   | 'auth.login'
   | 'auth.logout'
