@@ -634,7 +634,7 @@ export default function AdminDashboard() {
                         <div className="text-2xl">{report.categoryEmoji} <span className="text-base font-medium">{report.categoryName}</span></div>
                         <div><span className="text-[#92998B]">Count:</span> {report.sheepCount}</div>
                         <div><span className="text-[#92998B]">Condition:</span> {report.condition}</div>
-                        <div><span className="text-[#92998B]">Status:</span> <span className={`font-medium ${report.status === 'reported' ? 'text-[#614270]' : report.status === 'claimed' ? 'text-[#7D8DCC]' : 'text-[#9ED663]'}`}>{{ reported: 'Reported', claimed: 'Claimed', resolved: 'Resolved', escalated: 'Escalated' }[report.status] || report.status}</span></div>
+                        <div><span className="text-[#92998B]">Status:</span> <span className={`font-medium ${report.status === 'reported' ? 'text-[#614270]' : report.status === 'claimed' ? 'text-[#7D8DCC]' : 'text-[#9ED663]'}`}>{{ reported: 'Reported', claimed: 'Claimed', resolved: 'Resolved', escalated: 'Escalated', complete: 'Complete' }[report.status] || report.status}</span></div>
                         <div><span className="text-[#92998B]">Submitted:</span> {new Date(report.timestamp).toLocaleString('en-GB')}</div>
                         {report.description && <div><span className="text-[#92998B]">Description:</span> {report.description}</div>}
                       </div>
