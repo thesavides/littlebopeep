@@ -62,7 +62,7 @@ function LandingPage() {
   ]
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#D1D9C5' }}>
+    <div className="min-h-screen pb-[128px] sm:pb-0" style={{ backgroundColor: '#D1D9C5' }}>
 
       {/* ── Nav ──────────────────────────────────────────────────────────── */}
       <nav className="sticky top-0 z-40 border-b" style={{ backgroundColor: '#D1D9C5', borderColor: 'rgba(97,66,112,0.12)' }}>
@@ -151,66 +151,78 @@ function LandingPage() {
         </h1>
       </section>
 
-      {/* ── Three steps (illustrated, compact above-the-fold) ────────────── */}
-      <section className="mx-auto max-w-5xl px-5 pb-4">
-        <div className="grid grid-cols-3 gap-3 sm:gap-8">
+      {/* ── Three steps (illustrated, on white for legibility) ───────────── */}
+      <section className="py-6 sm:py-8" style={{ backgroundColor: '#fff' }}>
+        <div className="mx-auto max-w-5xl px-5">
+          <div className="grid grid-cols-3 gap-3 sm:gap-8">
 
-          {/* Step 1 — See it: walker illustration */}
-          <div className="flex flex-col items-center text-center gap-1">
-            <div className="h-12 flex items-end justify-center">
-              <svg width="36" height="44" viewBox="0 0 44 54" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="26" cy="7" r="5" stroke="#614270" strokeWidth="2.5"/>
-                <line x1="26" y1="12" x2="23" y2="27" stroke="#614270" strokeWidth="2.5" strokeLinecap="round"/>
-                <line x1="24" y1="17" x2="12" y2="23" stroke="#614270" strokeWidth="2.5" strokeLinecap="round"/>
-                <line x1="24" y1="19" x2="34" y2="25" stroke="#614270" strokeWidth="2.5" strokeLinecap="round"/>
-                <line x1="12" y1="23" x2="8" y2="40" stroke="#92998B" strokeWidth="2" strokeLinecap="round"/>
-                <line x1="23" y1="27" x2="14" y2="42" stroke="#614270" strokeWidth="2.5" strokeLinecap="round"/>
-                <line x1="14" y1="42" x2="6" y2="44" stroke="#614270" strokeWidth="2.5" strokeLinecap="round"/>
-                <line x1="23" y1="27" x2="32" y2="43" stroke="#614270" strokeWidth="2.5" strokeLinecap="round"/>
-                <line x1="32" y1="43" x2="40" y2="41" stroke="#614270" strokeWidth="2.5" strokeLinecap="round"/>
-              </svg>
+            {/* Step 1 — See it: walker illustration */}
+            <div className="flex flex-col items-center text-center gap-1">
+              <div className="h-12 flex items-end justify-center">
+                <svg width="36" height="44" viewBox="0 0 44 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="26" cy="7" r="5" stroke="#614270" strokeWidth="2.5"/>
+                  <line x1="26" y1="12" x2="23" y2="27" stroke="#614270" strokeWidth="2.5" strokeLinecap="round"/>
+                  <line x1="24" y1="17" x2="12" y2="23" stroke="#614270" strokeWidth="2.5" strokeLinecap="round"/>
+                  <line x1="24" y1="19" x2="34" y2="25" stroke="#614270" strokeWidth="2.5" strokeLinecap="round"/>
+                  <line x1="12" y1="23" x2="8" y2="40" stroke="#92998B" strokeWidth="2" strokeLinecap="round"/>
+                  <line x1="23" y1="27" x2="14" y2="42" stroke="#614270" strokeWidth="2.5" strokeLinecap="round"/>
+                  <line x1="14" y1="42" x2="6" y2="44" stroke="#614270" strokeWidth="2.5" strokeLinecap="round"/>
+                  <line x1="23" y1="27" x2="32" y2="43" stroke="#614270" strokeWidth="2.5" strokeLinecap="round"/>
+                  <line x1="32" y1="43" x2="40" y2="41" stroke="#614270" strokeWidth="2.5" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <div className="text-2xl sm:text-3xl font-bold leading-none font-serif" style={{ color: '#D1D9C5' }}>01</div>
+              <h3 className="font-semibold text-sm sm:text-base" style={{ color: '#614270' }}>{cards[0].title}</h3>
+              <p className="text-xs sm:text-sm leading-snug" style={{ color: '#92998B' }}>{cards[0].desc}</p>
             </div>
-            <div className="text-2xl sm:text-3xl font-bold leading-none font-serif" style={{ color: '#D1D9C5' }}>01</div>
-            <h3 className="font-semibold text-sm sm:text-base" style={{ color: '#614270' }}>{cards[0].title}</h3>
-          </div>
 
-          {/* Step 2 — Report it: brand map-pin logo */}
-          <div className="flex flex-col items-center text-center gap-1">
-            <div className="h-12 flex items-end justify-center">
-              <img src="/logo-pin.svg" alt="" aria-hidden="true" className="w-10 h-10" />
+            {/* Step 2 — Report it: brand map-pin logo */}
+            <div className="flex flex-col items-center text-center gap-1">
+              <div className="h-12 flex items-end justify-center">
+                <img src="/logo-pin.svg" alt="" aria-hidden="true" className="w-10 h-10" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-bold leading-none font-serif" style={{ color: '#D1D9C5' }}>02</div>
+              <h3 className="font-semibold text-sm sm:text-base" style={{ color: '#614270' }}>{cards[1].title}</h3>
+              <p className="text-xs sm:text-sm leading-snug" style={{ color: '#92998B' }}>{cards[1].desc}</p>
             </div>
-            <div className="text-2xl sm:text-3xl font-bold leading-none font-serif" style={{ color: '#D1D9C5' }}>02</div>
-            <h3 className="font-semibold text-sm sm:text-base" style={{ color: '#614270' }}>{cards[1].title}</h3>
-          </div>
 
-          {/* Step 3 — Get it sorted: brand-green tick circle */}
-          <div className="flex flex-col items-center text-center gap-1">
-            <div className="h-12 flex items-end justify-center">
-              <svg width="40" height="40" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="24" cy="24" r="21" stroke="#9ED663" strokeWidth="2.5" fill="rgba(158,214,99,0.12)"/>
-                <polyline points="13,25 20,33 35,15" stroke="#9ED663" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+            {/* Step 3 — Get it sorted: brand-green tick circle */}
+            <div className="flex flex-col items-center text-center gap-1">
+              <div className="h-12 flex items-end justify-center">
+                <svg width="40" height="40" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="24" cy="24" r="21" stroke="#9ED663" strokeWidth="2.5" fill="rgba(158,214,99,0.12)"/>
+                  <polyline points="13,25 20,33 35,15" stroke="#9ED663" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <div className="text-2xl sm:text-3xl font-bold leading-none font-serif" style={{ color: '#D1D9C5' }}>03</div>
+              <h3 className="font-semibold text-sm sm:text-base" style={{ color: '#614270' }}>{cards[2].title}</h3>
+              <p className="text-xs sm:text-sm leading-snug" style={{ color: '#92998B' }}>{cards[2].desc}</p>
             </div>
-            <div className="text-2xl sm:text-3xl font-bold leading-none font-serif" style={{ color: '#D1D9C5' }}>03</div>
-            <h3 className="font-semibold text-sm sm:text-base" style={{ color: '#614270' }}>{cards[2].title}</h3>
-          </div>
 
+          </div>
         </div>
       </section>
 
       {/* ── CTAs ─────────────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-5xl px-5 pb-8 flex flex-col items-center gap-3">
+      {/* Mobile: fixed to bottom (anchored); Desktop: normal flow under hero */}
+      <section
+        className="
+          fixed bottom-0 left-0 right-0 z-30 px-5 pt-3 pb-[max(env(safe-area-inset-bottom,0px),12px)] border-t flex flex-col items-stretch gap-2
+          sm:static sm:border-0 sm:px-5 sm:pt-0 sm:pb-10 sm:mx-auto sm:max-w-5xl sm:items-center sm:gap-3
+        "
+        style={{ backgroundColor: '#D1D9C5', borderColor: 'rgba(146,153,139,0.35)' }}
+      >
         <Link
           href="/auth?mode=signup"
-          className="rounded-full px-8 py-4 text-base font-semibold text-center transition-opacity hover:opacity-90 w-full sm:w-auto sm:min-w-[280px]"
+          className="rounded-full px-8 py-3 sm:py-4 text-base font-semibold text-center transition-opacity hover:opacity-90 w-full sm:w-auto sm:min-w-[280px]"
           style={{ backgroundColor: '#7D8DCC', color: '#fff' }}
         >
           {t('home.landing.ctaPrimary', {}, 'Sign up & report')}
         </Link>
         <Link
           href="/auth?mode=signup&role=farmer"
-          className="rounded-full px-8 py-3.5 text-sm font-medium text-center border transition-colors hover:opacity-80 w-full sm:w-auto sm:min-w-[280px]"
-          style={{ borderColor: '#614270', color: '#614270' }}
+          className="rounded-full px-8 py-2.5 sm:py-3.5 text-sm font-medium text-center border transition-colors hover:opacity-80 w-full sm:w-auto sm:min-w-[280px]"
+          style={{ borderColor: '#614270', color: '#614270', backgroundColor: 'rgba(255,255,255,0.4)' }}
         >
           {t('home.landing.ctaFarmer', {}, 'Farmer? Sign up to get alerts')}
         </Link>
