@@ -62,7 +62,7 @@ function LandingPage() {
   ]
 
   return (
-    <div className="min-h-screen pb-[160px] sm:pb-0" style={{ backgroundColor: '#D1D9C5' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#D1D9C5' }}>
 
       {/* ── Nav ──────────────────────────────────────────────────────────── */}
       <nav className="sticky top-0 z-40 border-b" style={{ backgroundColor: '#D1D9C5', borderColor: 'rgba(97,66,112,0.12)' }}>
@@ -204,25 +204,24 @@ function LandingPage() {
       </section>
 
       {/* ── CTAs ─────────────────────────────────────────────────────────── */}
-      {/* Mobile: fixed to bottom (anchored); Desktop: normal flow under hero */}
+      {/* Sits between the three-step (above the fold) and the How-it-works
+          section. On mobile this lands at/near the bottom of the viewport on
+          first load; on desktop it's a balanced band between the two white
+          step sections. */}
       <section
-        className="
-          fixed bottom-0 left-0 right-0 z-30 px-5 pt-4 pb-[max(env(safe-area-inset-bottom,0px),16px)] border-t flex flex-col items-stretch gap-2
-          sm:static sm:border-0 sm:px-5 sm:py-8 sm:mx-auto sm:max-w-5xl sm:items-center sm:gap-3
-        "
-        style={{ backgroundColor: '#D1D9C5', borderColor: 'rgba(146,153,139,0.35)' }}
+        className="mx-auto max-w-5xl px-5 py-6 sm:py-8 flex flex-col items-stretch gap-3 sm:items-center"
       >
         <Link
           href="/auth?mode=signup"
-          className="rounded-full px-8 py-3 sm:py-4 text-base font-semibold text-center transition-opacity hover:opacity-90 w-full sm:w-auto sm:min-w-[280px]"
+          className="rounded-full px-8 py-3.5 sm:py-4 text-base font-semibold text-center transition-opacity hover:opacity-90 w-full sm:w-auto sm:min-w-[280px]"
           style={{ backgroundColor: '#7D8DCC', color: '#fff' }}
         >
           {t('home.landing.ctaPrimary', {}, 'Sign up & report')}
         </Link>
         <Link
           href="/auth?mode=signup&role=farmer"
-          className="rounded-full px-8 py-2.5 sm:py-3.5 text-sm font-medium text-center border transition-colors hover:opacity-80 w-full sm:w-auto sm:min-w-[280px]"
-          style={{ borderColor: '#614270', color: '#614270', backgroundColor: 'rgba(255,255,255,0.4)' }}
+          className="rounded-full px-8 py-3 sm:py-3.5 text-sm font-medium text-center border transition-colors hover:opacity-80 w-full sm:w-auto sm:min-w-[280px]"
+          style={{ borderColor: '#614270', color: '#614270' }}
         >
           {t('home.landing.ctaFarmer', {}, 'Farmer? Sign up to get alerts')}
         </Link>
