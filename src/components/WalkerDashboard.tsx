@@ -846,30 +846,20 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
               </div>
             )}
 
-            {/* Navigation */}
-            {currentReportStep === 2 ? (
-              <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#D1D9C5] px-4 py-3 flex gap-3 z-40 safe-area-pb">
-                <Button variant="ghost" onClick={handleBack} className="flex-1">
-                  {t('walker.back', {}, '← Back')}
-                </Button>
-                <Button variant="primary" onClick={handleNextStep} className="flex-1">
-                  {t('walker.continue', {}, 'Continue →')}
-                </Button>
-              </div>
-            ) : (
-              <div className="mt-6 space-y-3">
-                <Button
-                  variant="primary"
-                  onClick={handleNextStep}
-                  disabled={currentReportStep === 1 && !draftReport.location}
-                >
-                  {currentReportStep === 4 ? t('walker.submitReport', {}, '✓ Submit Report') : t('walker.continue', {}, 'Continue →')}
-                </Button>
-                <Button variant="ghost" onClick={handleBack}>
-                  {currentReportStep === 1 ? t('walker.cancel', {}, 'Cancel') : t('walker.back', {}, '← Back')}
-                </Button>
-              </div>
-            )}
+            {/* Navigation — always anchored to bottom of screen */}
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#D1D9C5] px-4 py-3 flex gap-3 z-40 safe-area-pb">
+              <Button variant="ghost" onClick={handleBack} className="flex-1">
+                {currentReportStep === 1 ? t('walker.cancel', {}, 'Cancel') : t('walker.back', {}, '← Back')}
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleNextStep}
+                disabled={currentReportStep === 1 && !draftReport.location}
+                className="flex-1"
+              >
+                {currentReportStep === 4 ? t('walker.submitReport', {}, '✓ Submit Report') : t('walker.continue', {}, 'Continue →')}
+              </Button>
+            </div>
           </>
         )}
 
