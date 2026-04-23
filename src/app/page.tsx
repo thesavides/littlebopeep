@@ -22,7 +22,7 @@ function LandingPage() {
       step: '1',
       icon: '👀',
       title: t('home.landing.seeIt', {}, 'See it'),
-      desc: t('home.landing.seeItDesc', {}, 'Spot an issue on your walk — animals, fences, gates, or fly-tipping.'),
+      desc: t('home.landing.seeItDesc', {}, 'Spot an issue on your walk, animals, fences, gates, or fly-tipping.'),
     },
     {
       step: '2',
@@ -200,7 +200,7 @@ function LandingPage() {
                   <line x1="30" y1="35" x2="35" y2="34" stroke="#614270" strokeWidth="2" strokeLinecap="round"/>
                 </svg>
               </div>
-              <div className="text-2xl sm:text-3xl font-bold leading-none font-serif mt-1" style={{ color: '#614270' }}>01</div>
+              <div className="text-2xl sm:text-3xl font-bold leading-none font-serif mt-1" style={{ color: '#D1D9C5' }}>01</div>
               <h3 className="font-semibold text-sm sm:text-base" style={{ color: '#614270' }}>{cards[0].title}</h3>
               <p className="text-xs sm:text-sm leading-snug" style={{ color: '#92998B' }}>{cards[0].desc}</p>
             </div>
@@ -210,7 +210,7 @@ function LandingPage() {
               <div className="h-12 w-12 flex items-center justify-center">
                 <img src="/logo-pin.svg" alt="" aria-hidden="true" className="h-12 w-12" />
               </div>
-              <div className="text-2xl sm:text-3xl font-bold leading-none font-serif mt-1" style={{ color: '#614270' }}>02</div>
+              <div className="text-2xl sm:text-3xl font-bold leading-none font-serif mt-1" style={{ color: '#D1D9C5' }}>02</div>
               <h3 className="font-semibold text-sm sm:text-base" style={{ color: '#614270' }}>{cards[1].title}</h3>
               <p className="text-xs sm:text-sm leading-snug" style={{ color: '#92998B' }}>{cards[1].desc}</p>
             </div>
@@ -223,7 +223,7 @@ function LandingPage() {
                   <polyline points="14,25 21,32 34,17" stroke="#9ED663" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
-              <div className="text-2xl sm:text-3xl font-bold leading-none font-serif mt-1" style={{ color: '#614270' }}>03</div>
+              <div className="text-2xl sm:text-3xl font-bold leading-none font-serif mt-1" style={{ color: '#D1D9C5' }}>03</div>
               <h3 className="font-semibold text-sm sm:text-base" style={{ color: '#614270' }}>{cards[2].title}</h3>
               <p className="text-xs sm:text-sm leading-snug" style={{ color: '#92998B' }}>{cards[2].desc}</p>
             </div>
