@@ -1499,15 +1499,15 @@ export default function AdminDashboard() {
             </div>
             {/* Action-required queue cards */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-              <button onClick={() => setCurrentView('reports')} className={`rounded-xl p-4 border text-left hover:shadow-md transition-shadow ${needsReviewCount > 0 ? 'bg-[#FA9335]/10 border-[#FA9335]/40' : 'bg-[#D1D9C5] border-[#D1D9C5]'}`}>
+              <button onClick={() => { setFilterStatus('needs_review'); setCurrentView('reports') }} className={`rounded-xl p-4 border text-left hover:shadow-md transition-shadow ${needsReviewCount > 0 ? 'bg-[#FA9335]/10 border-[#FA9335]/40' : 'bg-[#D1D9C5] border-[#D1D9C5]'}`}>
                 <div className={`text-2xl font-bold ${needsReviewCount > 0 ? 'text-[#FA9335]' : 'text-[#92998B]'}`}>{needsReviewCount}</div>
                 <div className={`text-sm ${needsReviewCount > 0 ? 'text-[#FA9335] font-medium' : 'text-[#92998B]'}`}>⚠️ Needs Review</div>
               </button>
-              <button onClick={() => setCurrentView('reports')} className={`rounded-xl p-4 border text-left hover:shadow-md transition-shadow ${escalatedCount > 0 ? 'bg-[#FA9335]/10 border-[#FA9335]/40' : 'bg-[#D1D9C5] border-[#D1D9C5]'}`}>
+              <button onClick={() => { setFilterStatus('escalated'); setCurrentView('reports') }} className={`rounded-xl p-4 border text-left hover:shadow-md transition-shadow ${escalatedCount > 0 ? 'bg-[#FA9335]/10 border-[#FA9335]/40' : 'bg-[#D1D9C5] border-[#D1D9C5]'}`}>
                 <div className={`text-2xl font-bold ${escalatedCount > 0 ? 'text-[#FA9335]' : 'text-[#92998B]'}`}>{escalatedCount}</div>
                 <div className={`text-sm ${escalatedCount > 0 ? 'text-[#FA9335] font-medium' : 'text-[#92998B]'}`}>🚨 Escalated</div>
               </button>
-              <button onClick={() => setCurrentView('reports')} className={`rounded-xl p-4 border text-left hover:shadow-md transition-shadow ${flaggedCount > 0 ? 'bg-[#EADA69]/20 border-[#EADA69]/40' : 'bg-[#D1D9C5] border-[#D1D9C5]'}`}>
+              <button onClick={() => { setFilterStatus('flagged'); setCurrentView('reports') }} className={`rounded-xl p-4 border text-left hover:shadow-md transition-shadow ${flaggedCount > 0 ? 'bg-[#EADA69]/20 border-[#EADA69]/40' : 'bg-[#D1D9C5] border-[#D1D9C5]'}`}>
                 <div className={`text-2xl font-bold ${flaggedCount > 0 ? 'text-[#614270]' : 'text-[#92998B]'}`}>{flaggedCount}</div>
                 <div className={`text-sm ${flaggedCount > 0 ? 'text-[#614270] font-medium' : 'text-[#92998B]'}`}>🚩 Flagged by Farmer</div>
               </button>
