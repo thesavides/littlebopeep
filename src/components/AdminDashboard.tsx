@@ -1460,7 +1460,7 @@ export default function AdminDashboard() {
         {currentView === 'overview' && (
           <>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <button onClick={() => setCurrentView('admins')} className="bg-white rounded-xl p-4 shadow text-left hover:shadow-md transition-shadow">
+              <button onClick={() => setCurrentView('walkers')} className="bg-white rounded-xl p-4 shadow text-left hover:shadow-md transition-shadow">
                 <div className="text-3xl font-bold text-[#614270]">{allUsers.length}</div>
                 <div className="text-sm text-[#92998B]">Total Users</div>
                 <div className="text-xs text-[#9ED663] mt-1">{activeUsers} active</div>

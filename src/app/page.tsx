@@ -135,7 +135,7 @@ function LandingPage() {
         style={{
           backgroundImage: 'url(/hero-sheep.jpg)',
           backgroundSize: 'cover',
-          backgroundPosition: 'center center',
+          backgroundPosition: 'center 40%',
           backgroundRepeat: 'no-repeat',
         }}
       >
@@ -150,7 +150,7 @@ function LandingPage() {
         />
 
         {/* Content — compact on mobile, taller on desktop so the image breathes */}
-        <div className="relative mx-auto max-w-5xl px-5 pt-8 pb-10 sm:min-h-[380px] sm:pt-12 sm:pb-14 text-center sm:flex sm:flex-col sm:items-center sm:justify-center">
+        <div className="relative mx-auto max-w-5xl px-5 pt-8 pb-10 sm:min-h-[520px] sm:pt-12 sm:pb-14 text-center sm:flex sm:flex-col sm:items-center sm:justify-center">
           {/* Eyebrow */}
           <p
             className="inline-block rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-widest mb-4 sm:mb-6 backdrop-blur-sm"
@@ -329,6 +329,8 @@ function LandingPage() {
           <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2">
             {[
               { label: t('home.landing.aboutUs', {}, 'About us'), href: '/about' },
+              { label: t('home.landing.privacyPolicy', {}, 'Privacy policy'), href: '/privacy' },
+              { label: t('home.landing.termsConditions', {}, 'Terms & conditions'), href: '/terms' },
               { label: t('auth.signIn', {}, 'Sign in'), href: '/auth' },
               { label: t('home.landing.farmerSignup', {}, 'Farmer sign-up'), href: '/auth?mode=signup&role=farmer' },
             ].map((link) => (
