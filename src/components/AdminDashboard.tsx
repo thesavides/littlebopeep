@@ -2723,17 +2723,20 @@ function EditFarmModal({ farm, allFarmers, onClose, onSave }: {
 
 function FarmDetailsModal({ farm, owner, onClose, onAddField, onEditField, onDeleteField, categories, onUpdateSubscription }: any) {
   const activeCategories = (categories || []).filter((c: any) => c.isActive)
+  const [notifPrefsOpen, setNotifPrefsOpen] = useState(false)
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl p-6 max-w-3xl w-full shadow-xl my-8">
-        <div className="flex justify-between items-center mb-4">
+    <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl max-w-3xl w-full shadow-xl my-8">
+        {/* Sticky header */}
+        <div className="sticky top-0 bg-white rounded-t-2xl px-6 pt-6 pb-4 border-b border-[#D1D9C5] flex justify-between items-center z-10">
           <div>
             <h3 className="text-xl font-bold text-[#614270]">{farm.name}</h3>
             <p className="text-sm text-[#614270]">Owner: {owner?.name || 'Unknown'}</p>
           </div>
           <button onClick={onClose} className="text-[#92998B] hover:text-[#614270] text-2xl">&times;</button>
         </div>
+        <div className="px-6 pb-6 pt-4">
 
         <div className="mb-6 p-4 bg-[#D1D9C5] rounded-lg">
           <div className="grid grid-cols-2 gap-4 text-sm">
@@ -2790,54 +2793,62 @@ function FarmDetailsModal({ farm, owner, onClose, onAddField, onEditField, onDel
         )}
 
         {activeCategories.length > 0 && (
-          <div className="mt-6 pt-4 border-t">
-            <h4 className="font-semibold text-[#614270] mb-3">Notification Preferences</h4>
-            <p className="text-xs text-[#92998B] mb-3">Control which report types trigger alerts for this farm.</p>
-            <div className="space-y-2">
-              {activeCategories.map((cat: any) => {
-                const isCompulsory = cat.subscriptionMode === 'compulsory'
-                const effective = isCompulsory
-                  ? true
-                  : cat.subscriptionMode === 'default_on'
-                    ? (farm.categorySubscriptions?.[cat.id] ?? true)
-                    : (farm.categorySubscriptions?.[cat.id] ?? false)
-                return (
-                  <div key={cat.id} className={`flex items-center justify-between p-3 rounded-lg ${isCompulsory ? 'bg-[#FA9335]/10 border border-[#FA9335]/20' : 'bg-[#D1D9C5] border border-[#D1D9C5]'}`}>
-                    <div className="flex items-center gap-2">
-                      {cat.imageUrl ? (
-                        <img src={cat.imageUrl} alt={cat.name} className="w-7 h-7 object-contain flex-shrink-0" />
-                      ) : (
-                        <span className="text-xl">{cat.emoji}</span>
-                      )}
-                      <div>
-                        <div className="text-sm font-medium text-[#614270]">{cat.name}</div>
-                        <div className="text-xs text-[#92998B]">
-                          {isCompulsory ? '🔒 Compulsory — cannot be disabled' : cat.subscriptionMode === 'default_on' ? 'Default on' : 'Optional'}
+          <div className="mt-4 pt-4 border-t border-[#D1D9C5]">
+            <button
+              onClick={() => setNotifPrefsOpen(o => !o)}
+              className="w-full flex items-center justify-between py-2 text-left"
+            >
+              <h4 className="font-semibold text-[#614270]">Notification Preferences</h4>
+              <svg className={`w-4 h-4 text-[#92998B] transition-transform ${notifPrefsOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {notifPrefsOpen && (
+              <div className="mt-2 space-y-2">
+                <p className="text-xs text-[#92998B] mb-2">Control which report types trigger alerts for this farm.</p>
+                {activeCategories.map((cat: any) => {
+                  const isCompulsory = cat.subscriptionMode === 'compulsory'
+                  const effective = isCompulsory
+                    ? true
+                    : cat.subscriptionMode === 'default_on'
+                      ? (farm.categorySubscriptions?.[cat.id] ?? true)
+                      : (farm.categorySubscriptions?.[cat.id] ?? false)
+                  return (
+                    <div key={cat.id} className={`flex items-center justify-between p-3 rounded-lg ${isCompulsory ? 'bg-[#FA9335]/10 border border-[#FA9335]/20' : 'bg-[#D1D9C5] border border-[#D1D9C5]'}`}>
+                      <div className="flex items-center gap-2">
+                        {cat.imageUrl ? (
+                          <img src={cat.imageUrl} alt={cat.name} className="w-7 h-7 object-contain flex-shrink-0" />
+                        ) : (
+                          <span className="text-xl">{cat.emoji}</span>
+                        )}
+                        <div>
+                          <div className="text-sm font-medium text-[#614270]">{cat.name}</div>
+                          <div className="text-xs text-[#92998B]">
+                            {isCompulsory ? '🔒 Compulsory' : cat.subscriptionMode === 'default_on' ? 'Default on' : 'Optional'}
+                          </div>
                         </div>
                       </div>
+                      <button
+                        onClick={() => !isCompulsory && onUpdateSubscription(farm.id, cat.id, !effective)}
+                        disabled={isCompulsory}
+                        className={`relative w-11 h-6 rounded-full transition-colors ${effective ? 'bg-[#9ED663]' : 'bg-[#D1D9C5]'} ${isCompulsory ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                      >
+                        <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${effective ? 'translate-x-5' : 'translate-x-0'}`} />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => !isCompulsory && onUpdateSubscription(farm.id, cat.id, !effective)}
-                      disabled={isCompulsory}
-                      className={`relative w-11 h-6 rounded-full transition-colors ${
-                        effective ? 'bg-[#9ED663]' : 'bg-[#D1D9C5]'
-                      } ${isCompulsory ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                      title={isCompulsory ? 'Compulsory — cannot be changed' : undefined}
-                    >
-                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${effective ? 'translate-x-5' : 'translate-x-0'}`} />
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
 
-        <div className="mt-6 pt-4 border-t">
-          <button onClick={onClose} className="w-full py-3 bg-[#D1D9C5] text-[#614270] rounded-xl font-semibold hover:bg-[#D1D9C5]">
+        <div className="mt-6 pt-4 border-t border-[#D1D9C5]">
+          <button onClick={onClose} className="w-full py-3 bg-[#D1D9C5] text-[#614270] rounded-xl font-semibold hover:bg-[#92998B]/20">
             Close
           </button>
         </div>
+        </div>{/* end scrollable body */}
       </div>
     </div>
   )

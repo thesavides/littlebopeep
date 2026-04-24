@@ -25,6 +25,7 @@ export default function FarmerDashboard() {
     updateFarm,
     deleteFarm,
     addField,
+    updateField,
     deleteField,
     claimReport,
     unclaimReport,
@@ -76,6 +77,10 @@ export default function FarmerDashboard() {
   // Message-admin-on-complete state
   const [messageAdminOpen, setMessageAdminOpen] = useState<string | null>(null)
   const [messageAdminText, setMessageAdminText] = useState('')
+  // Field inline editing
+  const [expandedFieldId, setExpandedFieldId] = useState<string | null>(null)
+  const [editFieldName, setEditFieldName] = useState('')
+  const [editingFieldBoundaryId, setEditingFieldBoundaryId] = useState<string | null>(null)
 
   const currentUser = getCurrentUser()
 
@@ -225,6 +230,7 @@ export default function FarmerDashboard() {
       setViewState('view-farm')
       setFencePosts([])
       setFieldName('')
+      setEditingFieldBoundaryId(null)
     } else if (viewState === 'view-farm') {
       setViewState('dashboard')
       setSelectedFarmId(null)
@@ -311,7 +317,12 @@ export default function FarmerDashboard() {
 
   const handleSaveField = () => {
     if (selectedFarmId && fieldName.trim() && fencePosts.length >= 3) {
-      addField(selectedFarmId, { name: fieldName.trim(), fencePosts, categorySubscriptions: fieldCategorySubscriptions })
+      if (editingFieldBoundaryId) {
+        updateField(selectedFarmId, editingFieldBoundaryId, { name: fieldName.trim(), fencePosts })
+        setEditingFieldBoundaryId(null)
+      } else {
+        addField(selectedFarmId, { name: fieldName.trim(), fencePosts, categorySubscriptions: fieldCategorySubscriptions })
+      }
       setFieldName('')
       setFencePosts([])
       setFieldCategorySubscriptions({})
@@ -328,7 +339,7 @@ export default function FarmerDashboard() {
     switch (viewState) {
       case 'register': return t('farmer.registrationStep', { step: registrationStep, total: 5 }, `Registration (Step ${registrationStep}/5)`)
       case 'create-farm': return t('farmer.createFarm', {}, 'Create Farm')
-      case 'add-field': return t('farmer.addField', {}, 'Add Field')
+      case 'add-field': return editingFieldBoundaryId ? 'Edit Field Boundary' : t('farmer.addField', {}, 'Add Field')
       case 'subscription': return t('farmer.subscription', {}, 'Subscription')
       case 'notifications': return t('farmer.notificationPreferences', {}, 'Notification Preferences')
       case 'view-farm': return selectedFarm?.name || t('farmer.farm', {}, 'Farm')
@@ -997,15 +1008,112 @@ export default function FarmerDashboard() {
                 <div className="bg-[#EADA69]/20 border border-[#EADA69]/40 rounded-xl p-4 text-center text-[#614270]">{t('farmer.noFieldsYet', {}, 'No fields yet. Add fields by placing fence posts.')}</div>
               ) : (
                 <div className="space-y-3">
-                  {selectedFarm.fields.map((field) => (
-                    <div key={field.id} className="bg-white rounded-xl p-4 shadow flex justify-between items-center">
-                      <div>
-                        <h4 className="font-medium text-[#614270]">{field.name}</h4>
-                        <p className="text-sm text-[#92998B]">{t('farmer.fencePostsCount', { count: field.fencePosts.length }, `${field.fencePosts.length} fence posts`)}</p>
+                  {selectedFarm.fields.map((field) => {
+                    const isExpanded = expandedFieldId === field.id
+                    const activeCategories = reportCategories.filter(c => c.isActive)
+                    return (
+                      <div key={field.id} className="bg-white rounded-xl shadow border border-[#D1D9C5] overflow-hidden">
+                        {/* Field header row */}
+                        <button
+                          onClick={() => {
+                            if (isExpanded) {
+                              setExpandedFieldId(null)
+                            } else {
+                              setExpandedFieldId(field.id)
+                              setEditFieldName(field.name)
+                            }
+                          }}
+                          className="w-full flex items-center justify-between p-4 text-left hover:bg-[#D1D9C5]/20"
+                        >
+                          <div>
+                            <h4 className="font-medium text-[#614270]">{field.name}</h4>
+                            <p className="text-sm text-[#92998B]">{field.fencePosts.length} fence posts</p>
+                          </div>
+                          <svg className={`w-4 h-4 text-[#92998B] transition-transform flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+
+                        {/* Expanded edit section */}
+                        {isExpanded && (
+                          <div className="border-t border-[#D1D9C5] p-4 bg-[#D1D9C5]/10 space-y-4">
+                            {/* Name edit */}
+                            <div>
+                              <label className="block text-xs font-medium text-[#614270] mb-1">Field Name</label>
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  value={editFieldName}
+                                  onChange={e => setEditFieldName(e.target.value)}
+                                  className="flex-1 px-3 py-2 border border-[#D1D9C5] rounded-lg text-sm focus:ring-2 focus:ring-[#7D8DCC]"
+                                />
+                                <button
+                                  onClick={() => {
+                                    if (editFieldName.trim()) {
+                                      updateField(selectedFarm.id, field.id, { name: editFieldName.trim() })
+                                      setExpandedFieldId(null)
+                                    }
+                                  }}
+                                  disabled={!editFieldName.trim() || editFieldName.trim() === field.name}
+                                  className="px-3 py-2 bg-[#7D8DCC] text-white rounded-lg text-sm disabled:opacity-40"
+                                >Save</button>
+                              </div>
+                            </div>
+
+                            {/* Category alert subscriptions */}
+                            {activeCategories.length > 0 && (
+                              <div>
+                                <label className="block text-xs font-medium text-[#614270] mb-2">Alert me about</label>
+                                <div className="space-y-1">
+                                  {activeCategories.map(cat => {
+                                    const isCompulsory = cat.subscriptionMode === 'compulsory'
+                                    const effective = isCompulsory
+                                      ? true
+                                      : cat.subscriptionMode === 'default_on'
+                                        ? (field.categorySubscriptions?.[cat.id] ?? true)
+                                        : (field.categorySubscriptions?.[cat.id] ?? false)
+                                    return (
+                                      <div key={cat.id} className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-[#D1D9C5]/30">
+                                        <div className="flex items-center gap-2">
+                                          {cat.imageUrl ? <img src={cat.imageUrl} alt={cat.name} className="w-5 h-5 object-contain rounded flex-shrink-0" /> : <span className="text-base">{cat.emoji}</span>}
+                                          <span className="text-sm text-[#614270]">{cat.name}</span>
+                                          {isCompulsory && <span className="text-xs text-[#92998B]">🔒</span>}
+                                        </div>
+                                        <button
+                                          onClick={() => !isCompulsory && updateFieldCategorySubscription(selectedFarm.id, field.id, cat.id, !effective)}
+                                          disabled={isCompulsory}
+                                          className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 ${effective ? 'bg-[#7D8DCC]' : 'bg-[#92998B]/30'} ${isCompulsory ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                        >
+                                          <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${effective ? 'translate-x-5' : ''}`} />
+                                        </button>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Actions */}
+                            <div className="flex gap-2 pt-1">
+                              <button
+                                onClick={() => {
+                                  setEditingFieldBoundaryId(field.id)
+                                  setFieldName(field.name)
+                                  setFencePosts([...field.fencePosts])
+                                  setViewState('add-field')
+                                }}
+                                className="flex-1 py-2 bg-[#D1D9C5] text-[#614270] rounded-lg text-sm font-medium hover:bg-[#92998B]/20"
+                              >📍 Redraw Boundary</button>
+                              <button
+                                onClick={() => { deleteField(selectedFarm.id, field.id); setExpandedFieldId(null) }}
+                                className="px-4 py-2 bg-[#FA9335]/10 text-[#FA9335] rounded-lg text-sm hover:bg-[#FA9335]/20"
+                              >Delete</button>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <button onClick={() => deleteField(selectedFarm.id, field.id)} className="px-3 py-1 bg-[#FA9335]/10 text-[#FA9335] rounded text-sm">{t('farmer.delete', {}, 'Delete')}</button>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>
@@ -1075,7 +1183,7 @@ export default function FarmerDashboard() {
                 </div>
               </div>
             )}
-            <button onClick={handleSaveField} disabled={!canSaveField} className="w-full py-4 bg-[#7D8DCC] text-white rounded-xl font-semibold disabled:bg-[#D1D9C5]">{t('farmer.saveField', {}, 'Save Field')}</button>
+            <button onClick={handleSaveField} disabled={!canSaveField} className="w-full py-4 bg-[#7D8DCC] text-white rounded-xl font-semibold disabled:bg-[#D1D9C5]">{editingFieldBoundaryId ? 'Update Field Boundary' : t('farmer.saveField', {}, 'Save Field')}</button>
           </div>
         )}
 
