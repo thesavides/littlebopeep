@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- Brand background -->
-  <rect width="512" height="512" fill="#D1D9C5"/>
+  <!-- Plum background -->
+  <rect width="512" height="512" fill="#614270"/>
 
-  <!-- logo-pin scaled to 70% and centered: translate(76.8, 76.8) scale(0.70) -->
-  <g transform="translate(77, 64) scale(0.70)">
+  <!-- logo-pin scaled to 68% and centered -->
+  <g transform="translate(82, 66) scale(0.68)">
     <defs>
       <clipPath id="pin">
         <path d="M256 40C142 40 52 130 52 244C52 340 256 474 256 474C256 474 460 340 460 244C460 130 370 40 256 40Z"/>
@@ -25,8 +25,8 @@
     <!-- White diagonal road -->
     <path d="M52 412 L460 294" fill="none" stroke="white" stroke-width="22" stroke-linecap="butt" clip-path="url(#pin)"/>
 
-    <!-- Plum pin outline -->
+    <!-- White pin outline (matches screenshot) -->
     <path d="M256 40C142 40 52 130 52 244C52 340 256 474 256 474C256 474 460 340 460 244C460 130 370 40 256 40Z"
-          fill="none" stroke="#614270" stroke-width="30" stroke-linejoin="round"/>
+          fill="none" stroke="white" stroke-width="32" stroke-linejoin="round"/>
   </g>
 </svg>
