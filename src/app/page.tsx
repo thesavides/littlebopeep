@@ -145,7 +145,7 @@ function LandingPage() {
           className="absolute inset-0"
           style={{
             background:
-              'linear-gradient(to bottom, rgba(97,66,112,0.55) 0%, rgba(97,66,112,0.35) 45%, rgba(97,66,112,0.55) 100%)',
+              'linear-gradient(to bottom, rgba(97,66,112,0.275) 0%, rgba(97,66,112,0.175) 45%, rgba(97,66,112,0.275) 100%)',
           }}
         />
 
