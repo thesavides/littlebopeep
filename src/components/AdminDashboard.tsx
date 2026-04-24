@@ -608,7 +608,7 @@ export default function AdminDashboard() {
   )
 
   return (
-    <div className="min-h-screen bg-[#D1D9C5]">
+    <div className="min-h-screen bg-white">
       <Header title="Admin Dashboard" onTitleClick={() => setCurrentView('overview')} />
 
       {/* Report Detail Panel — Workstream 5 */}
