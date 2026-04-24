@@ -129,6 +129,10 @@ export default function AdminDashboard() {
   const [thankYouSenderId, setThankYouSenderId] = useState<string>('')
   const [sendingThankYou, setSendingThankYou] = useState(false)
   const [thankYouSent, setThankYouSent] = useState<Set<string>>(new Set())
+  // Resolve-with-message modal
+  const [resolveMessageReportId, setResolveMessageReportId] = useState<string | null>(null)
+  const [resolveMessageText, setResolveMessageText] = useState('')
+  const [sendingResolve, setSendingResolve] = useState(false)
   // Complete modal
   const [completeReportId, setCompleteReportId] = useState<string | null>(null)
   const [completeNotes, setCompleteNotes] = useState('')
@@ -1023,7 +1027,7 @@ export default function AdminDashboard() {
                           <span className="px-3 py-2 text-[#9ED663] text-sm font-medium">✓ Thanks Sent</span>
                         )}
                         {!report.archived && report.status === 'claimed' && (
-                          <button onClick={() => { resolveReport(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-[#7D8DCC]/10 text-[#7D8DCC] rounded-lg text-sm hover:bg-[#7D8DCC]/20">Resolve</button>
+                          <button onClick={() => { setResolveMessageReportId(report.id); setResolveMessageText('') }} className="px-3 py-2 bg-[#7D8DCC]/10 text-[#7D8DCC] rounded-lg text-sm hover:bg-[#7D8DCC]/20">Resolve</button>
                         )}
                         {!report.archived && (report.status === 'resolved' || report.status === 'escalated') && (
                           <button onClick={() => { escalateReport(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-[#FA9335]/10 text-[#FA9335] rounded-lg text-sm hover:bg-[#FA9335]/20">Escalate</button>
@@ -1245,6 +1249,54 @@ export default function AdminDashboard() {
           setShowEditFieldModal(null)
         }}
       />}
+
+      {/* Resolve with optional message to walker */}
+      {resolveMessageReportId && (() => {
+        const rpt = reports.find(r => r.id === resolveMessageReportId)
+        return (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4">
+            <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+              <h3 className="text-lg font-bold text-[#614270] mb-1">Resolve Report</h3>
+              {rpt && (
+                <p className="text-sm text-[#92998B] mb-3">
+                  #{rpt.id.slice(-6).toUpperCase()} · {rpt.categoryEmoji} {rpt.categoryName}
+                </p>
+              )}
+              <label className="block text-sm font-medium text-[#614270] mb-1">
+                Optional message to walker
+              </label>
+              <textarea
+                value={resolveMessageText}
+                onChange={e => setResolveMessageText(e.target.value)}
+                rows={3}
+                placeholder="e.g. Thanks for reporting — sheep safely returned!"
+                className="w-full px-3 py-2 border border-[#D1D9C5] rounded-lg text-sm focus:ring-2 focus:ring-[#7D8DCC] mb-4"
+              />
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setResolveMessageReportId(null)}
+                  className="flex-1 py-2 border border-[#D1D9C5] text-[#614270] rounded-xl text-sm hover:bg-[#D1D9C5]/50"
+                >Cancel</button>
+                <button
+                  disabled={sendingResolve}
+                  onClick={async () => {
+                    setSendingResolve(true)
+                    const rid = resolveMessageReportId
+                    resolveReport(rid)
+                    if (resolveMessageText.trim() && rpt?.reporterId) {
+                      await sendThankYouMessage(rpt.reporterId, rid, resolveMessageText.trim())
+                    }
+                    setSendingResolve(false)
+                    setResolveMessageReportId(null)
+                    setDetailReportId(null)
+                  }}
+                  className="flex-1 py-2 bg-[#7D8DCC] text-white rounded-xl text-sm hover:bg-[#6b7bb8] disabled:opacity-50"
+                >{sendingResolve ? 'Resolving…' : 'Resolve'}</button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Claim / Add Farmer Modal */}
       {showClaimReportModal && <ClaimReportModal
@@ -1861,7 +1913,7 @@ export default function AdminDashboard() {
                           <button onClick={() => setShowClaimReportModal(report.id)} className={`${btnBase} bg-[#9ED663]/20 text-[#614270] hover:bg-[#9ED663]/30`}>Claim</button>
                         )}
                         {!report.archived && report.status === 'claimed' && (
-                          <button onClick={() => resolveReport(report.id)} className={`${btnBase} bg-[#7D8DCC]/10 text-[#7D8DCC] hover:bg-[#7D8DCC]/20`}>Resolve</button>
+                          <button onClick={() => { setResolveMessageReportId(report.id); setResolveMessageText('') }} className={`${btnBase} bg-[#7D8DCC]/10 text-[#7D8DCC] hover:bg-[#7D8DCC]/20`}>Resolve</button>
                         )}
                         {!report.archived && (report.status === 'resolved' || report.status === 'escalated') && (
                           <button onClick={() => escalateReport(report.id)} className={`${btnBase} bg-[#FA9335]/10 text-[#FA9335] hover:bg-[#FA9335]/20`}>Escalate</button>

@@ -86,7 +86,8 @@ export async function signUp(
   email: string,
   password: string,
   fullName: string,
-  role: 'walker' | 'farmer'
+  role: 'walker' | 'farmer',
+  emailAlerts: boolean = false
 ): Promise<{
   success: boolean
   user?: UserProfile
@@ -103,7 +104,8 @@ export async function signUp(
         email,
         password,
         fullName,
-        role
+        role,
+        emailAlerts
       })
     })
 

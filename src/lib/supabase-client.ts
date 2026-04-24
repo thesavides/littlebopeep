@@ -328,6 +328,50 @@ export async function markAllNotificationsRead(userId: string): Promise<void> {
   }
 }
 
+// Create a status-change notification for the walker who submitted a report
+export async function createWalkerNotification(
+  walkerId: string,
+  reportId: string,
+  type: 'report_claimed' | 'report_resolved' | 'report_complete',
+  actorName?: string,
+  messageText?: string
+): Promise<void> {
+  const { error } = await supabase.from('notifications').insert({
+    user_id: walkerId,
+    report_id: reportId,
+    type,
+    sender_name: actorName ?? null,
+    message_text: messageText ?? null,
+    status: 'sent',
+  })
+  if (error) console.error('Error creating walker notification:', error)
+}
+
+// Real-time subscription for a user's own notifications
+export function subscribeToUserNotifications(
+  userId: string,
+  onInsert: (notification: NotificationDB) => void
+): () => void {
+  const channel = supabase
+    .channel(`notifications:${userId}`)
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
+      (payload) => { onInsert(payload.new as NotificationDB) }
+    )
+    .subscribe()
+  return () => { supabase.removeChannel(channel) }
+}
+
+// Update the email alert preference for a user
+export async function updateEmailAlertPreference(userId: string, enabled: boolean): Promise<void> {
+  const { error } = await supabase
+    .from('user_profiles')
+    .update({ email_alerts_enabled: enabled })
+    .eq('id', userId)
+  if (error) console.error('Error updating email alert preference:', error)
+}
+
 // Send a Thank You message from a farmer (or admin on behalf of farmer) to the walker
 export async function sendThankYouMessage(
   reporterId: string,

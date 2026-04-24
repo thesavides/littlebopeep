@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAppStore, Farm, FarmField, MAP_CONFIG, isReportNearFarm } from '@/store/appStore'
-import { supabase, fetchUserNotifications, markAllNotificationsRead, markReportNotificationsRead, NotificationDB, sendThankYouMessage } from '@/lib/supabase-client'
+import { supabase, fetchUserNotifications, markAllNotificationsRead, markReportNotificationsRead, NotificationDB, sendThankYouMessage, subscribeToUserNotifications, updateEmailAlertPreference } from '@/lib/supabase-client'
 import { useTranslation } from '@/contexts/TranslationContext'
 import Header from './Header'
 import Map from './Map'
@@ -51,11 +51,20 @@ export default function FarmerDashboard() {
   const [farmsLoaded, setFarmsLoaded] = useState(false)
   const [farmerNotifications, setFarmerNotifications] = useState<NotificationDB[]>([])
   const unreadCount = farmerNotifications.filter(n => !n.read_at).length
+  const [loginBannerDismissed, setLoginBannerDismissed] = useState(false)
+  const [emailAlertsEnabled, setEmailAlertsEnabled] = useState(false)
+  const [savingEmailPref, setSavingEmailPref] = useState(false)
   // Thank You message state — keyed by reportId
   const [thankYouOpen, setThankYouOpen] = useState<string | null>(null)
   const [thankYouText, setThankYouText] = useState('')
   const [thankYouSent, setThankYouSent] = useState<Set<string>>(new Set())
   const [sendingThankYou, setSendingThankYou] = useState(false)
+  // Claim-with-message modal
+  const [claimMessageOpen, setClaimMessageOpen] = useState<string | null>(null)
+  const [claimMessageText, setClaimMessageText] = useState('')
+  // Resolve-with-message modal
+  const [resolveMessageOpen, setResolveMessageOpen] = useState<string | null>(null)
+  const [resolveMessageText, setResolveMessageText] = useState('')
   const [profileOpen, setProfileOpen] = useState(false)
 
   // Resolve reason state
@@ -131,12 +140,23 @@ export default function FarmerDashboard() {
           }))
         }
 
-        // Load notifications
-        const notifs = await fetchUserNotifications(currentUserId)
+        // Load notifications + email preference
+        const [notifs, profile] = await Promise.all([
+          fetchUserNotifications(currentUserId),
+          supabase.from('user_profiles').select('email_alerts_enabled').eq('id', currentUserId).single().then(r => r.data),
+        ])
         setFarmerNotifications(notifs)
+        if (profile) setEmailAlertsEnabled(profile.email_alerts_enabled ?? false)
       }
     }
     init()
+
+    // Real-time: prepend new notifications as they arrive
+    if (!currentUserId) return
+    const unsub = subscribeToUserNotifications(currentUserId, (notif) => {
+      setFarmerNotifications(prev => [notif, ...prev])
+    })
+    return unsub
   }, [])
 
   useEffect(() => {
@@ -679,17 +699,8 @@ export default function FarmerDashboard() {
                       </div>
                       {report.description && <p className="text-sm text-[#614270] mb-3">{report.description}</p>}
                       <div className="flex gap-2">
-                        <button onClick={async () => {
-                          claimReport(report.id)
-                          // Auto-clear the notification for this report when farmer claims it
-                          if (currentUserId) {
-                            await markReportNotificationsRead(currentUserId, report.id)
-                            setFarmerNotifications(prev => prev.map(n =>
-                              n.report_id === report.id ? { ...n, read_at: n.read_at || new Date().toISOString(), status: 'read' } : n
-                            ))
-                          }
-                        }} className="flex-1 py-2 bg-[#7D8DCC] text-white rounded-lg text-sm">{t('farmer.claim', {}, 'Claim')}</button>
-                        <button onClick={() => resolveReport(report.id)} className="flex-1 py-2 bg-[#9ED663] text-white rounded-lg text-sm">{t('farmer.resolved', {}, 'Resolved')}</button>
+                        <button onClick={() => { setClaimMessageOpen(report.id); setClaimMessageText('') }} className="flex-1 py-2 bg-[#7D8DCC] text-white rounded-lg text-sm">{t('farmer.claim', {}, 'Claim')}</button>
+                        <button onClick={() => { setResolveMessageOpen(report.id); setResolveMessageText('') }} className="flex-1 py-2 bg-[#9ED663] text-white rounded-lg text-sm">{t('farmer.resolved', {}, 'Resolved')}</button>
                       </div>
                     </div>
                   ))}
@@ -716,7 +727,7 @@ export default function FarmerDashboard() {
                       </div>
                       <div className="flex flex-wrap gap-2 mt-2">
                         <button
-                          onClick={() => { setResolveOpen(report.id); setResolveReason('resolved') }}
+                          onClick={() => { setResolveMessageOpen(report.id); setResolveMessageText('') }}
                           className="flex-1 py-2 bg-[#9ED663] text-white rounded-lg text-sm"
                         >
                           {t('farmer.markResolved', {}, 'Mark Resolved')}
@@ -746,31 +757,6 @@ export default function FarmerDashboard() {
                         )}
                       </div>
 
-                      {/* Resolve with reason */}
-                      {resolveOpen === report.id && (
-                        <div className="mt-3 bg-[#D1D9C5] rounded-lg p-3 space-y-2">
-                          <p className="text-xs text-[#614270] font-medium">Select a resolution reason:</p>
-                          <select
-                            value={resolveReason}
-                            onChange={(e) => setResolveReason(e.target.value)}
-                            className="w-full text-sm px-3 py-2 border border-[#D1D9C5] rounded-lg bg-white"
-                          >
-                            <option value="resolved">Resolved</option>
-                            <option value="resolved_nothing">Resolved — Nothing to do</option>
-                            <option value="resolved_insufficient">Resolved — Insufficient information</option>
-                            <option value="resolved_invalid">Resolved — Invalid report</option>
-                          </select>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => { resolveReport(report.id, resolveReason); setResolveOpen(null) }}
-                              className="px-4 py-2 bg-[#9ED663] text-white rounded-lg text-sm hover:bg-[#614270]"
-                            >
-                              Confirm
-                            </button>
-                            <button onClick={() => setResolveOpen(null)} className="px-4 py-2 bg-white text-[#614270] rounded-lg text-sm border">Cancel</button>
-                          </div>
-                        </div>
-                      )}
 
                       {/* Flag to admin */}
                       {flagOpen === report.id && (
@@ -1170,6 +1156,28 @@ export default function FarmerDashboard() {
 
         {viewState === 'notifications' && (
           <div className="space-y-4">
+            {/* Email alert preference */}
+            <div className="bg-white rounded-xl shadow p-4 flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-[#614270]">📧 Email alerts</p>
+                <p className="text-xs text-[#92998B] mt-0.5">Get an email when new reports are spotted near your farm</p>
+              </div>
+              <button
+                disabled={savingEmailPref}
+                onClick={async () => {
+                  if (!currentUserId) return
+                  setSavingEmailPref(true)
+                  const next = !emailAlertsEnabled
+                  setEmailAlertsEnabled(next)
+                  await updateEmailAlertPreference(currentUserId, next)
+                  setSavingEmailPref(false)
+                }}
+                className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 focus:outline-none ${emailAlertsEnabled ? 'bg-[#7D8DCC]' : 'bg-[#D1D9C5]'}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${emailAlertsEnabled ? 'translate-x-6' : ''}`} />
+              </button>
+            </div>
+
             {/* Incoming report notifications from Supabase */}
             {farmerNotifications.length > 0 && (
               <div className="bg-white rounded-xl shadow p-4">
@@ -1330,6 +1338,103 @@ export default function FarmerDashboard() {
       )}
 
       <ProfileDrawer open={profileOpen} onClose={() => setProfileOpen(false)} />
+
+      {/* Login banner — unread notification alert shown on mount */}
+      {!loginBannerDismissed && unreadCount > 0 && (
+        <div className="fixed top-0 left-0 right-0 z-[70] bg-[#614270] text-white px-4 py-3 flex items-center justify-between shadow-lg">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🔔</span>
+            <span className="text-sm font-medium">
+              {unreadCount === 1
+                ? '1 new alert since you last logged in'
+                : `${unreadCount} new alerts since you last logged in`}
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => { setViewState('notifications'); setLoginBannerDismissed(true) }}
+              className="text-xs bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg font-medium"
+            >View</button>
+            <button onClick={() => setLoginBannerDismissed(true)} className="text-white/70 hover:text-white text-xl leading-none">×</button>
+          </div>
+        </div>
+      )}
+
+      {/* Claim-with-message modal */}
+      {claimMessageOpen && (() => {
+        const report = reports.find(r => r.id === claimMessageOpen)
+        return (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+            <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+              <h3 className="text-lg font-bold text-[#614270] mb-1">🤝 Claim this report?</h3>
+              <p className="text-sm text-[#92998B] mb-3">You can optionally send a message to the walker who reported it.</p>
+              <textarea
+                value={claimMessageText}
+                onChange={e => setClaimMessageText(e.target.value)}
+                placeholder="e.g. Thanks — I'm heading out to check now."
+                rows={3}
+                className="w-full px-3 py-2 border border-[#D1D9C5] rounded-lg text-sm mb-4 resize-none focus:outline-none focus:ring-2 focus:ring-[#7D8DCC]"
+              />
+              <div className="space-y-2">
+                <button
+                  onClick={async () => {
+                    claimReport(claimMessageOpen)
+                    if (currentUserId) {
+                      await markReportNotificationsRead(currentUserId, claimMessageOpen)
+                      setFarmerNotifications(prev => prev.map(n =>
+                        n.report_id === claimMessageOpen ? { ...n, read_at: n.read_at || new Date().toISOString(), status: 'read' } : n
+                      ))
+                    }
+                    if (claimMessageText.trim() && report?.reporterId) {
+                      const senderName = supabaseProfile?.full_name || currentUser?.name || undefined
+                      await sendThankYouMessage(report.reporterId, claimMessageOpen, claimMessageText.trim(), currentUserId ?? undefined, senderName)
+                    }
+                    setClaimMessageOpen(null)
+                    setClaimMessageText('')
+                  }}
+                  className="w-full py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold hover:bg-[#6b7db3]"
+                >{claimMessageText.trim() ? 'Claim & Send Message' : 'Claim'}</button>
+                <button onClick={() => { setClaimMessageOpen(null); setClaimMessageText('') }} className="w-full py-2 text-sm text-[#92998B] hover:text-[#614270]">Cancel</button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* Resolve-with-message modal */}
+      {resolveMessageOpen && (() => {
+        const report = reports.find(r => r.id === resolveMessageOpen)
+        return (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+            <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+              <h3 className="text-lg font-bold text-[#614270] mb-1">✅ Mark as resolved?</h3>
+              <p className="text-sm text-[#92998B] mb-3">You can optionally send a message to the walker letting them know the outcome.</p>
+              <textarea
+                value={resolveMessageText}
+                onChange={e => setResolveMessageText(e.target.value)}
+                placeholder="e.g. All sorted — the sheep are back in the field. Thank you!"
+                rows={3}
+                className="w-full px-3 py-2 border border-[#D1D9C5] rounded-lg text-sm mb-4 resize-none focus:outline-none focus:ring-2 focus:ring-[#7D8DCC]"
+              />
+              <div className="space-y-2">
+                <button
+                  onClick={async () => {
+                    resolveReport(resolveMessageOpen)
+                    if (resolveMessageText.trim() && report?.reporterId) {
+                      const senderName = supabaseProfile?.full_name || currentUser?.name || undefined
+                      await sendThankYouMessage(report.reporterId, resolveMessageOpen, resolveMessageText.trim(), currentUserId ?? undefined, senderName)
+                    }
+                    setResolveMessageOpen(null)
+                    setResolveMessageText('')
+                  }}
+                  className="w-full py-3 bg-[#9ED663] text-white rounded-xl font-semibold hover:bg-[#7ec44d]"
+                >{resolveMessageText.trim() ? 'Resolve & Send Message' : 'Mark Resolved'}</button>
+                <button onClick={() => { setResolveMessageOpen(null); setResolveMessageText('') }} className="w-full py-2 text-sm text-[#92998B] hover:text-[#614270]">Cancel</button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }

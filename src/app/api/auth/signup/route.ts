@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
   })
   try {
     const body = await request.json()
-    const { email, password, fullName, role } = body
+    const { email, password, fullName, role, emailAlerts } = body
 
     // Validate input
     if (!email || !password || !fullName || !role) {
@@ -73,7 +73,8 @@ export async function POST(request: NextRequest) {
         full_name: fullName,
         role,
         status: 'active',
-        password_reset_required: false
+        password_reset_required: false,
+        email_alerts_enabled: emailAlerts === true
       }])
       .select()
       .single()

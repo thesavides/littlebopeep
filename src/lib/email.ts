@@ -167,3 +167,98 @@ export function buildInviteEmail(params: {
 
   return { subject: `You've been invited to Little Bo Peep`, html }
 }
+
+// ── Notification alert emails ─────────────────────────────────────────────────
+
+export function buildNewReportAlertEmail(params: {
+  farmerName: string
+  categoryEmoji: string
+  categoryName: string
+  count: number
+  reportRef: string
+}): { subject: string; html: string } {
+  const html = baseTemplate(`
+    <h2 style="margin:0 0 8px;color:#614270;font-size:22px;font-weight:700;">🚨 New report near your farm</h2>
+    <p style="margin:0 0 16px;color:#475569;font-size:15px;">Hi ${params.farmerName},</p>
+    <p style="margin:0 0 16px;color:#475569;font-size:15px;">
+      A walker has spotted something near your land that may need your attention.
+    </p>
+    <div style="background:#fef9c3;border:1px solid #fde68a;border-radius:8px;padding:16px;margin:0 0 20px;">
+      <p style="margin:0;font-size:18px;">${params.categoryEmoji} <strong style="color:#614270;">${params.count} ${params.categoryName}</strong></p>
+      <p style="margin:6px 0 0;font-size:12px;color:#92998B;">Ref: ${params.reportRef}</p>
+    </div>
+    <a href="${APP_URL}"
+       style="display:inline-block;background:#614270;color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">
+      View &amp; Claim Report →
+    </a>
+    <p style="margin:20px 0 0;font-size:12px;color:#92998B;">
+      You're receiving this because you have email alerts enabled. You can turn these off in your account settings.
+    </p>
+  `)
+  return { subject: `🚨 New report near your farm — ${params.categoryEmoji} ${params.count} ${params.categoryName}`, html }
+}
+
+export function buildReportStatusEmail(params: {
+  walkerName: string
+  status: 'report_claimed' | 'report_resolved' | 'report_complete'
+  categoryEmoji: string
+  categoryName: string
+  count: number
+  reportRef: string
+  actorName?: string
+}): { subject: string; html: string } {
+  const statusMap = {
+    report_claimed: { label: 'Claimed', emoji: '🤝', line: `A farmer${params.actorName ? ` (${params.actorName})` : ''} has claimed your report and is on their way to investigate.` },
+    report_resolved: { label: 'Resolved', emoji: '✅', line: `Great news — your report has been resolved. The situation is being dealt with.` },
+    report_complete: { label: 'Complete', emoji: '🎉', line: `Your report has been marked complete. Thank you for helping keep the countryside safe!` },
+  }
+  const { label, emoji, line } = statusMap[params.status]
+  const html = baseTemplate(`
+    <h2 style="margin:0 0 8px;color:#614270;font-size:22px;font-weight:700;">${emoji} Your report has been ${label.toLowerCase()}</h2>
+    <p style="margin:0 0 16px;color:#475569;font-size:15px;">Hi ${params.walkerName},</p>
+    <p style="margin:0 0 16px;color:#475569;font-size:15px;">${line}</p>
+    <div style="background:#D1D9C5;border-radius:8px;padding:16px;margin:0 0 20px;">
+      <p style="margin:0;font-size:16px;">${params.categoryEmoji} <strong style="color:#614270;">${params.count} ${params.categoryName}</strong></p>
+      <p style="margin:6px 0 0;font-size:12px;color:#92998B;">Ref: ${params.reportRef} · Status: ${label}</p>
+    </div>
+    <a href="${APP_URL}"
+       style="display:inline-block;background:#7D8DCC;color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">
+      View My Reports →
+    </a>
+    <p style="margin:20px 0 0;font-size:12px;color:#92998B;">
+      You're receiving this because you have email alerts enabled. You can turn these off in your account settings.
+    </p>
+  `)
+  return { subject: `${emoji} Your report has been ${label.toLowerCase()} — ${params.categoryEmoji} ${params.categoryName}`, html }
+}
+
+export function buildThankYouAlertEmail(params: {
+  walkerName: string
+  senderName: string
+  messageText: string
+  categoryEmoji: string
+  categoryName: string
+  reportRef: string
+}): { subject: string; html: string } {
+  const html = baseTemplate(`
+    <h2 style="margin:0 0 8px;color:#614270;font-size:22px;font-weight:700;">💌 A farmer says thank you!</h2>
+    <p style="margin:0 0 16px;color:#475569;font-size:15px;">Hi ${params.walkerName},</p>
+    <p style="margin:0 0 16px;color:#475569;font-size:15px;">
+      <strong>${params.senderName}</strong> sent you a message about your report:
+    </p>
+    <blockquote style="margin:0 0 20px;padding:16px;background:#fef9c3;border-left:4px solid #EADA69;border-radius:0 8px 8px 0;font-style:italic;color:#614270;">
+      "${params.messageText}"
+    </blockquote>
+    <p style="margin:0 0 16px;font-size:13px;color:#92998B;">
+      Re: ${params.categoryEmoji} ${params.categoryName} · Ref: ${params.reportRef}
+    </p>
+    <a href="${APP_URL}"
+       style="display:inline-block;background:#614270;color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">
+      View My Reports →
+    </a>
+    <p style="margin:20px 0 0;font-size:12px;color:#92998B;">
+      You're receiving this because you have email alerts enabled. You can turn these off in your account settings.
+    </p>
+  `)
+  return { subject: `💌 ${params.senderName} says thank you for your report!`, html }
+}

@@ -17,6 +17,7 @@ export default function AuthPage() {
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [role, setRoleSelection] = useState<'walker' | 'farmer'>('walker')
+  const [emailAlerts, setEmailAlerts] = useState(false)
 
   // Pre-select mode and role from query params (e.g. ?mode=signup&role=farmer)
   useEffect(() => {
@@ -46,7 +47,8 @@ export default function AuthPage() {
           email,
           password,
           fullName.trim(),
-          role
+          role,
+          emailAlerts
         )
 
         if (!success || !user) {
@@ -175,6 +177,20 @@ export default function AuthPage() {
                   placeholder={t('auth.fullNamePlaceholder', {}, 'John Smith')}
                 />
               </div>
+
+              <label className="flex items-start gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={emailAlerts}
+                  onChange={(e) => setEmailAlerts(e.target.checked)}
+                  className="mt-0.5 accent-[#7D8DCC] w-4 h-4 flex-shrink-0"
+                />
+                <span className="text-sm text-[#614270]">
+                  {role === 'farmer'
+                    ? t('auth.emailAlertsfarmer', {}, '📧 Email me when new reports are spotted near my farm')
+                    : t('auth.emailAlertsWalker', {}, '📧 Email me updates when my reports are claimed or resolved')}
+                </span>
+              </label>
             </>
           )}
 

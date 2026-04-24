@@ -22,6 +22,36 @@ function writeSystemComment(reportId: string, body: string) {
   addReportCommentInDB({ reportId, commentType: 'system', body }).catch(() => {})
 }
 
+// Notify the walker who submitted a report of a status change, and optionally email them
+function notifyWalker(
+  reportId: string,
+  reporterId: string | undefined,
+  type: 'report_claimed' | 'report_resolved' | 'report_complete',
+  actorName?: string,
+  messageText?: string
+) {
+  if (!reporterId) return
+  import('@/lib/supabase-client').then(({ createWalkerNotification }) => {
+    createWalkerNotification(reporterId, reportId, type, actorName, messageText).catch(() => {})
+  })
+  fetch('/api/send-notification-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type, recipientId: reporterId, reportId, actorName, messageText }),
+  }).catch(() => {})
+}
+
+// Notify farmer(s) of a new report by email (in addition to the in-app notification row)
+function emailFarmerNotifications(reportId: string, farmerIds: string[]) {
+  farmerIds.forEach(recipientId => {
+    fetch('/api/send-notification-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'new_report', recipientId, reportId }),
+    }).catch(() => {})
+  })
+}
+
 // Map configuration
 export const MAP_CONFIG = {
   DEFAULT_CENTER: [54.5, -2] as [number, number],
@@ -631,9 +661,10 @@ export const useAppStore = create<AppState>()(
             set((state) => ({
               reports: state.reports.map((r) => r.id === localReport.id ? saved : r)
             }))
-            // Notify affected farmers (Workstream 4)
+            // Notify affected farmers in-app + email (Workstream 4)
             if (affectedFarmerIds.length > 0) {
               createNotificationsForFarmers(saved.id, affectedFarmerIds, 'new_report').catch(() => {})
+              emailFarmerNotifications(saved.id, affectedFarmerIds)
             }
           }
         } catch (err) {
@@ -675,6 +706,8 @@ export const useAppStore = create<AppState>()(
         import('@/lib/supabase-client').then(({ updateReport }) => {
           updateReport(reportId, { status: 'claimed', claimedByFarmerId: currentUserId, claimedByFarmerIds: newClaimants, claimedAt: new Date() }).catch(() => {})
         })
+        const actorName = get().getCurrentUser()?.name
+        notifyWalker(reportId, report?.reporterId, 'report_claimed', actorName)
         writeAuditLog({
           actorId: currentUserId,
           action: 'report.claim',
@@ -746,6 +779,7 @@ export const useAppStore = create<AppState>()(
         import('@/lib/supabase-client').then(({ updateReport }) => {
           updateReport(reportId, { status: 'claimed', claimedByFarmerId: farmerId, claimedByFarmerIds: [farmerId], claimedAt: new Date() }).catch(() => {})
         })
+        notifyWalker(reportId, get().reports.find(r => r.id === reportId)?.reporterId, 'report_claimed', get().getCurrentUser()?.name)
         writeAuditLog({
           actorId: currentUserId,
           action: 'report.claim',
@@ -770,6 +804,7 @@ export const useAppStore = create<AppState>()(
         import('@/lib/supabase-client').then(({ updateReport }) => {
           updateReport(reportId, { status: 'claimed', claimedByFarmerId: farmerId, claimedByFarmerIds: newClaimants, claimedAt: new Date() }).catch(() => {})
         })
+        notifyWalker(reportId, report?.reporterId, 'report_claimed', get().getCurrentUser()?.name)
         writeAuditLog({
           actorId: currentUserId,
           action: 'report.claim',
@@ -790,6 +825,7 @@ export const useAppStore = create<AppState>()(
         import('@/lib/supabase-client').then(({ updateReport }) => {
           updateReport(reportId, { status: 'resolved', resolutionReason: reason }).catch(() => {})
         })
+        notifyWalker(reportId, report?.reporterId, 'report_resolved', get().getCurrentUser()?.name)
         writeAuditLog({
           actorId: currentUserId,
           action: 'report.resolve',
@@ -821,7 +857,8 @@ export const useAppStore = create<AppState>()(
       },
 
       markReportComplete: (reportId, notes?) => {
-        const { currentUserId } = get()
+        const { currentUserId, reports } = get()
+        const report = reports.find(r => r.id === reportId)
         const now = new Date()
         set((state) => ({
           reports: state.reports.map((r) =>
@@ -831,6 +868,7 @@ export const useAppStore = create<AppState>()(
         import('@/lib/supabase-client').then(({ updateReport }) => {
           updateReport(reportId, { status: 'complete', adminNotes: notes, completedBy: currentUserId, completedAt: now }).catch(() => {})
         })
+        notifyWalker(reportId, report?.reporterId, 'report_complete', get().getCurrentUser()?.name)
         writeAuditLog({
           actorId: currentUserId,
           action: 'report.complete',

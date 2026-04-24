@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAppStore, getDistanceMeters, MAP_CONFIG } from '@/store/appStore'
-import { fetchUserNotifications, markAllNotificationsRead } from '@/lib/supabase-client'
+import { supabase, fetchUserNotifications, markAllNotificationsRead, subscribeToUserNotifications, updateEmailAlertPreference } from '@/lib/supabase-client'
 import type { ReportCategory } from '@/store/appStore'
 import Header from './Header'
 import Map from './Map'
@@ -64,8 +64,13 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
   // Get unread notifications (thank you messages)
   const unreadNotifications = currentUserId ? getUnreadNotifications(currentUserId) : []
 
-  // Thank You messages from Supabase
+  // All notifications from Supabase (thank_you + report_claimed + report_resolved + report_complete)
+  const [allNotifications, setAllNotifications] = useState<any[]>([])
+  // Thank You messages subset (kept for compat)
   const [thankYouMessages, setThankYouMessages] = useState<any[]>([])
+  const [emailAlertsEnabled, setEmailAlertsEnabled] = useState(false)
+  const [savingEmailPref, setSavingEmailPref] = useState(false)
+  const [loginBannerDismissed, setLoginBannerDismissed] = useState(false)
 
   const [profileOpen, setProfileOpen] = useState(false)
   const [showSubmitSuccess, setShowSubmitSuccess] = useState(false)
@@ -73,14 +78,33 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
   const [editFields, setEditFields] = useState<{ description: string; sheepCount: number; conditions: string[]; photoUrls: string[] }>({ description: '', sheepCount: 1, conditions: [], photoUrls: [] })
   const [savingEdit, setSavingEdit] = useState(false)
 
-  // Load reports and thank-you messages from Supabase on mount
+  // Load reports and notifications from Supabase on mount; subscribe to real-time updates
   useEffect(() => {
     loadReports()
-    if (currentUserId) {
-      fetchUserNotifications(currentUserId).then(notifs => {
-        setThankYouMessages(notifs.filter(n => n.type === 'thank_you'))
-      }).catch(() => {})
-    }
+    if (!currentUserId) return
+
+    fetchUserNotifications(currentUserId).then(notifs => {
+      setAllNotifications(notifs)
+      setThankYouMessages(notifs.filter(n => n.type === 'thank_you'))
+    }).catch(() => {})
+
+    supabase
+      .from('user_profiles')
+      .select('email_alerts_enabled')
+      .eq('id', currentUserId)
+      .single()
+      .then(({ data }) => {
+        if (data) setEmailAlertsEnabled(data.email_alerts_enabled ?? false)
+      })
+
+    const unsubscribe = subscribeToUserNotifications(currentUserId, (notif) => {
+      setAllNotifications(prev => [notif, ...prev])
+      if (notif.type === 'thank_you') {
+        setThankYouMessages(prev => [notif, ...prev])
+      }
+    })
+
+    return unsubscribe
   }, [])
 
   // Show notification banner if there are unread notifications
@@ -312,9 +336,9 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
               className="relative w-9 h-9 rounded-full bg-[#D1D9C5] hover:bg-[#92998B]/30 flex items-center justify-center text-[#614270] transition-colors"
             >
               <span className="text-base leading-none">📋</span>
-              {thankYouMessages.filter(m => !m.read_at).length > 0 && (
+              {allNotifications.filter(n => !n.read_at).length > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-[#FA9335] text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
-                  {thankYouMessages.filter(m => !m.read_at).length > 99 ? '99+' : thankYouMessages.filter(m => !m.read_at).length}
+                  {allNotifications.filter(n => !n.read_at).length > 99 ? '99+' : allNotifications.filter(n => !n.read_at).length}
                 </span>
               )}
             </button>
@@ -332,18 +356,25 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
         ) : undefined}
       />
 
-      {/* Thank You Notification Banner */}
-      {showNotification && unreadNotifications.length > 0 && (
-        <div className="bg-[#D1D9C5] border-b border-[#D1D9C5] px-4 py-3">
-          <div className="max-w-4xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🎉</span>
-              <div>
-                <p className="font-medium text-[#614270]">{t('walker.thankYou', {}, 'Thank You!')}</p>
-                <p className="text-sm text-[#614270]">{unreadNotifications[0].message}</p>
-              </div>
-            </div>
-            <button onClick={handleDismissNotification} className="text-[#614270] hover:text-[#614270] text-xl">×</button>
+      {/* Login banner — unread notifications on mount */}
+      {!loginBannerDismissed && allNotifications.some(n => !n.read_at) && (
+        <div className="sticky top-0 z-50 bg-[#614270] text-white px-4 py-2.5 flex items-center justify-between shadow-md">
+          <span className="text-sm font-medium">
+            🔔 {allNotifications.filter(n => !n.read_at).length} new update{allNotifications.filter(n => !n.read_at).length !== 1 ? 's' : ''}
+          </span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => { setViewState('my-reports'); setLoginBannerDismissed(true) }}
+              className="text-sm underline text-[#EADA69] hover:text-white"
+            >
+              View
+            </button>
+            <button
+              onClick={() => setLoginBannerDismissed(true)}
+              className="text-white/70 hover:text-white text-xl leading-none"
+            >
+              ×
+            </button>
           </div>
         </div>
       )}
@@ -866,47 +897,83 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
         {/* ===== MY REPORTS VIEW ===== */}
         {viewState === 'my-reports' && (
           <>
-            {/* Thank You messages from farmers */}
-            {thankYouMessages.length > 0 && (
-              <div className="bg-[#EADA69]/20 border border-[#EADA69]/40 rounded-xl p-4 mb-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-[#614270]">💌 Thank You Messages ({thankYouMessages.length})</h3>
-                  {thankYouMessages.some(m => !m.read_at) && (
-                    <button
-                      onClick={async () => {
-                        if (currentUserId) {
-                          await markAllNotificationsRead(currentUserId)
-                          setThankYouMessages(prev => prev.map(m => ({ ...m, read_at: m.read_at || new Date().toISOString() })))
+            {/* Notifications + email preference */}
+            {currentUserId && (
+              <div className="mb-4">
+                {/* Email alerts toggle */}
+                <div className="flex items-center justify-between px-1 mb-3">
+                  <span className="text-sm text-[#614270] font-medium">📧 Email alerts</span>
+                  <button
+                    onClick={async () => {
+                      if (savingEmailPref) return
+                      setSavingEmailPref(true)
+                      const next = !emailAlertsEnabled
+                      setEmailAlertsEnabled(next)
+                      await updateEmailAlertPreference(currentUserId, next)
+                      setSavingEmailPref(false)
+                    }}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${emailAlertsEnabled ? 'bg-[#7D8DCC]' : 'bg-[#92998B]/40'}`}
+                    aria-label="Toggle email alerts"
+                    disabled={savingEmailPref}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${emailAlertsEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+
+                {/* All notifications */}
+                {allNotifications.length > 0 && (
+                  <div className="bg-[#EADA69]/20 border border-[#EADA69]/40 rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-semibold text-[#614270]">
+                        🔔 Updates ({allNotifications.length})
+                      </h3>
+                      {allNotifications.some(n => !n.read_at) && (
+                        <button
+                          onClick={async () => {
+                            await markAllNotificationsRead(currentUserId)
+                            setAllNotifications(prev => prev.map(n => ({ ...n, read_at: n.read_at || new Date().toISOString() })))
+                            setThankYouMessages(prev => prev.map(n => ({ ...n, read_at: n.read_at || new Date().toISOString() })))
+                            setLoginBannerDismissed(true)
+                          }}
+                          className="text-xs text-[#614270] hover:underline"
+                        >
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      {allNotifications.map(notif => {
+                        const report = myReports.find(r => r.id === notif.report_id)
+                        const isUnread = !notif.read_at
+                        const typeConfig: Record<string, { icon: string; label: string }> = {
+                          thank_you:       { icon: '💌', label: notif.sender_name ? `🧑‍🌾 ${notif.sender_name}` : 'A farmer' },
+                          report_claimed:  { icon: '🙋', label: notif.sender_name ? `Claimed by ${notif.sender_name}` : 'Your report was claimed' },
+                          report_resolved: { icon: '✅', label: notif.sender_name ? `Resolved by ${notif.sender_name}` : 'Your report was resolved' },
+                          report_complete: { icon: '🎉', label: 'Report marked complete' },
+                          new_report:      { icon: '📍', label: 'New report' },
                         }
-                      }}
-                      className="text-xs text-[#614270] hover:underline"
-                    >
-                      Mark all read
-                    </button>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  {thankYouMessages.map(msg => {
-                    const report = myReports.find(r => r.id === msg.report_id)
-                    const isUnread = !msg.read_at
-                    const senderLabel = msg.sender_name || 'A farmer'
-                    return (
-                      <div key={msg.id} className={`rounded-lg p-3 text-sm ${isUnread ? 'bg-white border border-[#EADA69]/60 shadow-sm' : 'bg-[#EADA69]/10'}`}>
-                        <div className="flex items-center gap-1.5 mb-1">
-                          {isUnread && <span className="inline-block w-2 h-2 bg-[#EADA69] rounded-full flex-shrink-0" />}
-                          <span className="text-xs font-semibold text-[#614270]">🧑‍🌾 {senderLabel}</span>
-                          <span className="text-xs text-[#92998B] ml-auto">{new Date(msg.sent_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
-                        </div>
-                        <p className="text-[#614270] italic">&ldquo;{msg.message_text || 'Thank you!'}&rdquo;</p>
-                        {report && (
-                          <p className="text-xs text-[#92998B] mt-1">
-                            Re: {report.categoryEmoji} {report.categoryName}
-                          </p>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
+                        const cfg = typeConfig[notif.type] ?? { icon: '🔔', label: 'Update' }
+                        return (
+                          <div key={notif.id} className={`rounded-lg p-3 text-sm ${isUnread ? 'bg-white border border-[#EADA69]/60 shadow-sm' : 'bg-[#EADA69]/10'}`}>
+                            <div className="flex items-center gap-1.5 mb-1">
+                              {isUnread && <span className="inline-block w-2 h-2 bg-[#EADA69] rounded-full flex-shrink-0" />}
+                              <span className="text-xs font-semibold text-[#614270]">{cfg.icon} {cfg.label}</span>
+                              <span className="text-xs text-[#92998B] ml-auto">{new Date(notif.sent_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+                            </div>
+                            {notif.message_text && (
+                              <p className="text-[#614270] italic">&ldquo;{notif.message_text}&rdquo;</p>
+                            )}
+                            {report && (
+                              <p className="text-xs text-[#92998B] mt-1">
+                                Re: {report.categoryEmoji} {report.categoryName}
+                              </p>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1106,7 +1173,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                 label: 'My Reports',
                 icon: '📋',
                 active: viewState === 'my-reports',
-                badge: thankYouMessages.filter(m => !m.read_at).length,
+                badge: allNotifications.filter(n => !n.read_at).length,
                 onClick: () => setViewState('my-reports'),
               },
               {
