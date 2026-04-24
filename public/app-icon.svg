@@ -2,11 +2,10 @@
   <!-- Brand background -->
   <rect width="512" height="512" fill="#D1D9C5"/>
 
-  <!-- Pin shape scaled to ~65% centered with padding, shifted up slightly -->
-  <!-- Original pin: 52,40 → 460,474 (408w × 434h). Scale 0.65 → 265w × 282h. Center: (512-265)/2=123.5 left, (512-282)/2-10=100 top -->
-  <g transform="translate(123, 98) scale(0.65)">
+  <!-- logo-pin scaled to 70% and centered: translate(76.8, 76.8) scale(0.70) -->
+  <g transform="translate(77, 64) scale(0.70)">
     <defs>
-      <clipPath id="pin-icon">
+      <clipPath id="pin">
         <path d="M256 40C142 40 52 130 52 244C52 340 256 474 256 474C256 474 460 340 460 244C460 130 370 40 256 40Z"/>
       </clipPath>
     </defs>
@@ -15,34 +14,19 @@
     <path d="M256 40C142 40 52 130 52 244C52 340 256 474 256 474C256 474 460 340 460 244C460 130 370 40 256 40Z" fill="white"/>
 
     <!-- Dark sage base -->
-    <ellipse cx="256" cy="450" rx="250" ry="160" fill="#4A5C44" clip-path="url(#pin-icon)"/>
+    <ellipse cx="256" cy="450" rx="250" ry="160" fill="#4A5C44" clip-path="url(#pin)"/>
 
     <!-- Left sage-green hill -->
-    <ellipse cx="148" cy="358" rx="222" ry="138" fill="#92998B" clip-path="url(#pin-icon)"/>
+    <ellipse cx="148" cy="358" rx="222" ry="138" fill="#92998B" clip-path="url(#pin)"/>
 
     <!-- Right soft-blue hill -->
-    <ellipse cx="374" cy="318" rx="184" ry="118" fill="#7D8DCC" clip-path="url(#pin-icon)"/>
+    <ellipse cx="374" cy="318" rx="184" ry="118" fill="#7D8DCC" clip-path="url(#pin)"/>
 
     <!-- White diagonal road -->
-    <rect x="212" y="280" width="28" height="220" rx="12"
-          transform="rotate(-18 226 390)" fill="white" opacity="0.7"
-          clip-path="url(#pin-icon)"/>
+    <path d="M52 412 L460 294" fill="none" stroke="white" stroke-width="22" stroke-linecap="butt" clip-path="url(#pin)"/>
 
-    <!-- Sun / moon circle -->
-    <circle cx="340" cy="118" r="42" fill="#EADA69" clip-path="url(#pin-icon)"/>
-
-    <!-- Sheep body (white blob) -->
-    <ellipse cx="174" cy="282" rx="38" ry="26" fill="white" clip-path="url(#pin-icon)"/>
-    <circle  cx="162" cy="268" r="18" fill="white" clip-path="url(#pin-icon)"/>
-    <circle  cx="186" cy="264" r="14" fill="white" clip-path="url(#pin-icon)"/>
-    <!-- Sheep head -->
-    <circle  cx="206" cy="268" r="12" fill="#4A5C44" clip-path="url(#pin-icon)"/>
-    <!-- Sheep legs -->
-    <rect x="162" y="306" width="6" height="18" rx="3" fill="#4A5C44" clip-path="url(#pin-icon)"/>
-    <rect x="176" y="306" width="6" height="18" rx="3" fill="#4A5C44" clip-path="url(#pin-icon)"/>
-
-    <!-- Pin outline -->
+    <!-- Plum pin outline -->
     <path d="M256 40C142 40 52 130 52 244C52 340 256 474 256 474C256 474 460 340 460 244C460 130 370 40 256 40Z"
-          fill="none" stroke="#614270" stroke-width="12"/>
+          fill="none" stroke="#614270" stroke-width="30" stroke-linejoin="round"/>
   </g>
 </svg>
