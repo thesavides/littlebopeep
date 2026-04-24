@@ -1215,7 +1215,7 @@ export default function AdminDashboard() {
       {/* Farm Details Modal (with fields) */}
       {showFarmDetailsModal && <FarmDetailsModal
         farm={farms.find(f => f.id === showFarmDetailsModal)!}
-        owner={users.find(u => u.id === farms.find(f => f.id === showFarmDetailsModal)?.farmerId)}
+        owner={allUsers.find((u: any) => u.id === farms.find(f => f.id === showFarmDetailsModal)?.farmerId)}
         onClose={() => setShowFarmDetailsModal(null)}
         onAddField={(farmId: string) => setShowCreateFieldModal(farmId)}
         onEditField={(farmId: string, fieldId: string) => setShowEditFieldModal({ farmId, fieldId })}
@@ -2732,7 +2732,7 @@ function FarmDetailsModal({ farm, owner, onClose, onAddField, onEditField, onDel
         <div className="sticky top-0 bg-white rounded-t-2xl px-6 pt-6 pb-4 border-b border-[#D1D9C5] flex justify-between items-center z-10">
           <div>
             <h3 className="text-xl font-bold text-[#614270]">{farm.name}</h3>
-            <p className="text-sm text-[#614270]">Owner: {owner?.name || 'Unknown'}</p>
+            <p className="text-sm text-[#614270]">Owner: {owner?.full_name || owner?.name || owner?.email || 'Unknown'}</p>
           </div>
           <button onClick={onClose} className="text-[#92998B] hover:text-[#614270] text-2xl">&times;</button>
         </div>
@@ -3060,7 +3060,6 @@ function CreateFieldModal({ farmId, farm, onClose, onCreate }: any) {
 function EditFieldModal({ farmId, field, onClose, onSave }: any) {
   const { reportCategories } = useAppStore()
   const [name, setName] = useState(field.name)
-  const [sheepCount, setSheepCount] = useState(field.sheepCount?.toString() || '')
   const [categorySubscriptions, setCategorySubscriptions] = useState<Record<string, boolean>>(field.categorySubscriptions || {})
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -3072,7 +3071,6 @@ function EditFieldModal({ farmId, field, onClose, onSave }: any) {
 
     onSave(farmId, field.id, {
       name: name.trim(),
-      sheepCount: sheepCount ? parseInt(sheepCount) : undefined,
       categorySubscriptions,
     })
   }
@@ -3094,18 +3092,6 @@ function EditFieldModal({ farmId, field, onClose, onSave }: any) {
               onChange={(e) => setName(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7D8DCC]"
               required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-[#614270] mb-1">Sheep Count</label>
-            <input
-              type="number"
-              value={sheepCount}
-              onChange={(e) => setSheepCount(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7D8DCC]"
-              placeholder="150"
-              min="0"
             />
           </div>
 

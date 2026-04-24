@@ -16,6 +16,7 @@ type RegistrationStep = 1 | 2 | 3 | 4 | 5
 
 export default function FarmerDashboard() {
   const { t } = useTranslation()
+  const [isUpgradeFlow, setIsUpgradeFlow] = useState(false)
   const {
     currentUserId,
     farms,
@@ -39,9 +40,9 @@ export default function FarmerDashboard() {
     cancelSubscription,
     reportCategories,
     updateFarmCategorySubscription,
-    updateFieldCategorySubscription,
     loadReports,
     loadFarms,
+    setRole,
   } = useAppStore()
 
   // Supabase profile for the current user (pre-populates form fields correctly
@@ -77,10 +78,13 @@ export default function FarmerDashboard() {
   // Message-admin-on-complete state
   const [messageAdminOpen, setMessageAdminOpen] = useState<string | null>(null)
   const [messageAdminText, setMessageAdminText] = useState('')
-  // Field inline editing
-  const [expandedFieldId, setExpandedFieldId] = useState<string | null>(null)
-  const [editFieldName, setEditFieldName] = useState('')
+  // Field modal editing
+  const [editFieldModal, setEditFieldModal] = useState<{ farmId: string; field: { id: string; name: string; fencePosts: Array<{ lat: number; lng: number }>; categorySubscriptions?: Record<string, boolean> } } | null>(null)
+  const [editFieldModalName, setEditFieldModalName] = useState('')
+  const [editFieldModalSubs, setEditFieldModalSubs] = useState<Record<string, boolean>>({})
   const [editingFieldBoundaryId, setEditingFieldBoundaryId] = useState<string | null>(null)
+  // Local buffer value for slider (committed on mouse/pointer up)
+  const [localAlertBuffer, setLocalAlertBuffer] = useState<number | null>(null)
 
   const currentUser = getCurrentUser()
 
@@ -122,6 +126,12 @@ export default function FarmerDashboard() {
 
   // Load farms from Supabase and fetch the current user's profile on mount
   useEffect(() => {
+    // Detect walker-to-farmer upgrade flow
+    if (sessionStorage.getItem('upgrading_to_farmer') === '1') {
+      sessionStorage.removeItem('upgrading_to_farmer')
+      setIsUpgradeFlow(true)
+    }
+
     const init = async () => {
       await loadReports()
       await loadFarms()
@@ -252,7 +262,7 @@ export default function FarmerDashboard() {
     }
   }
 
-  const handleCompleteRegistration = () => {
+  const handleCompleteRegistration = async () => {
     if (currentUserId) {
       // Update user with billing info
       updateUser(currentUserId, {
@@ -270,10 +280,10 @@ export default function FarmerDashboard() {
           lng: formData.physicalLng
         } : undefined
       })
-      
+
       // Start trial
       startTrial(currentUserId)
-      
+
       // Create first farm if name provided
       if (formData.farmName) {
         addFarm({
@@ -284,7 +294,17 @@ export default function FarmerDashboard() {
           alertsEnabled: true
         })
       }
-      
+
+      // Upgrade DB role from walker → farmer if this was an upgrade flow
+      if (isUpgradeFlow) {
+        await fetch('/api/auth/upgrade-role', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUserId, targetRole: 'farmer' }),
+        }).catch(() => {})
+        setIsUpgradeFlow(false)
+      }
+
       setViewState('dashboard')
     }
   }
@@ -406,12 +426,21 @@ export default function FarmerDashboard() {
                   </div>
                 </div>
                 <Button variant="secondary" onClick={handleRegistrationNext} disabled={!formData.farmName || !formData.email} className="mt-6">{t('farmer.continue', {}, 'Continue')}</Button>
-                <button
-                  onClick={() => setViewState('dashboard')}
-                  className="w-full mt-3 py-2 text-sm text-[#92998B] hover:text-[#614270]"
-                >
-                  {t('farmer.skipForNow', {}, 'Skip for now — I\'ll add a farm later')}
-                </button>
+                {isUpgradeFlow ? (
+                  <button
+                    onClick={() => { setIsUpgradeFlow(false); setRole('walker') }}
+                    className="w-full mt-3 py-2 text-sm text-[#92998B] hover:text-[#614270]"
+                  >
+                    {t('farmer.cancelUpgrade', {}, 'Cancel — go back to walker mode')}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setViewState('dashboard')}
+                    className="w-full mt-3 py-2 text-sm text-[#92998B] hover:text-[#614270]"
+                  >
+                    {t('farmer.skipForNow', {}, 'Skip for now — I\'ll add a farm later')}
+                  </button>
+                )}
               </div>
             )}
 
@@ -976,7 +1005,10 @@ export default function FarmerDashboard() {
 
               {/* Alert Buffer Slider */}
               <div className="mb-2">
-                <label className="block text-sm font-medium text-[#614270] mb-2" dangerouslySetInnerHTML={{ __html: t('farmer.alertBufferZoneLabel', { buffer: selectedFarm.alertBufferMeters }, `Alert Buffer Zone: <span class="text-[#7D8DCC] font-semibold">${selectedFarm.alertBufferMeters}m</span>`) }} />
+                <label className="block text-sm font-medium text-[#614270] mb-2">
+                  {t('farmer.alertBufferZoneLabel', { buffer: localAlertBuffer ?? selectedFarm.alertBufferMeters }, `Alert Buffer Zone: `)}
+                  <span className="text-[#7D8DCC] font-semibold">{localAlertBuffer ?? selectedFarm.alertBufferMeters}m</span>
+                </label>
                 <p className="text-xs text-[#92998B] mb-3">
                   {t('farmer.alertBufferExplanation', {}, 'You will also be alerted when sheep are spotted within this distance outside your field boundaries.')}
                 </p>
@@ -985,8 +1017,18 @@ export default function FarmerDashboard() {
                   min="100"
                   max="2000"
                   step="100"
-                  value={selectedFarm.alertBufferMeters}
-                  onChange={(e) => updateFarm(selectedFarm.id, { alertBufferMeters: parseInt(e.target.value) })}
+                  value={localAlertBuffer ?? selectedFarm.alertBufferMeters}
+                  onChange={(e) => setLocalAlertBuffer(parseInt(e.target.value))}
+                  onMouseUp={(e) => {
+                    const val = parseInt((e.target as HTMLInputElement).value)
+                    updateFarm(selectedFarm.id, { alertBufferMeters: val })
+                    setLocalAlertBuffer(null)
+                  }}
+                  onTouchEnd={(e) => {
+                    const val = parseInt((e.target as HTMLInputElement).value)
+                    updateFarm(selectedFarm.id, { alertBufferMeters: val })
+                    setLocalAlertBuffer(null)
+                  }}
                   className="w-full h-2 bg-[#D1D9C5] rounded-lg appearance-none cursor-pointer"
                 />
                 <div className="flex justify-between text-xs text-[#92998B] mt-1">
@@ -1008,112 +1050,22 @@ export default function FarmerDashboard() {
                 <div className="bg-[#EADA69]/20 border border-[#EADA69]/40 rounded-xl p-4 text-center text-[#614270]">{t('farmer.noFieldsYet', {}, 'No fields yet. Add fields by placing fence posts.')}</div>
               ) : (
                 <div className="space-y-3">
-                  {selectedFarm.fields.map((field) => {
-                    const isExpanded = expandedFieldId === field.id
-                    const activeCategories = reportCategories.filter(c => c.isActive)
-                    return (
-                      <div key={field.id} className="bg-white rounded-xl shadow border border-[#D1D9C5] overflow-hidden">
-                        {/* Field header row */}
-                        <button
-                          onClick={() => {
-                            if (isExpanded) {
-                              setExpandedFieldId(null)
-                            } else {
-                              setExpandedFieldId(field.id)
-                              setEditFieldName(field.name)
-                            }
-                          }}
-                          className="w-full flex items-center justify-between p-4 text-left hover:bg-[#D1D9C5]/20"
-                        >
-                          <div>
-                            <h4 className="font-medium text-[#614270]">{field.name}</h4>
-                            <p className="text-sm text-[#92998B]">{field.fencePosts.length} fence posts</p>
-                          </div>
-                          <svg className={`w-4 h-4 text-[#92998B] transition-transform flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </button>
-
-                        {/* Expanded edit section */}
-                        {isExpanded && (
-                          <div className="border-t border-[#D1D9C5] p-4 bg-[#D1D9C5]/10 space-y-4">
-                            {/* Name edit */}
-                            <div>
-                              <label className="block text-xs font-medium text-[#614270] mb-1">Field Name</label>
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  value={editFieldName}
-                                  onChange={e => setEditFieldName(e.target.value)}
-                                  className="flex-1 px-3 py-2 border border-[#D1D9C5] rounded-lg text-sm focus:ring-2 focus:ring-[#7D8DCC]"
-                                />
-                                <button
-                                  onClick={() => {
-                                    if (editFieldName.trim()) {
-                                      updateField(selectedFarm.id, field.id, { name: editFieldName.trim() })
-                                      setExpandedFieldId(null)
-                                    }
-                                  }}
-                                  disabled={!editFieldName.trim() || editFieldName.trim() === field.name}
-                                  className="px-3 py-2 bg-[#7D8DCC] text-white rounded-lg text-sm disabled:opacity-40"
-                                >Save</button>
-                              </div>
-                            </div>
-
-                            {/* Category alert subscriptions */}
-                            {activeCategories.length > 0 && (
-                              <div>
-                                <label className="block text-xs font-medium text-[#614270] mb-2">Alert me about</label>
-                                <div className="space-y-1">
-                                  {activeCategories.map(cat => {
-                                    const isCompulsory = cat.subscriptionMode === 'compulsory'
-                                    const effective = isCompulsory
-                                      ? true
-                                      : cat.subscriptionMode === 'default_on'
-                                        ? (field.categorySubscriptions?.[cat.id] ?? true)
-                                        : (field.categorySubscriptions?.[cat.id] ?? false)
-                                    return (
-                                      <div key={cat.id} className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-[#D1D9C5]/30">
-                                        <div className="flex items-center gap-2">
-                                          {cat.imageUrl ? <img src={cat.imageUrl} alt={cat.name} className="w-5 h-5 object-contain rounded flex-shrink-0" /> : <span className="text-base">{cat.emoji}</span>}
-                                          <span className="text-sm text-[#614270]">{cat.name}</span>
-                                          {isCompulsory && <span className="text-xs text-[#92998B]">🔒</span>}
-                                        </div>
-                                        <button
-                                          onClick={() => !isCompulsory && updateFieldCategorySubscription(selectedFarm.id, field.id, cat.id, !effective)}
-                                          disabled={isCompulsory}
-                                          className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 ${effective ? 'bg-[#7D8DCC]' : 'bg-[#92998B]/30'} ${isCompulsory ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                        >
-                                          <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${effective ? 'translate-x-5' : ''}`} />
-                                        </button>
-                                      </div>
-                                    )
-                                  })}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Actions */}
-                            <div className="flex gap-2 pt-1">
-                              <button
-                                onClick={() => {
-                                  setEditingFieldBoundaryId(field.id)
-                                  setFieldName(field.name)
-                                  setFencePosts([...field.fencePosts])
-                                  setViewState('add-field')
-                                }}
-                                className="flex-1 py-2 bg-[#D1D9C5] text-[#614270] rounded-lg text-sm font-medium hover:bg-[#92998B]/20"
-                              >📍 Redraw Boundary</button>
-                              <button
-                                onClick={() => { deleteField(selectedFarm.id, field.id); setExpandedFieldId(null) }}
-                                className="px-4 py-2 bg-[#FA9335]/10 text-[#FA9335] rounded-lg text-sm hover:bg-[#FA9335]/20"
-                              >Delete</button>
-                            </div>
-                          </div>
-                        )}
+                  {selectedFarm.fields.map((field) => (
+                    <div key={field.id} className="bg-white rounded-xl shadow border border-[#D1D9C5] flex items-center justify-between p-4">
+                      <div>
+                        <h4 className="font-medium text-[#614270]">{field.name}</h4>
+                        <p className="text-sm text-[#92998B]">{field.fencePosts.length} fence posts</p>
                       </div>
-                    )
-                  })}
+                      <button
+                        onClick={() => {
+                          setEditFieldModal({ farmId: selectedFarm.id, field })
+                          setEditFieldModalName(field.name)
+                          setEditFieldModalSubs(field.categorySubscriptions || {})
+                        }}
+                        className="px-3 py-1.5 bg-[#D1D9C5] text-[#614270] rounded-lg text-sm font-medium hover:bg-[#92998B]/20"
+                      >Edit</button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -1331,65 +1283,11 @@ export default function FarmerDashboard() {
               </div>
             )}
 
-            <p className="text-sm text-[#92998B]">Choose which report types you want to be alerted about — you can set different alerts per field.</p>
-            {myFarms.length === 0 ? (
-              <div className="p-8 text-center text-[#92998B] bg-white rounded-xl shadow">
-                <div className="text-4xl mb-2">🏡</div>
-                <p>Add a farm first to manage notification preferences.</p>
+            {myFarms.length > 0 && (
+              <div className="bg-white rounded-xl shadow p-4">
+                <p className="text-sm text-[#92998B]">To manage per-field alert categories, open a farm and tap <strong>Edit</strong> on any field.</p>
               </div>
-            ) : myFarms.map((farm) => {
-              const activeCategories = reportCategories.filter((c) => c.isActive)
-              return (
-                <div key={farm.id} className="bg-white rounded-xl shadow p-4 space-y-3">
-                  <h3 className="font-semibold text-[#614270]">🏡 {farm.name}</h3>
-                  {activeCategories.length === 0 ? (
-                    <p className="text-sm text-[#92998B]">No report categories configured yet.</p>
-                  ) : farm.fields.length === 0 ? (
-                    <p className="text-sm text-[#92998B]">Add fields to this farm to set per-field alert preferences.</p>
-                  ) : farm.fields.map((field) => (
-                    <div key={field.id} className="border border-[#D1D9C5] rounded-lg overflow-hidden">
-                      <div className="bg-[#D1D9C5] px-3 py-2 text-sm font-medium text-[#614270]">📍 {field.name}</div>
-                      <div className="divide-y divide-[#D1D9C5]">
-                        {activeCategories.map((cat) => {
-                          const isCompulsory = cat.subscriptionMode === 'compulsory'
-                          const effective = isCompulsory
-                            ? true
-                            : cat.subscriptionMode === 'default_on'
-                              ? (field.categorySubscriptions?.[cat.id] ?? true)
-                              : (field.categorySubscriptions?.[cat.id] ?? false)
-                          return (
-                            <div key={cat.id} className={`flex items-center justify-between px-3 py-2.5 ${isCompulsory ? 'bg-[#FA9335]/5' : 'bg-white'}`}>
-                              <div className="flex items-center gap-2">
-                                {cat.imageUrl ? (
-                                  <img src={cat.imageUrl} alt={cat.name} className="w-6 h-6 object-contain flex-shrink-0 rounded" />
-                                ) : (
-                                  <span className="text-lg">{cat.emoji}</span>
-                                )}
-                                <div>
-                                  <div className="text-sm font-medium text-[#614270]">{cat.name}</div>
-                                  <div className="text-xs text-[#92998B]">
-                                    {isCompulsory ? '🔒 Required' : effective ? 'Alerts on' : 'Alerts off'}
-                                  </div>
-                                </div>
-                              </div>
-                              <button
-                                onClick={() => !isCompulsory && updateFieldCategorySubscription(farm.id, field.id, cat.id, !effective)}
-                                disabled={isCompulsory}
-                                className={`relative w-11 h-6 rounded-full transition-colors ${
-                                  effective ? 'bg-[#63BD8F]' : 'bg-[#D1D9C5]'
-                                } ${isCompulsory ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                              >
-                                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${effective ? 'translate-x-5' : 'translate-x-0'}`} />
-                              </button>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )
-            })}
+            )}
           </div>
         )}
       </main>
@@ -1543,6 +1441,94 @@ export default function FarmerDashboard() {
           </div>
         )
       })()}
+
+      {/* Field Edit Modal */}
+      {editFieldModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-[#614270]">Edit Field</h3>
+              <button onClick={() => setEditFieldModal(null)} className="text-[#92998B] hover:text-[#614270] text-2xl leading-none">&times;</button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#614270] mb-1">Field Name *</label>
+                <input
+                  type="text"
+                  value={editFieldModalName}
+                  onChange={e => setEditFieldModalName(e.target.value)}
+                  className="w-full px-3 py-2 border border-[#D1D9C5] rounded-lg focus:ring-2 focus:ring-[#7D8DCC] focus:border-transparent"
+                />
+              </div>
+
+              {reportCategories.filter(c => c.isActive).length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-[#614270] mb-2">Alert me about</label>
+                  <div className="flex flex-wrap gap-2">
+                    {reportCategories.filter(c => c.isActive).map(cat => {
+                      const isCompulsory = cat.subscriptionMode === 'compulsory'
+                      const enabled = isCompulsory || (editFieldModalSubs[cat.id] ?? (cat.subscriptionMode === 'default_on'))
+                      return (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          disabled={isCompulsory}
+                          onClick={() => !isCompulsory && setEditFieldModalSubs(prev => ({ ...prev, [cat.id]: !enabled }))}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                            enabled ? 'bg-[#614270] text-white border-[#614270]' : 'bg-white text-[#92998B] border-[#D1D9C5]'
+                          } ${isCompulsory ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                        >
+                          {cat.imageUrl ? <img src={cat.imageUrl} alt={cat.name} className="w-4 h-4 object-contain rounded" /> : <span>{cat.emoji}</span>}
+                          <span>{cat.name}</span>
+                          {isCompulsory && <span className="text-xs opacity-70">🔒</span>}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={() => {
+                  setEditingFieldBoundaryId(editFieldModal.field.id)
+                  setFieldName(editFieldModal.field.name)
+                  setFencePosts([...editFieldModal.field.fencePosts])
+                  setEditFieldModal(null)
+                  setViewState('add-field')
+                }}
+                className="w-full py-2.5 bg-[#D1D9C5] text-[#614270] rounded-xl text-sm font-medium hover:bg-[#92998B]/20"
+              >📍 Redraw Boundary</button>
+
+              <button
+                onClick={() => {
+                  if (confirm('Delete this field?')) {
+                    deleteField(editFieldModal.farmId, editFieldModal.field.id)
+                    setEditFieldModal(null)
+                  }
+                }}
+                className="w-full py-2.5 bg-[#FA9335]/10 text-[#FA9335] rounded-xl text-sm hover:bg-[#FA9335]/20"
+              >Delete Field</button>
+            </div>
+
+            <div className="flex gap-3 mt-5">
+              <button onClick={() => setEditFieldModal(null)} className="flex-1 py-3 bg-[#D1D9C5] text-[#614270] rounded-xl text-sm">Cancel</button>
+              <button
+                onClick={() => {
+                  if (!editFieldModalName.trim()) return
+                  updateField(editFieldModal.farmId, editFieldModal.field.id, {
+                    name: editFieldModalName.trim(),
+                    categorySubscriptions: editFieldModalSubs,
+                  })
+                  setEditFieldModal(null)
+                }}
+                disabled={!editFieldModalName.trim()}
+                className="flex-1 py-3 bg-[#7D8DCC] text-white rounded-xl text-sm font-semibold disabled:opacity-40"
+              >Save Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

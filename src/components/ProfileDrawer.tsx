@@ -16,7 +16,7 @@ interface ProfileDrawerProps {
 export default function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
   const router = useRouter()
   const { t } = useTranslation()
-  const { currentRole, isAdmin, setShowHomePage, setRole, setAdmin, setCurrentUserId } = useAppStore()
+  const { currentRole, isAdmin, setShowHomePage, setRole, setAdmin, setCurrentUserId, currentUserId } = useAppStore()
 
   const [userEmail, setUserEmail] = useState('')
   const [userPrimaryRole, setUserPrimaryRole] = useState<'walker' | 'farmer' | 'admin' | 'super_admin' | null>(null)
@@ -100,14 +100,18 @@ export default function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                 <p className="text-xs font-semibold uppercase tracking-wide mb-0.5" style={{ color: '#92998B' }}>Are you a farmer?</p>
                 <p className="text-xs" style={{ color: '#614270' }}>Register your farm to receive sighting alerts for your land.</p>
               </div>
-              <a
-                href="/auth?mode=signup&role=farmer"
-                className="flex items-center gap-3 px-4 py-3 transition-colors hover:opacity-80"
+              <button
+                onClick={() => {
+                  sessionStorage.setItem('upgrading_to_farmer', '1')
+                  setRole('farmer')
+                  onClose()
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 transition-colors hover:opacity-80"
                 style={{ backgroundColor: '#614270', color: '#fff' }}
               >
                 <span className="text-base">🧑‍🌾</span>
                 <span className="text-sm font-medium">Register as a Farmer</span>
-              </a>
+              </button>
             </div>
           )}
 
