@@ -19,6 +19,7 @@ export default function AuthPage() {
   const [role, setRoleSelection] = useState<'walker' | 'farmer'>('walker')
   const [emailAlerts, setEmailAlerts] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(false)
+  const [legalModal, setLegalModal] = useState<'terms' | 'privacy' | null>(null)
 
   // Pre-select mode and role from query params (e.g. ?mode=signup&role=farmer)
   useEffect(() => {
@@ -112,6 +113,7 @@ export default function AuthPage() {
   }
 
   return (
+    <>
     <div className="min-h-screen bg-[#D1D9C5] flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
 
@@ -219,17 +221,17 @@ export default function AuthPage() {
                 />
                 <span className="text-sm text-[#614270]">
                   {t('auth.termsAccept', {}, 'I have read and agree to the')}{' '}
-                  <a href="/terms" target="_blank" rel="noreferrer"
+                  <button type="button" onClick={() => setLegalModal('terms')}
                     className="underline font-medium hover:opacity-70 transition-opacity"
                     style={{ color: '#614270' }}>
                     {t('home.landing.termsConditions', {}, 'Terms & Conditions')}
-                  </a>
+                  </button>
                   {' '}{t('auth.termsAnd', {}, 'and')}{' '}
-                  <a href="/privacy" target="_blank" rel="noreferrer"
+                  <button type="button" onClick={() => setLegalModal('privacy')}
                     className="underline font-medium hover:opacity-70 transition-opacity"
                     style={{ color: '#614270' }}>
                     {t('home.landing.privacyPolicy', {}, 'Privacy Policy')}
-                  </a>
+                  </button>
                 </span>
               </label>
             </>
@@ -301,5 +303,46 @@ export default function AuthPage() {
         </div>
       </div>
     </div>
+
+      {/* Legal content modal */}
+
+      {legalModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+          style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+          onClick={() => setLegalModal(null)}>
+          <div className="bg-white w-full sm:max-w-2xl sm:rounded-2xl shadow-2xl flex flex-col"
+            style={{ maxHeight: '85vh' }}
+            onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[#D1D9C5] flex-shrink-0">
+              <h2 className="font-serif font-semibold text-lg" style={{ color: '#614270' }}>
+                {legalModal === 'terms' ? t('home.landing.termsConditions', {}, 'Terms & Conditions') : t('home.landing.privacyPolicy', {}, 'Privacy Policy')}
+              </h2>
+              <button onClick={() => setLegalModal(null)}
+                className="text-[#92998B] hover:text-[#614270] transition-colors text-2xl leading-none">
+                ×
+              </button>
+            </div>
+            {/* Scrollable content */}
+            <div className="overflow-y-auto flex-1 px-5 py-4">
+              <iframe
+                src={legalModal === 'terms' ? '/terms' : '/privacy'}
+                className="w-full border-0"
+                style={{ height: '60vh', minHeight: '400px' }}
+                title={legalModal === 'terms' ? 'Terms & Conditions' : 'Privacy Policy'}
+              />
+            </div>
+            {/* Footer */}
+            <div className="px-5 py-4 border-t border-[#D1D9C5] flex-shrink-0">
+              <button onClick={() => setLegalModal(null)}
+                className="w-full py-2.5 rounded-xl font-medium text-sm transition-colors"
+                style={{ backgroundColor: '#614270', color: '#fff' }}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
