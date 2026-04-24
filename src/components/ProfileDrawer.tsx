@@ -93,6 +93,24 @@ export default function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
             <LanguageSelector />
           </div>
 
+          {/* Become a Farmer (walkers only) */}
+          {userPrimaryRole === 'walker' && !isAdmin && (
+            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(146,153,139,0.3)' }}>
+              <div className="px-4 py-3" style={{ backgroundColor: 'rgba(209,217,197,0.4)' }}>
+                <p className="text-xs font-semibold uppercase tracking-wide mb-0.5" style={{ color: '#92998B' }}>Are you a farmer?</p>
+                <p className="text-xs" style={{ color: '#614270' }}>Register your farm to receive sighting alerts for your land.</p>
+              </div>
+              <a
+                href="/auth?mode=signup&role=farmer"
+                className="flex items-center gap-3 px-4 py-3 transition-colors hover:opacity-80"
+                style={{ backgroundColor: '#614270', color: '#fff' }}
+              >
+                <span className="text-base">🧑‍🌾</span>
+                <span className="text-sm font-medium">Register as a Farmer</span>
+              </a>
+            </div>
+          )}
+
           {/* Role switcher (farmers only) */}
           {userPrimaryRole === 'farmer' && !isAdmin && (
             <div className="space-y-2">

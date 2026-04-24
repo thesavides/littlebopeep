@@ -2747,6 +2747,30 @@ function FarmDetailsModal({ farm, owner, onClose, onAddField, onEditField, onDel
           </div>
         </div>
 
+        {/* Map preview of field boundaries */}
+        {farm.fields.length > 0 && (
+          <div className="mb-4 h-56 rounded-xl overflow-hidden shadow-sm">
+            <Map
+              center={farm.fields[0]?.fencePosts[0]
+                ? [farm.fields[0].fencePosts[0].lat, farm.fields[0].fencePosts[0].lng]
+                : [54.5, -2]}
+              zoom={15}
+              markers={farm.fields.flatMap((field: any) =>
+                field.fencePosts.map((post: any, idx: number) => ({
+                  position: [post.lat, post.lng] as [number, number],
+                  type: 'fencepost' as const,
+                  id: `${field.id}-${idx}`,
+                }))
+              )}
+              polygons={farm.fields.map((field: any) => ({
+                id: field.id,
+                positions: field.fencePosts.map((p: any) => [p.lat, p.lng] as [number, number]),
+                color: '#9ED663',
+              }))}
+            />
+          </div>
+        )}
+
         <div className="mb-4 flex justify-between items-center">
           <h4 className="font-semibold text-[#614270]">Fields ({farm.fields.length})</h4>
           <button

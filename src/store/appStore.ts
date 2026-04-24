@@ -1045,9 +1045,7 @@ export const useAppStore = create<AppState>()(
       loadFarms: async () => {
         try {
           const supabaseFarms = await fetchFarms()
-          if (supabaseFarms.length > 0) {
-            set({ farms: supabaseFarms })
-          }
+          set({ farms: supabaseFarms })
         } catch (err) {
           console.error('Failed to load farms from Supabase:', err)
         }
