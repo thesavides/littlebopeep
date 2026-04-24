@@ -18,6 +18,7 @@ export default function AuthPage() {
   const [fullName, setFullName] = useState('')
   const [role, setRoleSelection] = useState<'walker' | 'farmer'>('walker')
   const [emailAlerts, setEmailAlerts] = useState(false)
+  const [termsAccepted, setTermsAccepted] = useState(false)
 
   // Pre-select mode and role from query params (e.g. ?mode=signup&role=farmer)
   useEffect(() => {
@@ -35,20 +36,36 @@ export default function AuthPage() {
 
     try {
       if (mode === 'signup') {
-        // Validate full name is provided
         if (!fullName.trim()) {
           setError(t('auth.nameRequired', {}, 'Please enter your full name'))
           setLoading(false)
           return
         }
 
-        // Sign up walker or farmer
+        if (!termsAccepted) {
+          setError(t('auth.termsRequired', {}, 'You must accept the Terms & Conditions to create an account'))
+          setLoading(false)
+          return
+        }
+
+        const now = new Date().toISOString()
+        const meta = {
+          user_agent: navigator.userAgent,
+          language: navigator.language,
+          platform: (navigator as any).platform ?? 'unknown',
+          screen: `${screen.width}x${screen.height}`,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          referrer: document.referrer || null,
+        }
+
         const { success, user, error: signUpError } = await signUp(
           email,
           password,
           fullName.trim(),
           role,
-          emailAlerts
+          emailAlerts,
+          now,
+          meta
         )
 
         if (!success || !user) {
@@ -189,6 +206,30 @@ export default function AuthPage() {
                   {role === 'farmer'
                     ? t('auth.emailAlertsfarmer', {}, '📧 Email me when new reports are spotted near my farm')
                     : t('auth.emailAlertsWalker', {}, '📧 Email me updates when my reports are claimed or resolved')}
+                </span>
+              </label>
+
+              <label className="flex items-start gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(e) => setTermsAccepted(e.target.checked)}
+                  className="mt-0.5 accent-[#614270] w-4 h-4 flex-shrink-0"
+                  required
+                />
+                <span className="text-sm text-[#614270]">
+                  {t('auth.termsAccept', {}, 'I have read and agree to the')}{' '}
+                  <a href="/terms" target="_blank" rel="noreferrer"
+                    className="underline font-medium hover:opacity-70 transition-opacity"
+                    style={{ color: '#614270' }}>
+                    {t('home.landing.termsConditions', {}, 'Terms & Conditions')}
+                  </a>
+                  {' '}{t('auth.termsAnd', {}, 'and')}{' '}
+                  <a href="/privacy" target="_blank" rel="noreferrer"
+                    className="underline font-medium hover:opacity-70 transition-opacity"
+                    style={{ color: '#614270' }}>
+                    {t('home.landing.privacyPolicy', {}, 'Privacy Policy')}
+                  </a>
                 </span>
               </label>
             </>

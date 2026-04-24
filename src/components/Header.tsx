@@ -48,7 +48,7 @@ export default function Header({ showBackButton = false, onBack, title, onTitleC
           className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
           aria-label="Go to home"
         >
-          <img src="/logo-pin.svg" alt="" aria-hidden="true" className="w-8 h-8" />
+          <img src="/logo-pin.svg" alt="" aria-hidden="true" className="w-6 h-6" />
           {!title && (
             isAdmin ? (
               <span className="font-serif font-semibold text-lg tracking-tight text-white leading-none">

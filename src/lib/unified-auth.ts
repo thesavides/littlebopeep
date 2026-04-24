@@ -87,7 +87,9 @@ export async function signUp(
   password: string,
   fullName: string,
   role: 'walker' | 'farmer',
-  emailAlerts: boolean = false
+  emailAlerts: boolean = false,
+  termsAcceptedAt?: string,
+  termsAcceptedMeta?: Record<string, unknown>
 ): Promise<{
   success: boolean
   user?: UserProfile
@@ -105,7 +107,9 @@ export async function signUp(
         password,
         fullName,
         role,
-        emailAlerts
+        emailAlerts,
+        termsAcceptedAt,
+        termsAcceptedMeta
       })
     })
 

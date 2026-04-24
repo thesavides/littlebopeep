@@ -1,467 +1,298 @@
-export default function PrivacyPage() {
+'use client'
+
+import Link from 'next/link'
+import { useState } from 'react'
+import { useTranslation } from '@/contexts/TranslationContext'
+
+function Callout({ children }: { children: React.ReactNode }) {
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@300;400;600&display=swap');
+    <div className="my-4 pl-4 py-3 pr-4 rounded-r-xl text-sm leading-relaxed"
+      style={{ borderLeft: '4px solid #7D8DCC', backgroundColor: 'rgba(125,141,204,0.1)', color: '#3e2c48' }}>
+      {children}
+    </div>
+  )
+}
 
-        :root {
-          --green:      #2d5a27;
-          --green-mid:  #3d7a35;
-          --green-pale: #eef4ec;
-          --cream:      #faf8f3;
-          --text:       #1c2519;
-          --muted:      #5a6b56;
-          --border:     #c8d9c4;
-          --accent:     #8fbc4e;
-        }
+function SectionTitle({ id, children }: { id: string; children: React.ReactNode }) {
+  return (
+    <h2 id={id} className="font-serif text-xl font-semibold mt-8 mb-3 pb-2"
+      style={{ color: '#614270', borderBottom: '2px solid rgba(146,153,139,0.3)', scrollMarginTop: '24px' }}>
+      {children}
+    </h2>
+  )
+}
 
-        .legal-page {
-          font-family: 'Source Sans 3', sans-serif;
-          font-weight: 400;
-          background: var(--cream);
-          color: var(--text);
-          line-height: 1.75;
-          font-size: 16px;
-          min-height: 100vh;
-        }
+function Sub({ children }: { children: React.ReactNode }) {
+  return <h3 className="font-semibold mt-4 mb-1.5 text-sm" style={{ color: '#3e2c48' }}>{children}</h3>
+}
 
-        .legal-nav {
-          background: var(--green);
-          padding: 14px 32px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
+function LegalTable({ rows }: { rows: [string, string][] }) {
+  return (
+    <div className="my-4 overflow-x-auto rounded-xl" style={{ border: '1px solid rgba(146,153,139,0.3)' }}>
+      <table className="w-full text-sm">
+        <thead>
+          <tr style={{ backgroundColor: '#614270', color: '#fff' }}>
+            <th className="text-left px-4 py-2.5 font-semibold">{rows[0][0]}</th>
+            <th className="text-left px-4 py-2.5 font-semibold">{rows[0][1]}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.slice(1).map(([a, b], i) => (
+            <tr key={i} style={{ backgroundColor: i % 2 === 0 ? '#fff' : 'rgba(209,217,197,0.3)' }}>
+              <td className="px-4 py-2.5 align-top" style={{ borderTop: '1px solid rgba(146,153,139,0.2)' }} dangerouslySetInnerHTML={{ __html: a }} />
+              <td className="px-4 py-2.5 align-top" style={{ borderTop: '1px solid rgba(146,153,139,0.2)' }} dangerouslySetInnerHTML={{ __html: b }} />
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
 
-        .legal-nav .nav-logo {
-          font-family: 'Lora', serif;
-          font-size: 13px;
-          letter-spacing: 0.18em;
-          text-transform: uppercase;
-          color: var(--accent);
-          text-decoration: none;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
+export default function PrivacyPage() {
+  const { t, language, changeLanguage, languages } = useTranslation()
+  const [langOpen, setLangOpen] = useState(false)
+  const currentLang = languages.find((l) => l.code === language)
 
-        .legal-nav .nav-back {
-          font-size: 14px;
-          color: rgba(255,255,255,0.8);
-          text-decoration: none;
-        }
+  return (
+    <div className="min-h-screen" style={{ backgroundColor: '#D1D9C5' }}>
 
-        .legal-nav .nav-back:hover { color: #fff; }
+      {/* Nav */}
+      <nav className="sticky top-0 z-40 border-b" style={{ backgroundColor: '#D1D9C5', borderColor: 'rgba(97,66,112,0.12)' }}>
+        <div className="mx-auto max-w-5xl flex items-center justify-between px-5 py-3">
+          <Link href="/" className="flex items-center gap-2.5 no-underline">
+            <img src="/logo-pin.svg" alt="" aria-hidden="true" className="w-8 h-8" />
+            <span className="font-serif font-semibold text-lg tracking-tight leading-none">
+              <span style={{ color: '#614270' }}>Little </span>
+              <span style={{ color: '#92998B' }}>Bo </span>
+              <span style={{ color: '#614270' }}>Peep</span>
+            </span>
+          </Link>
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <button onClick={() => setLangOpen(o => !o)}
+                className="flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium border transition-colors"
+                style={{ borderColor: '#92998B', color: '#92998B' }}>
+                <span>{currentLang?.flag_emoji ?? '🌐'}</span>
+                <span>{currentLang?.code?.toUpperCase() ?? 'EN'}</span>
+                <svg className="w-3 h-3 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {langOpen && (
+                <div className="absolute right-0 mt-1 rounded-xl shadow-lg border overflow-hidden z-50"
+                  style={{ backgroundColor: '#D1D9C5', borderColor: '#92998B', minWidth: '140px' }}>
+                  {languages.map(lang => (
+                    <button key={lang.code} onClick={() => { changeLanguage(lang.code); setLangOpen(false) }}
+                      className="flex items-center gap-2 w-full px-3 py-2 text-xs text-left transition-colors hover:opacity-80"
+                      style={{ backgroundColor: lang.code === language ? 'rgba(97,66,112,0.1)' : 'transparent', color: '#614270', fontWeight: lang.code === language ? 600 : 400 }}>
+                      <span>{lang.flag_emoji}</span><span>{lang.name_native}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <Link href="/auth" className="rounded-full px-4 py-1.5 text-xs font-semibold transition-opacity hover:opacity-80"
+              style={{ backgroundColor: '#7D8DCC', color: '#fff' }}>
+              {t('auth.signIn', {}, 'Sign in')}
+            </Link>
+          </div>
+        </div>
+      </nav>
 
-        .legal-page header {
-          background: var(--green);
-          color: #fff;
-          padding: 48px 32px 40px;
-          text-align: center;
-          border-top: 1px solid rgba(255,255,255,0.1);
-        }
+      {/* Header */}
+      <section className="mx-auto max-w-3xl px-5 pt-10 pb-4 text-center">
+        <p className="inline-block rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-widest mb-5"
+          style={{ backgroundColor: 'rgba(125,141,204,0.15)', color: '#7D8DCC' }}>
+          Legal
+        </p>
+        <h1 className="font-serif text-3xl sm:text-4xl leading-snug" style={{ color: '#614270' }}>
+          Privacy Policy
+        </h1>
+        <p className="mt-2 text-sm" style={{ color: '#92998B' }}>Version 1.0 · Effective 1 May 2025 · Last reviewed April 2025</p>
+      </section>
 
-        .legal-page header .logo-mark {
-          font-family: 'Lora', serif;
-          font-size: 13px;
-          letter-spacing: 0.18em;
-          text-transform: uppercase;
-          color: var(--accent);
-          margin-bottom: 10px;
-        }
+      {/* Body */}
+      <section className="mx-auto max-w-3xl px-5 pb-12">
+        <div className="rounded-2xl p-6 sm:p-10 text-sm leading-relaxed"
+          style={{ backgroundColor: '#fff', border: '1px solid rgba(146,153,139,0.3)', color: '#3e2c48' }}>
 
-        .legal-page header h1 {
-          font-family: 'Lora', serif;
-          font-size: clamp(26px, 5vw, 40px);
-          font-weight: 600;
-          margin-bottom: 12px;
-        }
-
-        .legal-page header .meta {
-          font-size: 14px;
-          color: rgba(255,255,255,0.65);
-          letter-spacing: 0.04em;
-        }
-
-        .legal-page .page-wrap {
-          max-width: 860px;
-          margin: 0 auto;
-          padding: 56px 32px 80px;
-        }
-
-        .legal-page .toc {
-          background: var(--green-pale);
-          border: 1px solid var(--border);
-          border-radius: 8px;
-          padding: 28px 32px;
-          margin-bottom: 56px;
-        }
-
-        .legal-page .toc h2 {
-          font-family: 'Lora', serif;
-          font-size: 16px;
-          color: var(--green);
-          margin-bottom: 14px;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-        }
-
-        .legal-page .toc ol {
-          padding-left: 20px;
-          columns: 2;
-          column-gap: 32px;
-        }
-
-        .legal-page .toc li { margin-bottom: 5px; }
-
-        .legal-page .toc a {
-          color: var(--green-mid);
-          text-decoration: none;
-          font-size: 14px;
-        }
-
-        .legal-page .toc a:hover { text-decoration: underline; }
-
-        .legal-page section { margin-bottom: 52px; }
-        .legal-page section:last-of-type { margin-bottom: 0; }
-
-        .legal-page h2.section-title {
-          font-family: 'Lora', serif;
-          font-size: 22px;
-          color: var(--green);
-          border-bottom: 2px solid var(--border);
-          padding-bottom: 10px;
-          margin-bottom: 22px;
-          scroll-margin-top: 24px;
-        }
-
-        .legal-page h3 {
-          font-family: 'Source Sans 3', sans-serif;
-          font-weight: 600;
-          font-size: 16px;
-          color: var(--text);
-          margin: 22px 0 8px;
-        }
-
-        .legal-page p { margin-bottom: 14px; }
-        .legal-page p:last-child { margin-bottom: 0; }
-
-        .legal-page ul, .legal-page ol {
-          padding-left: 22px;
-          margin-bottom: 14px;
-        }
-
-        .legal-page li { margin-bottom: 6px; }
-
-        .legal-page .callout {
-          border-left: 4px solid var(--green-mid);
-          background: var(--green-pale);
-          padding: 16px 20px;
-          border-radius: 0 6px 6px 0;
-          margin: 20px 0;
-          font-size: 15px;
-        }
-
-        .legal-page .callout strong { color: var(--green); }
-
-        .legal-page table {
-          width: 100%;
-          border-collapse: collapse;
-          font-size: 14px;
-          margin: 16px 0 20px;
-        }
-
-        .legal-page th {
-          background: var(--green);
-          color: #fff;
-          text-align: left;
-          padding: 10px 14px;
-          font-weight: 600;
-        }
-
-        .legal-page td {
-          padding: 10px 14px;
-          border-bottom: 1px solid var(--border);
-          vertical-align: top;
-        }
-
-        .legal-page tr:last-child td { border-bottom: none; }
-        .legal-page tr:nth-child(even) td { background: var(--green-pale); }
-
-        .legal-page footer {
-          background: var(--green);
-          color: rgba(255,255,255,0.7);
-          text-align: center;
-          padding: 32px;
-          font-size: 13px;
-        }
-
-        .legal-page footer a { color: var(--accent); text-decoration: none; }
-
-        @media (max-width: 600px) {
-          .legal-page .toc ol { columns: 1; }
-          .legal-page .page-wrap { padding: 32px 20px 60px; }
-          .legal-page header { padding: 36px 20px 28px; }
-          .legal-nav { padding: 12px 20px; }
-        }
-      `}</style>
-
-      <div className="legal-page">
-        <nav className="legal-nav">
-          <a href="/" className="nav-logo">
-            <img src="/logo-pin.svg" alt="" width={24} height={24} style={{ filter: 'brightness(0) invert(1)' }} />
-            Little Bo Peep
-          </a>
-          <a href="/" className="nav-back">← Back to app</a>
-        </nav>
-
-        <header>
-          <div className="logo-mark">Little Bo Peep Ltd</div>
-          <h1>Privacy Policy</h1>
-          <div className="meta">Version 1.0 &nbsp;·&nbsp; Effective date: 1 May 2025 &nbsp;·&nbsp; Last reviewed: April 2025</div>
-        </header>
-
-        <div className="page-wrap">
-
-          <div className="toc">
-            <h2>Contents</h2>
-            <ol>
-              <li><a href="#s1">Who We Are</a></li>
-              <li><a href="#s2">Scope of This Policy</a></li>
-              <li><a href="#s3">Data We Collect</a></li>
-              <li><a href="#s4">How We Use Your Data</a></li>
-              <li><a href="#s5">Legal Bases for Processing</a></li>
-              <li><a href="#s6">Cookies &amp; Tracking</a></li>
-              <li><a href="#s7">Sharing Your Data</a></li>
-              <li><a href="#s8">International Transfers</a></li>
-              <li><a href="#s9">Data Retention</a></li>
-              <li><a href="#s10">Your Rights</a></li>
-              <li><a href="#s11">Children&apos;s Privacy</a></li>
-              <li><a href="#s12">Security</a></li>
-              <li><a href="#s13">Changes to This Policy</a></li>
-              <li><a href="#s14">How to Contact Us</a></li>
+          {/* ToC */}
+          <div className="rounded-xl p-4 mb-8 text-xs" style={{ backgroundColor: 'rgba(209,217,197,0.4)', color: '#614270' }}>
+            <p className="font-semibold uppercase tracking-widest mb-2 text-xs" style={{ color: '#92998B' }}>Contents</p>
+            <ol className="list-decimal pl-5 columns-2 gap-x-8 space-y-1">
+              {['Who We Are','Scope','Data We Collect','How We Use Data','Legal Bases','Cookies','Sharing Data','International Transfers','Data Retention','Your Rights','Children','Security','Policy Changes','Contact Us'].map((s, i) => (
+                <li key={i}><a href={`#s${i+1}`} className="hover:underline" style={{ color: '#614270' }}>{s}</a></li>
+              ))}
             </ol>
           </div>
 
-          <section id="s1">
-            <h2 className="section-title">1. Who We Are</h2>
-            <p>Little Bo Peep Ltd (&ldquo;<strong>we</strong>&rdquo;, &ldquo;<strong>us</strong>&rdquo;, &ldquo;<strong>our</strong>&rdquo;) is a private limited company incorporated and registered in England and Wales. We operate the Little Bo Peep digital platform and mobile-progressive web application (collectively, the &ldquo;<strong>Service</strong>&rdquo;), accessible at <strong>littlebopeep.app</strong> and any associated subdomains.</p>
-            <p>For the purposes of the UK General Data Protection Regulation (<strong>UK GDPR</strong>) and the Data Protection Act 2018 (<strong>DPA 2018</strong>), Little Bo Peep Ltd is the <strong>data controller</strong> of personal data processed through the Service.</p>
-            <div className="callout">
-              <strong>Data Controller contact:</strong><br />
-              Little Bo Peep Ltd<br />
-              Email: <a href="mailto:info@littlebopeep.app">info@littlebopeep.app</a>
-            </div>
-            <p>We are committed to registering with the Information Commissioner&apos;s Office (<strong>ICO</strong>) as required by the DPA 2018 and to maintaining that registration in good standing.</p>
-          </section>
+          <SectionTitle id="s1">1. Who We Are</SectionTitle>
+          <p className="mb-3">Little Bo Peep Ltd (&ldquo;<strong>we</strong>&rdquo;, &ldquo;<strong>us</strong>&rdquo;, &ldquo;<strong>our</strong>&rdquo;) is a private limited company incorporated and registered in England and Wales. We operate the Little Bo Peep digital platform and mobile-progressive web application (collectively, the &ldquo;<strong>Service</strong>&rdquo;), accessible at <strong>littlebopeep.app</strong>.</p>
+          <p className="mb-3">For the purposes of the UK GDPR and the Data Protection Act 2018, Little Bo Peep Ltd is the <strong>data controller</strong> of personal data processed through the Service.</p>
+          <Callout><strong>Data Controller:</strong> Little Bo Peep Ltd · Email: <a href="mailto:info@littlebopeep.app" style={{ color: '#614270' }}>info@littlebopeep.app</a></Callout>
 
-          <section id="s2">
-            <h2 className="section-title">2. Scope of This Policy</h2>
-            <p>This Privacy Policy applies to all personal data we collect when you:</p>
-            <ul>
-              <li>Visit, browse, or register on our website or application;</li>
-              <li>Use the Service as a countryside walker or rambler (&ldquo;<strong>Walker</strong>&rdquo;);</li>
-              <li>Use the Service as a registered farmer or landowner (&ldquo;<strong>Farmer</strong>&rdquo;);</li>
-              <li>Contact us by any means, including by email.</li>
-            </ul>
-            <p>It does not apply to third-party websites or services linked from our platform. We recommend you review the privacy policies of any third-party services you access.</p>
-          </section>
+          <SectionTitle id="s2">2. Scope of This Policy</SectionTitle>
+          <p className="mb-3">This Privacy Policy applies to all personal data we collect when you visit or register on our platform, use the Service as a Walker or Farmer, or contact us by any means. It does not apply to third-party websites linked from our platform.</p>
 
-          <section id="s3">
-            <h2 className="section-title">3. Data We Collect</h2>
-            <h3>3.1 Data you provide to us</h3>
-            <table>
-              <tbody>
-                <tr><th>Category</th><th>Examples</th></tr>
-                <tr><td>Identity data</td><td>First name, last name, username</td></tr>
-                <tr><td>Contact data</td><td>Email address, telephone number (optional)</td></tr>
-                <tr><td>Account credentials</td><td>Hashed password, authentication tokens</td></tr>
-                <tr><td>Farmer profile data</td><td>Farm name, farm address, land zone coordinates, billing contact details</td></tr>
-                <tr><td>Report data (Walker)</td><td>Description of a lost or stray sheep, photographs uploaded by you, date/time of sighting, notes</td></tr>
-                <tr><td>Payment data</td><td>Billing name, address, payment method details (processed by our PCI DSS-compliant payment processor; we do not store full card numbers)</td></tr>
-                <tr><td>Communications</td><td>Content of messages you send to us via email or support channels</td></tr>
-              </tbody>
-            </table>
-            <h3>3.2 Data collected automatically</h3>
-            <table>
-              <tbody>
-                <tr><th>Category</th><th>Examples</th></tr>
-                <tr><td>Location data</td><td>GPS coordinates at the point of sheep sighting (Walkers); farm zone coordinates (Farmers). Location data is personal data and is processed only with your explicit consent obtained at account creation or at first use of location features.</td></tr>
-                <tr><td>Device &amp; technical data</td><td>IP address, browser type and version, operating system, device identifiers, time zone</td></tr>
-                <tr><td>Usage data</td><td>Pages visited, features used, report submission events, session timestamps</td></tr>
-                <tr><td>Photographic data</td><td>Images of livestock uploaded by Walkers. We note that photographs may incidentally capture third parties. You should not upload photographs containing identifiable individuals. Where such images are uploaded, we will treat them as personal data subject to this policy.</td></tr>
-              </tbody>
-            </table>
-            <h3>3.3 Data received from third parties</h3>
-            <p>We may receive limited data from third-party authentication providers (if you choose to sign in via a third-party identity service) or mapping service providers (such as Mapbox) in connection with your use of the Service.</p>
-          </section>
+          <SectionTitle id="s3">3. Data We Collect</SectionTitle>
+          <Sub>3.1 Data you provide</Sub>
+          <LegalTable rows={[
+            ['Category', 'Examples'],
+            ['Identity data', 'First name, last name, username'],
+            ['Contact data', 'Email address, telephone number (optional)'],
+            ['Account credentials', 'Hashed password, authentication tokens'],
+            ['Farmer profile data', 'Farm name, address, land zone coordinates, billing contact'],
+            ['Report data (Walker)', 'Sheep description, photographs, date/time, location, notes'],
+            ['Payment data', 'Billing name, address, payment method (processed by PCI DSS-compliant processor; we do not store card numbers)'],
+            ['Communications', 'Content of messages you send to us'],
+          ]} />
+          <Sub>3.2 Data collected automatically</Sub>
+          <LegalTable rows={[
+            ['Category', 'Examples'],
+            ['Location data', 'GPS coordinates at point of sighting (Walkers); farm zone coordinates (Farmers). Processed only with your explicit consent.'],
+            ['Device & technical data', 'IP address, browser type, OS, device identifiers, time zone'],
+            ['Usage data', 'Pages visited, features used, session timestamps'],
+            ['Photographic data', 'Images uploaded by Walkers. Do not upload photos containing identifiable individuals.'],
+          ]} />
+          <Sub>3.3 Data from third parties</Sub>
+          <p>We may receive limited data from third-party authentication providers or mapping service providers (such as Mapbox) in connection with your use of the Service.</p>
 
-          <section id="s4">
-            <h2 className="section-title">4. How We Use Your Data</h2>
-            <p>We use personal data for the following purposes:</p>
-            <ul>
-              <li><strong>Providing and operating the Service:</strong> creating and managing your account; enabling Walkers to submit lost sheep reports; enabling Farmers to receive, manage and respond to reports within their registered farm zones.</li>
-              <li><strong>Communicating with you:</strong> sending service notifications, report alerts, account confirmations and administrative messages.</li>
-              <li><strong>Processing payments:</strong> administering subscriptions, free-trial periods and any billing for Farmer accounts.</li>
-              <li><strong>Improving the Service:</strong> analysing usage patterns, diagnosing technical issues, developing new features.</li>
-              <li><strong>Legal compliance:</strong> meeting our obligations under applicable law, including responding to lawful requests from public authorities.</li>
-              <li><strong>Safety and security:</strong> detecting and preventing fraudulent, abusive or unlawful use of the Service.</li>
-            </ul>
-            <p>We will not use your personal data for automated decision-making or profiling that produces legal or similarly significant effects without your explicit consent.</p>
-          </section>
+          <SectionTitle id="s4">4. How We Use Your Data</SectionTitle>
+          <ul className="list-disc pl-5 space-y-1.5 mb-3">
+            <li><strong>Operating the Service:</strong> account management, enabling report submission and receipt.</li>
+            <li><strong>Communications:</strong> service notifications, report alerts, account confirmations.</li>
+            <li><strong>Payment processing:</strong> subscriptions and billing for Farmer accounts.</li>
+            <li><strong>Service improvement:</strong> usage analysis, technical diagnostics, feature development.</li>
+            <li><strong>Legal compliance:</strong> responding to lawful requests from public authorities.</li>
+            <li><strong>Security:</strong> detecting and preventing fraudulent or unlawful use.</li>
+          </ul>
+          <p>We will not use your data for automated decision-making producing legal effects without your explicit consent.</p>
 
-          <section id="s5">
-            <h2 className="section-title">5. Legal Bases for Processing</h2>
-            <p>Under the UK GDPR, we rely on the following lawful bases:</p>
-            <table>
-              <tbody>
-                <tr><th>Processing Activity</th><th>Lawful Basis</th></tr>
-                <tr><td>Account creation and management</td><td>Performance of a contract (Art. 6(1)(b))</td></tr>
-                <tr><td>Delivery of core Service features (reports, alerts)</td><td>Performance of a contract (Art. 6(1)(b))</td></tr>
-                <tr><td>Location data collection</td><td>Consent (Art. 6(1)(a)) — you may withdraw consent at any time</td></tr>
-                <tr><td>Payment processing</td><td>Performance of a contract (Art. 6(1)(b))</td></tr>
-                <tr><td>Service improvement and analytics</td><td>Legitimate interests (Art. 6(1)(f)) — our interest in improving the Service, balanced against your rights</td></tr>
-                <tr><td>Compliance with legal obligations (e.g. HMRC records)</td><td>Legal obligation (Art. 6(1)(c))</td></tr>
-                <tr><td>Marketing communications (if applicable)</td><td>Consent (Art. 6(1)(a)) — you may withdraw consent at any time</td></tr>
-              </tbody>
-            </table>
-            <p>Where we rely on <strong>legitimate interests</strong>, we have assessed that our interests do not override your fundamental rights and freedoms. You may object to processing carried out on this basis by contacting us.</p>
-          </section>
+          <SectionTitle id="s5">5. Legal Bases for Processing</SectionTitle>
+          <LegalTable rows={[
+            ['Processing Activity', 'Lawful Basis'],
+            ['Account creation and management', 'Performance of a contract (Art. 6(1)(b))'],
+            ['Core Service features (reports, alerts)', 'Performance of a contract (Art. 6(1)(b))'],
+            ['Location data collection', 'Consent (Art. 6(1)(a)) — withdraw at any time'],
+            ['Payment processing', 'Performance of a contract (Art. 6(1)(b))'],
+            ['Service improvement and analytics', 'Legitimate interests (Art. 6(1)(f))'],
+            ['Compliance with legal obligations', 'Legal obligation (Art. 6(1)(c))'],
+            ['Marketing communications', 'Consent (Art. 6(1)(a)) — withdraw at any time'],
+          ]} />
 
-          <section id="s6">
-            <h2 className="section-title">6. Cookies &amp; Tracking Technologies</h2>
-            <p>We use cookies and similar technologies (including local storage and session tokens) to operate and improve the Service. Cookies we use include:</p>
-            <ul>
-              <li><strong>Strictly necessary cookies:</strong> required for you to log in, navigate the Service, and use core features. These cannot be disabled without affecting the functionality of the Service.</li>
-              <li><strong>Functional cookies:</strong> remember your preferences (e.g. map layer settings, language preference).</li>
-              <li><strong>Analytics cookies:</strong> help us understand how the Service is used (e.g. pages visited, errors encountered). Where we use third-party analytics, data is anonymised or pseudonymised where possible.</li>
-            </ul>
-            <p>You may control non-essential cookies via your browser settings. Blocking certain cookies may affect Service functionality. A full cookie notice is presented on your first visit to the Service.</p>
-          </section>
+          <SectionTitle id="s6">6. Cookies &amp; Tracking Technologies</SectionTitle>
+          <ul className="list-disc pl-5 space-y-1.5 mb-3">
+            <li><strong>Strictly necessary:</strong> required for login and core features.</li>
+            <li><strong>Functional:</strong> remember your preferences (map layers, language).</li>
+            <li><strong>Analytics:</strong> understand usage patterns; anonymised where possible.</li>
+          </ul>
+          <p>You may control non-essential cookies via your browser settings, though this may affect Service functionality.</p>
 
-          <section id="s7">
-            <h2 className="section-title">7. Sharing Your Data</h2>
-            <p>We do not sell, rent or trade your personal data. We may share personal data with:</p>
-            <ul>
-              <li><strong>Registered Farmers:</strong> when a Walker submits a sheep sighting report, relevant report data (including the sighting location, photographs, and description) may be shared with Farmers who have registered alert zones that include or are proximate to the sighting location. Walkers acknowledge and accept this sharing as a core function of the Service.</li>
-              <li><strong>Service providers (data processors):</strong> including cloud hosting providers, database providers, mapping service providers, payment processors, and email delivery services. These third parties are contractually bound to process data only on our instructions and in accordance with applicable data protection law.</li>
-              <li><strong>Professional advisers:</strong> lawyers, accountants, auditors and insurers, subject to confidentiality obligations.</li>
-              <li><strong>Regulatory authorities:</strong> including the ICO, HMRC, or law enforcement agencies where we are required or permitted to do so by law.</li>
-            </ul>
-            <div className="callout">
-              <strong>Note to Walkers:</strong> Report data you submit — including location, photographs and descriptions — will be visible to Farmers with registered zones covering the relevant area. Do not include personal information about third parties in your reports without their consent.
-            </div>
-          </section>
+          <SectionTitle id="s7">7. Sharing Your Data</SectionTitle>
+          <p className="mb-3">We do not sell, rent or trade your personal data. We may share data with:</p>
+          <ul className="list-disc pl-5 space-y-1.5 mb-3">
+            <li><strong>Registered Farmers:</strong> report data (location, photos, description) shared with Farmers whose alert zones cover the sighting area.</li>
+            <li><strong>Service providers:</strong> cloud hosts, database providers, mapping services, payment processors, email delivery — contractually bound to our instructions.</li>
+            <li><strong>Professional advisers:</strong> lawyers, accountants, auditors.</li>
+            <li><strong>Regulatory authorities:</strong> ICO, HMRC, or law enforcement where required by law.</li>
+          </ul>
+          <Callout><strong>Note to Walkers:</strong> Report data — including location, photos and descriptions — will be visible to Farmers with registered zones covering the relevant area. Do not include personal information about third parties without their consent.</Callout>
 
-          <section id="s8">
-            <h2 className="section-title">8. International Data Transfers</h2>
-            <p>We host our Service infrastructure primarily within the United Kingdom and the European Economic Area (EEA). Where personal data is transferred to a country outside the UK or EEA that does not benefit from an adequacy decision, we ensure appropriate safeguards are in place, such as:</p>
-            <ul>
-              <li>UK International Data Transfer Agreements (IDTAs) or Addenda to the EU Standard Contractual Clauses;</li>
-              <li>Binding Corporate Rules; or</li>
-              <li>Another lawful transfer mechanism approved by the ICO.</li>
-            </ul>
-            <p>You may request further information about the transfer mechanisms we rely on by contacting us at <a href="mailto:info@littlebopeep.app">info@littlebopeep.app</a>.</p>
-          </section>
+          <SectionTitle id="s8">8. International Data Transfers</SectionTitle>
+          <p className="mb-3">We host primarily within the UK and EEA. Where transfers occur outside these areas without an adequacy decision, we rely on UK IDTAs, Standard Contractual Clauses, or other ICO-approved mechanisms. Contact us for details: <a href="mailto:info@littlebopeep.app" style={{ color: '#614270' }}>info@littlebopeep.app</a>.</p>
 
-          <section id="s9">
-            <h2 className="section-title">9. Data Retention</h2>
-            <p>We retain personal data only for as long as necessary for the purposes for which it was collected, or as required by law. Our general retention periods are as follows:</p>
-            <table>
-              <tbody>
-                <tr><th>Data Category</th><th>Retention Period</th></tr>
-                <tr><td>Account and profile data</td><td>Duration of account plus 12 months following account closure</td></tr>
-                <tr><td>Sheep sighting reports</td><td>24 months from date of submission, unless earlier deletion is requested</td></tr>
-                <tr><td>Payment and billing records</td><td>6 years from the end of the relevant tax year, as required by HMRC</td></tr>
-                <tr><td>Location data</td><td>Duration of the report to which it relates, plus 24 months</td></tr>
-                <tr><td>Communications with us</td><td>3 years from date of last communication</td></tr>
-                <tr><td>System logs and technical data</td><td>Up to 12 months, unless required longer for security or legal purposes</td></tr>
-              </tbody>
-            </table>
-            <div className="callout">
-              <strong>Right to erasure and legal obligations:</strong> Where you exercise your right to erasure (see Section 10), we will delete or anonymise your personal data subject to any overriding legal obligation to retain it — for example, financial records required by HMRC. In such cases, we will retain only the minimum data necessary to satisfy that obligation and will inform you accordingly.
-            </div>
-          </section>
+          <SectionTitle id="s9">9. Data Retention</SectionTitle>
+          <LegalTable rows={[
+            ['Data Category', 'Retention Period'],
+            ['Account and profile data', 'Duration of account plus 12 months after closure'],
+            ['Sheep sighting reports', '24 months from submission (unless earlier deletion requested)'],
+            ['Payment and billing records', '6 years from end of relevant tax year (HMRC requirement)'],
+            ['Location data', 'Duration of related report plus 24 months'],
+            ['Communications', '3 years from last communication'],
+            ['System logs', 'Up to 12 months'],
+          ]} />
+          <Callout><strong>Right to erasure:</strong> Where you request erasure we will delete or anonymise your data, subject to overriding legal obligations (e.g. HMRC financial records).</Callout>
 
-          <section id="s10">
-            <h2 className="section-title">10. Your Rights Under UK GDPR</h2>
-            <p>Subject to certain conditions and exemptions, you have the following rights in relation to your personal data:</p>
-            <h3>10.1 Right of Access</h3>
-            <p>You may request a copy of the personal data we hold about you and information about how we process it (a &ldquo;Subject Access Request&rdquo; or SAR). We will respond within one calendar month of receipt of a valid request, free of charge.</p>
-            <h3>10.2 Right to Rectification</h3>
-            <p>You may request correction of inaccurate or incomplete personal data we hold about you.</p>
-            <h3>10.3 Right to Erasure (&ldquo;Right to Be Forgotten&rdquo;)</h3>
-            <p>You may request deletion of your personal data where it is no longer necessary for the purpose for which it was collected, where you withdraw consent (and no other lawful basis applies), where you have objected and there are no overriding legitimate grounds, or where the data has been unlawfully processed. We will action valid requests within one calendar month. Please note that legal retention obligations (including financial record-keeping under HMRC requirements) may limit our ability to fully erase certain categories of data, and we will notify you of any such limitations.</p>
-            <h3>10.4 Right to Restriction of Processing</h3>
-            <p>You may request that we restrict processing of your data in certain circumstances, for example while a complaint or objection is being assessed.</p>
-            <h3>10.5 Right to Data Portability</h3>
-            <p>Where processing is based on consent or performance of a contract, and is carried out by automated means, you may request a copy of your data in a structured, commonly used, machine-readable format, and request that we transmit it directly to another controller where technically feasible.</p>
-            <h3>10.6 Right to Object</h3>
-            <p>You may object to processing based on legitimate interests or for direct marketing purposes. We will cease processing unless we can demonstrate compelling legitimate grounds that override your interests, or the processing is necessary for legal claims.</p>
-            <h3>10.7 Rights Related to Automated Decision-Making</h3>
-            <p>You have the right not to be subject to decisions based solely on automated processing, including profiling, that produce legal or similarly significant effects, unless such processing is necessary for a contract, is authorised by law, or you have given explicit consent.</p>
-            <h3>10.8 Right to Withdraw Consent</h3>
-            <p>Where processing is based on your consent (including for location data), you may withdraw that consent at any time. Withdrawal of consent does not affect the lawfulness of processing carried out before the withdrawal.</p>
-            <h3>10.9 Right to Lodge a Complaint</h3>
-            <p>You have the right to lodge a complaint with the <strong>Information Commissioner&apos;s Office (ICO)</strong> if you believe your data protection rights have been infringed:</p>
-            <div className="callout">
-              Information Commissioner&apos;s Office<br />
-              Wycliffe House, Water Lane, Wilmslow, Cheshire SK9 5AF<br />
-              Tel: 0303 123 1113 &nbsp;·&nbsp; <a href="https://www.ico.org.uk" target="_blank" rel="noreferrer">www.ico.org.uk</a>
-            </div>
-            <p>We ask that you contact us first at <a href="mailto:info@littlebopeep.app">info@littlebopeep.app</a> so we can attempt to resolve your concern.</p>
-            <h3>10.10 How to Exercise Your Rights</h3>
-            <p>To exercise any of the above rights, please contact us at <a href="mailto:info@littlebopeep.app">info@littlebopeep.app</a> with &ldquo;<strong>Data Rights Request</strong>&rdquo; in the subject line. We may need to verify your identity before actioning a request. We will not charge a fee for routine requests but reserve the right to charge a reasonable administrative fee for manifestly unfounded or excessive requests.</p>
-          </section>
+          <SectionTitle id="s10">10. Your Rights Under UK GDPR</SectionTitle>
+          <Sub>10.1 Right of Access</Sub>
+          <p className="mb-3">Request a copy of the data we hold about you (Subject Access Request). We will respond within one calendar month, free of charge.</p>
+          <Sub>10.2 Right to Rectification</Sub>
+          <p className="mb-3">Request correction of inaccurate or incomplete data.</p>
+          <Sub>10.3 Right to Erasure</Sub>
+          <p className="mb-3">Request deletion where data is no longer necessary, consent is withdrawn, or processing is unlawful. Legal retention obligations may limit full erasure.</p>
+          <Sub>10.4 Right to Restriction</Sub>
+          <p className="mb-3">Request restricted processing while a complaint or objection is assessed.</p>
+          <Sub>10.5 Right to Data Portability</Sub>
+          <p className="mb-3">Where processing is by automated means on the basis of consent or contract, request your data in a machine-readable format.</p>
+          <Sub>10.6 Right to Object</Sub>
+          <p className="mb-3">Object to processing based on legitimate interests or for direct marketing.</p>
+          <Sub>10.7 Automated Decision-Making</Sub>
+          <p className="mb-3">You have the right not to be subject to decisions based solely on automated processing that produce significant effects, unless permitted by law or you have consented.</p>
+          <Sub>10.8 Right to Withdraw Consent</Sub>
+          <p className="mb-3">Withdraw consent at any time; this does not affect prior lawful processing.</p>
+          <Sub>10.9 Right to Lodge a Complaint</Sub>
+          <Callout>
+            <strong>Information Commissioner&apos;s Office</strong><br />
+            Wycliffe House, Water Lane, Wilmslow, Cheshire SK9 5AF<br />
+            Tel: 0303 123 1113 · <a href="https://www.ico.org.uk" target="_blank" rel="noreferrer" style={{ color: '#614270' }}>www.ico.org.uk</a>
+          </Callout>
+          <p className="mb-3">Please contact us first at <a href="mailto:info@littlebopeep.app" style={{ color: '#614270' }}>info@littlebopeep.app</a> — we aim to resolve concerns directly.</p>
+          <Sub>10.10 How to Exercise Your Rights</Sub>
+          <p>Email <a href="mailto:info@littlebopeep.app" style={{ color: '#614270' }}>info@littlebopeep.app</a> with &ldquo;<strong>Data Rights Request</strong>&rdquo; in the subject line. We may verify your identity before actioning a request.</p>
 
-          <section id="s11">
-            <h2 className="section-title">11. Children&apos;s Privacy</h2>
-            <p>The Service is not intended for use by persons under the age of 16 years. We do not knowingly collect personal data from children under 16. If you are a parent or guardian and believe your child has provided personal data to us without appropriate consent, please contact us at <a href="mailto:info@littlebopeep.app">info@littlebopeep.app</a> and we will take steps to delete such data promptly.</p>
-          </section>
+          <SectionTitle id="s11">11. Children&apos;s Privacy</SectionTitle>
+          <p>The Service is not intended for persons under 16. If you believe a child has provided personal data without consent, contact us at <a href="mailto:info@littlebopeep.app" style={{ color: '#614270' }}>info@littlebopeep.app</a> and we will delete it promptly.</p>
 
-          <section id="s12">
-            <h2 className="section-title">12. Security of Your Personal Data</h2>
-            <p>We take reasonable and appropriate technical and organisational measures to protect personal data against unauthorised access, loss, destruction, alteration or disclosure. These include, without limitation:</p>
-            <ul>
-              <li>Encrypted transmission of data using TLS/HTTPS protocols;</li>
-              <li>Hashing of passwords and authentication credentials;</li>
-              <li>Access controls limiting staff access to personal data to those with a legitimate need;</li>
-              <li>Regular security assessments of our infrastructure and codebase.</li>
-            </ul>
-            <div className="callout">
-              <strong>Important:</strong> The Service is a public-facing application accessible via the internet. No method of electronic transmission or storage is 100% secure. We cannot guarantee the absolute security of data transmitted to or from the Service. Users accept this inherent risk by using the Service. You should take care when submitting any personal, financial or sensitive information and should not share your account credentials with any third party.
-            </div>
-            <p>In the event of a personal data breach that is likely to result in a risk to your rights and freedoms, we will notify the ICO within 72 hours of becoming aware of it and, where required, notify affected individuals without undue delay.</p>
-          </section>
+          <SectionTitle id="s12">12. Security of Your Personal Data</SectionTitle>
+          <ul className="list-disc pl-5 space-y-1.5 mb-3">
+            <li>Encrypted data transmission via TLS/HTTPS</li>
+            <li>Password hashing and credential protection</li>
+            <li>Access controls limiting staff access to personal data</li>
+            <li>Regular security assessments</li>
+          </ul>
+          <Callout><strong>Important:</strong> No internet transmission is 100% secure. You accept this inherent risk by using the Service. Never share your account credentials.</Callout>
+          <p>In the event of a breach likely to risk your rights and freedoms, we will notify the ICO within 72 hours and affected users without undue delay.</p>
 
-          <section id="s13">
-            <h2 className="section-title">13. Changes to This Privacy Policy</h2>
-            <p>We reserve the right to update or amend this Privacy Policy at any time. Where changes are material, we will take reasonable steps to notify you, which may include prominently displaying a notice within the Service or sending an email to your registered address. Your continued use of the Service following publication of an updated Privacy Policy constitutes your acceptance of the revised terms.</p>
-            <p>We encourage you to review this Privacy Policy periodically. The date of the most recent version is shown at the top of this document.</p>
-          </section>
+          <SectionTitle id="s13">13. Changes to This Privacy Policy</SectionTitle>
+          <p className="mb-3">We may update this Policy at any time. Material changes will be communicated via the Service or by email. Continued use after an update constitutes acceptance of the revised Policy.</p>
 
-          <section id="s14">
-            <h2 className="section-title">14. How to Contact Us</h2>
-            <p>If you have any questions, concerns or requests relating to this Privacy Policy or our data practices, please contact us:</p>
-            <div className="callout">
-              <strong>Little Bo Peep Ltd</strong><br />
-              Data Privacy Enquiries<br />
-              Email: <a href="mailto:info@littlebopeep.app">info@littlebopeep.app</a><br />
-              Subject line: <em>Privacy Policy Enquiry</em>
-            </div>
-            <p>We aim to respond to all enquiries within 5 working days and will respond to formal rights requests within the statutory timescales set out in Section 10.</p>
-          </section>
-
+          <SectionTitle id="s14">14. How to Contact Us</SectionTitle>
+          <Callout>
+            <strong>Little Bo Peep Ltd</strong> — Data Privacy Enquiries<br />
+            Email: <a href="mailto:info@littlebopeep.app" style={{ color: '#614270' }}>info@littlebopeep.app</a><br />
+            Subject: <em>Privacy Policy Enquiry</em>
+          </Callout>
+          <p>We aim to respond within 5 working days and to formal rights requests within the statutory timescales in Section 10.</p>
         </div>
+      </section>
 
-        <footer>
-          <p>&copy; 2025 Little Bo Peep Ltd. All rights reserved.</p>
-          <p style={{ marginTop: '8px' }}>Registered in England and Wales &nbsp;·&nbsp; <a href="mailto:info@littlebopeep.app">info@littlebopeep.app</a></p>
-          <p style={{ marginTop: '12px' }}>
-            <a href="/privacy">Privacy Policy</a> &nbsp;·&nbsp; <a href="/terms">Terms &amp; Conditions</a> &nbsp;·&nbsp; <a href="/">Back to App</a>
-          </p>
-        </footer>
-      </div>
-    </>
+      {/* Footer */}
+      <footer className="py-8 border-t" style={{ backgroundColor: '#D1D9C5', borderColor: 'rgba(146,153,139,0.3)' }}>
+        <div className="mx-auto max-w-5xl px-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <Link href="/" className="flex items-center gap-2 no-underline opacity-70 hover:opacity-100 transition-opacity">
+            <img src="/logo-pin.svg" alt="" aria-hidden="true" className="w-5 h-5" />
+            <span className="text-xs font-serif font-semibold tracking-tight leading-none">
+              <span style={{ color: '#614270' }}>Little </span>
+              <span style={{ color: '#92998B' }}>Bo </span>
+              <span style={{ color: '#614270' }}>Peep</span>
+            </span>
+          </Link>
+          <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2">
+            {[
+              { label: t('home.landing.aboutUs', {}, 'About us'), href: '/about' },
+              { label: t('home.landing.privacyPolicy', {}, 'Privacy policy'), href: '/privacy' },
+              { label: t('home.landing.termsConditions', {}, 'Terms & conditions'), href: '/terms' },
+              { label: t('auth.signIn', {}, 'Sign in'), href: '/auth' },
+              { label: t('home.landing.farmerSignup', {}, 'Farmer sign-up'), href: '/auth?mode=signup&role=farmer' },
+            ].map(link => (
+              <Link key={link.href} href={link.href} className="text-xs hover:opacity-80 transition-opacity" style={{ color: '#92998B' }}>
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      </footer>
+    </div>
   )
 }

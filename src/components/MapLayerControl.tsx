@@ -4,7 +4,9 @@ import { useState } from 'react'
 import { useAppStore } from '@/store/appStore'
 
 export default function MapLayerControl() {
-  const { mapPreferences, updateMapPreferences } = useAppStore()
+  const { mapPreferences, updateMapPreferences, currentRole } = useAppStore()
+
+  if (currentRole !== 'walker') return null
   const [isOpen, setIsOpen] = useState(false)
   const [showDisclaimer, setShowDisclaimer] = useState(false)
 
