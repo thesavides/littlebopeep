@@ -1029,7 +1029,7 @@ export default function AdminDashboard() {
                         {!report.archived && report.status === 'claimed' && (
                           <button onClick={() => { setResolveMessageReportId(report.id); setResolveMessageText('') }} className="px-3 py-2 bg-[#7D8DCC]/10 text-[#7D8DCC] rounded-lg text-sm hover:bg-[#7D8DCC]/20">Resolve</button>
                         )}
-                        {!report.archived && (report.status === 'resolved' || report.status === 'escalated') && (
+                        {!report.archived && report.status === 'resolved' && (
                           <button onClick={() => { escalateReport(report.id); setDetailReportId(null) }} className="px-3 py-2 bg-[#FA9335]/10 text-[#FA9335] rounded-lg text-sm hover:bg-[#FA9335]/20">Escalate</button>
                         )}
                         {!report.archived && (report.status === 'resolved' || report.status === 'escalated') && (
@@ -1931,7 +1931,7 @@ export default function AdminDashboard() {
                         {!report.archived && report.status === 'claimed' && (
                           <button onClick={() => { setResolveMessageReportId(report.id); setResolveMessageText('') }} className={`${btnBase} bg-[#7D8DCC]/10 text-[#7D8DCC] hover:bg-[#7D8DCC]/20`}>Resolve</button>
                         )}
-                        {!report.archived && (report.status === 'resolved' || report.status === 'escalated') && (
+                        {!report.archived && report.status === 'resolved' && (
                           <button onClick={() => escalateReport(report.id)} className={`${btnBase} bg-[#FA9335]/10 text-[#FA9335] hover:bg-[#FA9335]/20`}>Escalate</button>
                         )}
                         {!report.archived && (report.status === 'resolved' || report.status === 'escalated') && (
