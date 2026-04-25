@@ -768,9 +768,11 @@ export const useAppStore = create<AppState>()(
               : r
           )
         }))
-        // Persist to Supabase
         import('@/lib/supabase-client').then(({ updateReport }) => {
-          updateReport(reportId, { status: 'claimed', claimedByFarmerId: currentUserId, claimedByFarmerIds: newClaimants, claimedAt: new Date() }).catch(() => {})
+          updateReport(reportId, { status: 'claimed', claimedByFarmerId: currentUserId, claimedByFarmerIds: newClaimants, claimedAt: new Date() }).catch((err: unknown) => {
+            console.error('claimReport: Supabase sync failed', err)
+            import('@/lib/error-log').then(({ writeErrorLog }) => writeErrorLog({ actorId: currentUserId, severity: 'error', message: 'claimReport: Supabase sync failed', entityType: 'report', entityId: reportId, context: { error: String(err) } }))
+          })
         })
         const actorName = get().getCurrentUser()?.name
         notifyWalker(reportId, report?.reporterId, 'report_claimed', actorName)
@@ -797,7 +799,10 @@ export const useAppStore = create<AppState>()(
           )
         }))
         import('@/lib/supabase-client').then(({ updateReport }) => {
-          updateReport(reportId, { status: newStatus, claimedByFarmerId: newPrimary, claimedByFarmerIds: remaining }).catch(() => {})
+          updateReport(reportId, { status: newStatus, claimedByFarmerId: newPrimary, claimedByFarmerIds: remaining }).catch((err: unknown) => {
+            console.error('unclaimReport: Supabase sync failed', err)
+            import('@/lib/error-log').then(({ writeErrorLog }) => writeErrorLog({ actorId: currentUserId, severity: 'error', message: 'unclaimReport: Supabase sync failed', entityType: 'report', entityId: reportId, context: { error: String(err) } }))
+          })
         })
         writeAuditLog({
           actorId: currentUserId,
@@ -822,7 +827,10 @@ export const useAppStore = create<AppState>()(
           )
         }))
         import('@/lib/supabase-client').then(({ updateReport }) => {
-          updateReport(reportId, { status: newStatus, claimedByFarmerId: newPrimary, claimedByFarmerIds: remaining }).catch(() => {})
+          updateReport(reportId, { status: newStatus, claimedByFarmerId: newPrimary, claimedByFarmerIds: remaining }).catch((err: unknown) => {
+            console.error('unclaimReportForFarmer: Supabase sync failed', err)
+            import('@/lib/error-log').then(({ writeErrorLog }) => writeErrorLog({ actorId: currentUserId, severity: 'error', message: 'unclaimReportForFarmer: Supabase sync failed', entityType: 'report', entityId: reportId, context: { removedFarmer: farmerId, error: String(err) } }))
+          })
         })
         writeAuditLog({
           actorId: currentUserId,
@@ -843,7 +851,10 @@ export const useAppStore = create<AppState>()(
           )
         }))
         import('@/lib/supabase-client').then(({ updateReport }) => {
-          updateReport(reportId, { status: 'claimed', claimedByFarmerId: farmerId, claimedByFarmerIds: [farmerId], claimedAt: new Date() }).catch(() => {})
+          updateReport(reportId, { status: 'claimed', claimedByFarmerId: farmerId, claimedByFarmerIds: [farmerId], claimedAt: new Date() }).catch((err: unknown) => {
+            console.error('reassignReport: Supabase sync failed', err)
+            import('@/lib/error-log').then(({ writeErrorLog }) => writeErrorLog({ actorId: currentUserId, severity: 'error', message: 'reassignReport: Supabase sync failed', entityType: 'report', entityId: reportId, context: { farmerId, error: String(err) } }))
+          })
         })
         notifyWalker(reportId, get().reports.find(r => r.id === reportId)?.reporterId, 'report_claimed', get().getCurrentUser()?.name)
         writeAuditLog({
@@ -868,7 +879,10 @@ export const useAppStore = create<AppState>()(
           )
         }))
         import('@/lib/supabase-client').then(({ updateReport }) => {
-          updateReport(reportId, { status: 'claimed', claimedByFarmerId: farmerId, claimedByFarmerIds: newClaimants, claimedAt: new Date() }).catch(() => {})
+          updateReport(reportId, { status: 'claimed', claimedByFarmerId: farmerId, claimedByFarmerIds: newClaimants, claimedAt: new Date() }).catch((err: unknown) => {
+            console.error('claimReportForFarmer: Supabase sync failed', err)
+            import('@/lib/error-log').then(({ writeErrorLog }) => writeErrorLog({ actorId: currentUserId, severity: 'error', message: 'claimReportForFarmer: Supabase sync failed', entityType: 'report', entityId: reportId, context: { farmerId, error: String(err) } }))
+          })
         })
         notifyWalker(reportId, report?.reporterId, 'report_claimed', get().getCurrentUser()?.name)
         writeAuditLog({
@@ -889,7 +903,10 @@ export const useAppStore = create<AppState>()(
           )
         }))
         import('@/lib/supabase-client').then(({ updateReport }) => {
-          updateReport(reportId, { status: 'resolved', resolutionReason: reason }).catch(() => {})
+          updateReport(reportId, { status: 'resolved', resolutionReason: reason }).catch((err: unknown) => {
+            console.error('resolveReport: Supabase sync failed', err)
+            import('@/lib/error-log').then(({ writeErrorLog }) => writeErrorLog({ actorId: currentUserId, severity: 'error', message: 'resolveReport: Supabase sync failed', entityType: 'report', entityId: reportId, context: { error: String(err) } }))
+          })
         })
         notifyWalker(reportId, report?.reporterId, 'report_resolved', get().getCurrentUser()?.name)
         writeAuditLog({
@@ -911,7 +928,10 @@ export const useAppStore = create<AppState>()(
           )
         }))
         import('@/lib/supabase-client').then(({ updateReport }) => {
-          updateReport(reportId, { status: 'claimed', resolutionReason: null }).catch(() => {})
+          updateReport(reportId, { status: 'claimed', resolutionReason: null }).catch((err: unknown) => {
+            console.error('reopenReport: Supabase sync failed', err)
+            import('@/lib/error-log').then(({ writeErrorLog }) => writeErrorLog({ actorId: currentUserId, severity: 'error', message: 'reopenReport: Supabase sync failed', entityType: 'report', entityId: reportId, context: { error: String(err) } }))
+          })
         })
         writeAuditLog({
           actorId: currentUserId,
@@ -932,7 +952,10 @@ export const useAppStore = create<AppState>()(
           )
         }))
         import('@/lib/supabase-client').then(({ updateReport }) => {
-          updateReport(reportId, { status: 'complete', adminNotes: notes, completedBy: currentUserId, completedAt: now }).catch(() => {})
+          updateReport(reportId, { status: 'complete', adminNotes: notes, completedBy: currentUserId, completedAt: now }).catch((err: unknown) => {
+            console.error('markReportComplete: Supabase sync failed', err)
+            import('@/lib/error-log').then(({ writeErrorLog }) => writeErrorLog({ actorId: currentUserId, severity: 'error', message: 'markReportComplete: Supabase sync failed', entityType: 'report', entityId: reportId, context: { error: String(err) } }))
+          })
         })
         notifyWalker(reportId, report?.reporterId, 'report_complete', get().getCurrentUser()?.name)
         writeAuditLog({
@@ -953,7 +976,10 @@ export const useAppStore = create<AppState>()(
           )
         }))
         import('@/lib/supabase-client').then(({ updateReport }) => {
-          updateReport(reportId, { status: 'escalated', escalatedBy: currentUserId, escalatedAt: now }).catch(() => {})
+          updateReport(reportId, { status: 'escalated', escalatedBy: currentUserId, escalatedAt: now }).catch((err: unknown) => {
+            console.error('escalateReport: Supabase sync failed', err)
+            import('@/lib/error-log').then(({ writeErrorLog }) => writeErrorLog({ actorId: currentUserId, severity: 'error', message: 'escalateReport: Supabase sync failed', entityType: 'report', entityId: reportId, context: { error: String(err) } }))
+          })
         })
         writeAuditLog({
           actorId: currentUserId,
@@ -973,7 +999,15 @@ export const useAppStore = create<AppState>()(
           )
         }))
         import('@/lib/supabase-client').then(({ updateReport }) => {
-          updateReport(reportId, { farmerFlagNote: note, flaggedByFarmer: currentUserId, flaggedAt: now }).catch(() => {})
+          updateReport(reportId, { farmerFlagNote: note, flaggedByFarmer: currentUserId, flaggedAt: now }).catch((err: unknown) => {
+            console.error('flagReportToAdmin: Supabase sync failed', err)
+            import('@/lib/error-log').then(({ writeErrorLog }) => writeErrorLog({
+              actorId: currentUserId, severity: 'error',
+              message: 'flagReportToAdmin: Supabase sync failed',
+              entityType: 'report', entityId: reportId,
+              context: { error: String(err) }
+            }))
+          })
         })
         writeAuditLog({
           actorId: currentUserId,
@@ -1055,15 +1089,37 @@ export const useAppStore = create<AppState>()(
         })
       },
       
-      batchArchiveReports: (ids) => set((state) => ({
-        reports: state.reports.map((r) => 
-          ids.includes(r.id) ? { ...r, archived: true } : r
-        )
-      })),
-      
-      batchDeleteReports: (ids) => set((state) => ({
-        reports: state.reports.filter((r) => !ids.includes(r.id))
-      })),
+      batchArchiveReports: (ids) => {
+        const { currentUserId } = get()
+        set((state) => ({
+          reports: state.reports.map((r) => ids.includes(r.id) ? { ...r, archived: true } : r)
+        }))
+        import('@/lib/supabase-client').then(({ updateReport }) => {
+          Promise.all(ids.map(id => updateReport(id, { archived: true }))).catch((err: unknown) => {
+            console.error('Failed to batch-archive reports in Supabase:', err)
+            import('@/lib/error-log').then(({ writeErrorLog }) => writeErrorLog({
+              actorId: currentUserId, severity: 'error',
+              message: 'batchArchiveReports: Supabase persistence failed',
+              context: { ids, error: String(err) },
+            }))
+          })
+        })
+      },
+
+      batchDeleteReports: (ids) => {
+        const { currentUserId } = get()
+        set((state) => ({ reports: state.reports.filter((r) => !ids.includes(r.id)) }))
+        import('@/lib/supabase-client').then(({ deleteReport: deleteReportDB }) => {
+          Promise.all(ids.map(id => deleteReportDB(id))).catch((err: unknown) => {
+            console.error('Failed to batch-delete reports in Supabase:', err)
+            import('@/lib/error-log').then(({ writeErrorLog }) => writeErrorLog({
+              actorId: currentUserId, severity: 'error',
+              message: 'batchDeleteReports: Supabase persistence failed',
+              context: { ids, error: String(err) },
+            }))
+          })
+        })
+      },
       
       // Notification actions
       addNotification: (notification) => set((state) => ({
@@ -1196,23 +1252,55 @@ export const useAppStore = create<AppState>()(
       },
 
       // Report category actions
-      addReportCategory: (category) => set((state) => ({
-        reportCategories: [...state.reportCategories, {
-          ...category,
-          id: Date.now().toString(),
-          createdAt: new Date(),
-        }]
-      })),
+      addReportCategory: (category) => {
+        const tempId = Date.now().toString()
+        set((state) => ({
+          reportCategories: [...state.reportCategories, { ...category, id: tempId, createdAt: new Date() }]
+        }))
+        import('@/lib/supabase-client').then(({ createReportCategory }) => {
+          createReportCategory(category).then((saved: any) => {
+            set((state) => ({
+              reportCategories: state.reportCategories.map((c) => c.id === tempId ? { ...c, id: saved.id } : c)
+            }))
+          }).catch((err: unknown) => {
+            console.error('Failed to create report category in Supabase:', err)
+            import('@/lib/error-log').then(({ writeErrorLog }) => writeErrorLog({
+              severity: 'error', message: 'addReportCategory: Supabase persistence failed',
+              context: { name: category.name, error: String(err) },
+            }))
+          })
+        })
+      },
 
-      updateReportCategory: (id, data) => set((state) => ({
-        reportCategories: state.reportCategories.map((c) =>
-          c.id === id ? { ...c, ...data } : c
-        )
-      })),
+      updateReportCategory: (id, data) => {
+        set((state) => ({
+          reportCategories: state.reportCategories.map((c) => c.id === id ? { ...c, ...data } : c)
+        }))
+        import('@/lib/supabase-client').then(({ updateReportCategoryDB }) => {
+          updateReportCategoryDB(id, data).catch((err: unknown) => {
+            console.error('Failed to update report category in Supabase:', err)
+            import('@/lib/error-log').then(({ writeErrorLog }) => writeErrorLog({
+              severity: 'error', message: 'updateReportCategory: Supabase persistence failed',
+              context: { id, error: String(err) },
+            }))
+          })
+        })
+      },
 
-      deleteReportCategory: (id) => set((state) => ({
-        reportCategories: state.reportCategories.filter((c) => c.id !== id)
-      })),
+      deleteReportCategory: (id) => {
+        set((state) => ({
+          reportCategories: state.reportCategories.filter((c) => c.id !== id)
+        }))
+        import('@/lib/supabase-client').then(({ deleteReportCategoryDB }) => {
+          deleteReportCategoryDB(id).catch((err: unknown) => {
+            console.error('Failed to delete report category in Supabase:', err)
+            import('@/lib/error-log').then(({ writeErrorLog }) => writeErrorLog({
+              severity: 'error', message: 'deleteReportCategory: Supabase persistence failed',
+              context: { id, error: String(err) },
+            }))
+          })
+        })
+      },
 
       updateFarmCategorySubscription: (farmId, categoryId, subscribed) => {
         set((state) => ({
