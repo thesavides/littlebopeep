@@ -1092,7 +1092,9 @@ export default function FarmerDashboard() {
                     id: `post-${idx}`,
                     position: [post.lat, post.lng] as [number, number],
                     popup: t('farmer.postNumber', { number: idx + 1 }, `Post ${idx + 1}`),
-                    type: 'fencepost' as const
+                    type: 'fencepost' as const,
+                    draggable: true,
+                    onDragEnd: (lat: number, lng: number) => setFencePosts(prev => prev.map((p, i) => i === idx ? { lat, lng } : p)),
                   }))}
                   polygons={fencePosts.length >= 3 ? [{ id: 'new', positions: fencePosts.map(p => [p.lat, p.lng] as [number, number]), color: '#9ED663' }] : []}
                 />
@@ -1105,7 +1107,7 @@ export default function FarmerDashboard() {
               </div>
             )}
             <div className="bg-[#D1D9C5] border border-[#D1D9C5] rounded-xl p-3 text-sm text-[#614270]">
-              {t('farmer.fencePostTip', {}, '🪵 Tap on the map to place fence posts around your field boundary.')}
+              {t('farmer.fencePostTip', {}, '🪵 Tap on the map to place fence posts. Drag existing posts to adjust their position.')}
             </div>
             {reportCategories.filter(c => c.isActive).length > 0 && (
               <div>

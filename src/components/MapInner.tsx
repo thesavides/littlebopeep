@@ -167,6 +167,8 @@ interface MapProps {
     status?: 'reported' | 'claimed' | 'resolved'
     emoji?: string
     imageUrl?: string
+    draggable?: boolean
+    onDragEnd?: (lat: number, lng: number) => void
   }>
   circles?: Array<{
     center: [number, number]
@@ -474,6 +476,13 @@ export default function MapInner({
           key={marker.id}
           position={marker.position}
           icon={getMarkerIcon(marker.type, marker.status, marker.emoji, marker.imageUrl)}
+          draggable={marker.draggable ?? false}
+          eventHandlers={marker.onDragEnd ? {
+            dragend: (e) => {
+              const latlng = (e.target as any).getLatLng()
+              marker.onDragEnd!(latlng.lat, latlng.lng)
+            }
+          } : undefined}
         >
           {marker.popup && <Popup>{marker.popup}</Popup>}
         </Marker>

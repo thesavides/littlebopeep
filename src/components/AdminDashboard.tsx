@@ -2982,6 +2982,10 @@ function CreateFieldModal({ farmId, farm, onClose, onCreate }: any) {
     setFencePosts([])
   }
 
+  const handlePostDrag = (idx: number, lat: number, lng: number) => {
+    setFencePosts(prev => prev.map((p, i) => i === idx ? { lat, lng } : p))
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) {
@@ -3004,8 +3008,8 @@ function CreateFieldModal({ farmId, farm, onClose, onCreate }: any) {
   const canSave = name.trim() && fencePosts.length >= 3
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl p-6 max-w-2xl w-full shadow-xl my-8">
+    <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl p-6 max-w-2xl w-full shadow-xl my-4">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-bold text-[#614270]">Add Field to {farm.name}</h3>
           <button onClick={onClose} className="text-[#92998B] hover:text-[#614270] text-2xl">&times;</button>
@@ -3038,7 +3042,9 @@ function CreateFieldModal({ farmId, farm, onClose, onCreate }: any) {
                   id: `post-${idx}`,
                   position: [post.lat, post.lng] as [number, number],
                   popup: `Post ${idx + 1}`,
-                  type: 'fencepost' as const
+                  type: 'fencepost' as const,
+                  draggable: true,
+                  onDragEnd: (lat: number, lng: number) => handlePostDrag(idx, lat, lng),
                 }))}
                 polygons={fencePosts.length >= 3 ? [{
                   id: 'new',
@@ -3148,9 +3154,13 @@ function EditFieldModal({ farmId, field, onClose, onSave }: any) {
 
   const canSave = name.trim() && fencePosts.length >= 3
 
+  const handlePostDrag = (idx: number, lat: number, lng: number) => {
+    setFencePosts(prev => prev.map((p, i) => i === idx ? { lat, lng } : p))
+  }
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl p-6 max-w-2xl w-full shadow-xl my-8">
+    <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-[60] p-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl p-6 max-w-2xl w-full shadow-xl my-4">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-bold text-[#614270]">Edit Field</h3>
           <button onClick={onClose} className="text-[#92998B] hover:text-[#614270] text-2xl">&times;</button>
@@ -3172,7 +3182,7 @@ function EditFieldModal({ farmId, field, onClose, onSave }: any) {
             <label className="block text-sm font-medium text-[#614270] mb-1">
               Field Boundary ({fencePosts.length} fence posts{fencePosts.length >= 3 ? ' ✓' : ', need 3+'})
             </label>
-            <p className="text-xs text-[#92998B] mb-2">Click on the map to move or add fence posts. Existing boundary shown in green.</p>
+            <p className="text-xs text-[#92998B] mb-2">Click on the map to add posts. Drag existing posts to move them.</p>
             <div className="h-96 rounded-lg overflow-hidden shadow border">
               <Map
                 center={fencePosts[0] ? [fencePosts[0].lat, fencePosts[0].lng] : MAP_CONFIG.DEFAULT_CENTER}
@@ -3182,7 +3192,9 @@ function EditFieldModal({ farmId, field, onClose, onSave }: any) {
                   id: `post-${idx}`,
                   position: [post.lat, post.lng] as [number, number],
                   popup: `Post ${idx + 1}`,
-                  type: 'fencepost' as const
+                  type: 'fencepost' as const,
+                  draggable: true,
+                  onDragEnd: (lat: number, lng: number) => handlePostDrag(idx, lat, lng),
                 }))}
                 polygons={fencePosts.length >= 3 ? [{
                   id: 'edit',

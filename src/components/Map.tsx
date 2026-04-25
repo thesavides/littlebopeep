@@ -16,6 +16,8 @@ interface MapProps {
     status?: 'reported' | 'claimed' | 'resolved'
     emoji?: string
     imageUrl?: string
+    draggable?: boolean
+    onDragEnd?: (lat: number, lng: number) => void
   }>
   circles?: Array<{
     center: [number, number]
