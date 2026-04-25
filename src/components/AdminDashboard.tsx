@@ -1217,8 +1217,14 @@ export default function AdminDashboard() {
         farm={farms.find(f => f.id === showFarmDetailsModal)!}
         owner={allUsers.find((u: any) => u.id === farms.find(f => f.id === showFarmDetailsModal)?.farmerId)}
         onClose={() => setShowFarmDetailsModal(null)}
-        onAddField={(farmId: string) => setShowCreateFieldModal(farmId)}
-        onEditField={(farmId: string, fieldId: string) => setShowEditFieldModal({ farmId, fieldId })}
+        onAddField={(farmId: string) => {
+          setShowFarmDetailsModal(null)
+          setShowCreateFieldModal(farmId)
+        }}
+        onEditField={(farmId: string, fieldId: string) => {
+          setShowFarmDetailsModal(null)
+          setShowEditFieldModal({ farmId, fieldId })
+        }}
         onDeleteField={(farmId: string, fieldId: string) => {
           if (confirm('Delete this field? This cannot be undone.')) {
             deleteField(farmId, fieldId)
@@ -1232,9 +1238,13 @@ export default function AdminDashboard() {
       {showCreateFieldModal && <CreateFieldModal
         farmId={showCreateFieldModal}
         farm={farms.find(f => f.id === showCreateFieldModal)!}
-        onClose={() => setShowCreateFieldModal(null)}
+        onClose={() => {
+          setShowFarmDetailsModal(showCreateFieldModal)
+          setShowCreateFieldModal(null)
+        }}
         onCreate={(farmId: string, field: any) => {
           addField(farmId, field)
+          setShowFarmDetailsModal(farmId)
           setShowCreateFieldModal(null)
         }}
       />}
@@ -1243,9 +1253,13 @@ export default function AdminDashboard() {
       {showEditFieldModal && <EditFieldModal
         farmId={showEditFieldModal.farmId}
         field={farms.find(f => f.id === showEditFieldModal.farmId)?.fields.find(fi => fi.id === showEditFieldModal.fieldId)!}
-        onClose={() => setShowEditFieldModal(null)}
+        onClose={() => {
+          setShowFarmDetailsModal(showEditFieldModal.farmId)
+          setShowEditFieldModal(null)
+        }}
         onSave={(farmId: string, fieldId: string, data: any) => {
           updateField(farmId, fieldId, data)
+          setShowFarmDetailsModal(farmId)
           setShowEditFieldModal(null)
         }}
       />}
