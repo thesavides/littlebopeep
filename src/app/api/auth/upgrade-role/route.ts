@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { writeAuditLog } from '@/lib/audit'
+import { writeAuditLogServer } from '@/lib/audit'
 
 export async function POST(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     const { data: existing } = await supabaseAdmin
       .from('user_profiles')
-      .select('role')
+      .select('role, email')
       .eq('id', userId)
       .single()
 
@@ -45,13 +45,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 })
     }
 
-    writeAuditLog({
-      actorId: userId,
-      action: 'user.role_change',
-      entityType: 'user',
-      entityId: userId,
-      detail: { from: existing.role, to: 'farmer' },
-    })
+    await writeAuditLogServer(
+      { actorId: userId, actorEmail: existing.email ?? null, action: 'user.role_change', entityType: 'user', entityId: userId, detail: { from: existing.role, to: 'farmer' } },
+      supabaseAdmin, request.headers
+    )
 
     return NextResponse.json({ success: true, role: 'farmer' })
   } catch (err: any) {

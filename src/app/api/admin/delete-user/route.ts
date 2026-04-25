@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { writeAuditLog } from '@/lib/audit'
+import { writeAuditLogServer } from '@/lib/audit'
 
 /**
  * Server-side user deletion — requires super_admin role.
@@ -69,18 +69,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 })
     }
 
-    await writeAuditLog({
-      actorId: requestingUser.id,
-      actorEmail: requestingUser.email,
-      action: 'user.delete',
-      entityType: 'user',
-      entityId: userId,
-      detail: {
-        email: deletedProfile?.email,
-        fullName: deletedProfile?.full_name,
-        role: deletedProfile?.role,
-      },
-    })
+    await writeAuditLogServer(
+      { actorId: requestingUser.id, actorEmail: requestingUser.email, action: 'user.delete', entityType: 'user', entityId: userId, detail: { email: deletedProfile?.email, fullName: deletedProfile?.full_name, role: deletedProfile?.role } },
+      supabaseAdmin, request.headers
+    )
 
     return NextResponse.json({ success: true })
   } catch (error: any) {

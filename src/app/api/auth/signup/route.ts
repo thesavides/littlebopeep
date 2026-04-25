@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail, buildWelcomeEmail } from '@/lib/email'
-import { writeAuditLog } from '@/lib/audit'
+import { writeAuditLogServer } from '@/lib/audit'
 
 /**
  * Server-side signup endpoint for walkers and farmers
@@ -95,14 +95,10 @@ export async function POST(request: NextRequest) {
     const { subject, html } = buildWelcomeEmail({ name: fullName, role })
     await sendEmail({ to: email, subject, html })
 
-    await writeAuditLog({
-      actorId: authData.user.id,
-      actorEmail: email,
-      action: 'user.signup',
-      entityType: 'user',
-      entityId: authData.user.id,
-      detail: { fullName, role },
-    })
+    await writeAuditLogServer(
+      { actorId: authData.user.id, actorEmail: email, action: 'user.signup', entityType: 'user', entityId: authData.user.id, detail: { fullName, role } },
+      supabaseAdmin, request.headers
+    )
 
     return NextResponse.json({
       success: true,

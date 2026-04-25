@@ -5,6 +5,7 @@
  */
 
 import { supabase } from './supabase-client'
+import { writeAuditLog } from './audit'
 
 export type UserRole = 'walker' | 'farmer' | 'admin' | 'super_admin'
 export type UserStatus = 'active' | 'suspended' | 'pending_verification' | 'password_reset_required'
@@ -43,6 +44,10 @@ export async function signIn(email: string, password: string): Promise<{
     })
 
     if (authError || !authData.user) {
+      writeAuditLog({
+        action: 'auth.login_failed',
+        detail: { email, reason: authError?.message ?? 'unknown' },
+      })
       return { success: false, error: authError?.message || 'Login failed' }
     }
 
@@ -54,14 +59,25 @@ export async function signIn(email: string, password: string): Promise<{
       .single()
 
     if (profileError || !profile) {
-      // Sign out if profile doesn't exist
       await supabase.auth.signOut()
+      writeAuditLog({
+        action: 'auth.login_failed',
+        detail: { email, reason: 'profile not found' },
+      })
       return { success: false, error: 'User profile not found' }
     }
 
     // Check if user is suspended
     if (profile.status === 'suspended') {
       await supabase.auth.signOut()
+      writeAuditLog({
+        actorId: authData.user.id,
+        actorEmail: email,
+        action: 'auth.login_failed',
+        entityType: 'user',
+        entityId: authData.user.id,
+        detail: { email, reason: 'account suspended' },
+      })
       return { success: false, error: 'Account suspended. Please contact support.' }
     }
 
@@ -70,6 +86,15 @@ export async function signIn(email: string, password: string): Promise<{
       .from('user_profiles')
       .update({ last_login_at: new Date().toISOString() })
       .eq('id', authData.user.id)
+
+    writeAuditLog({
+      actorId: authData.user.id,
+      actorEmail: email,
+      action: 'auth.login',
+      entityType: 'user',
+      entityId: authData.user.id,
+      detail: { role: profile.role, status: profile.status },
+    })
 
     return { success: true, user: profile }
   } catch (error) {
@@ -140,6 +165,21 @@ export async function signUp(
  * Sign out current user
  */
 export async function signOut(): Promise<void> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      writeAuditLog({
+        actorId: user.id,
+        actorEmail: user.email ?? null,
+        action: 'auth.logout',
+        entityType: 'user',
+        entityId: user.id,
+        detail: {},
+      })
+    }
+  } catch {
+    // Non-fatal — proceed with sign-out regardless.
+  }
   await supabase.auth.signOut()
 }
 

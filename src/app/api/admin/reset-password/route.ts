@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { writeAuditLogServer } from '@/lib/audit'
 
 export async function POST(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -26,7 +27,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Use the request origin or configured app URL
+    // Resolve who triggered the reset — may be an admin acting on another user.
+    let actorId: string | null = null
+    let actorEmail: string | null = null
+    const authHeader = request.headers.get('authorization')
+    if (authHeader?.startsWith('Bearer ')) {
+      const { data: { user } } = await supabaseAdmin.auth.getUser(authHeader.slice(7))
+      if (user) { actorId = user.id; actorEmail = user.email ?? null }
+    }
+
     const productionUrl = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'https://littlebopeep.pages.dev'
 
     const { error } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
@@ -37,6 +46,29 @@ export async function POST(request: NextRequest) {
       console.error('Password reset error:', error)
       return NextResponse.json({ success: false, error: error.message }, { status: 400 })
     }
+
+    // Resolve target user profile for audit metadata (best-effort).
+    const { data: targetProfile } = await supabaseAdmin
+      .from('user_profiles')
+      .select('id, role')
+      .eq('email', email)
+      .single()
+
+    await writeAuditLogServer(
+      {
+        actorId,
+        actorEmail,
+        action: 'user.password_reset',
+        entityType: 'user',
+        entityId: targetProfile?.id ?? null,
+        detail: {
+          targetEmail: email,
+          targetRole: targetProfile?.role ?? null,
+          triggeredBy: actorId ? 'admin' : 'self',
+        },
+      },
+      supabaseAdmin, request.headers
+    )
 
     return NextResponse.json({ success: true })
   } catch (error) {

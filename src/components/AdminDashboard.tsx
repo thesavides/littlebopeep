@@ -175,22 +175,46 @@ export default function AdminDashboard() {
   }
 
   const handleSuspend = async (userId: string) => {
+    const targetUser = allUsers.find((u: any) => u.id === userId)
     const { success, error } = await suspendUserInSupabase(userId)
     if (success) {
       const refreshed = await getAllUsers()
       setRealUsers(refreshed)
       setViewingUser((prev: any) => prev?.id === userId ? { ...prev, status: 'suspended' } : prev)
+      writeAuditLog({
+        actorId: currentUserId,
+        action: 'user.suspend',
+        entityType: 'user',
+        entityId: userId,
+        detail: {
+          targetEmail: targetUser?.email,
+          targetRole: targetUser?.role,
+          previousStatus: targetUser?.status ?? 'active',
+        },
+      })
     } else {
       alert(error || 'Failed to suspend user')
     }
   }
 
   const handleActivate = async (userId: string) => {
+    const targetUser = allUsers.find((u: any) => u.id === userId)
     const { success, error } = await activateUserInSupabase(userId)
     if (success) {
       const refreshed = await getAllUsers()
       setRealUsers(refreshed)
       setViewingUser((prev: any) => prev?.id === userId ? { ...prev, status: 'active' } : prev)
+      writeAuditLog({
+        actorId: currentUserId,
+        action: 'user.activate',
+        entityType: 'user',
+        entityId: userId,
+        detail: {
+          targetEmail: targetUser?.email,
+          targetRole: targetUser?.role,
+          previousStatus: targetUser?.status ?? 'suspended',
+        },
+      })
     } else {
       alert(error || 'Failed to activate user')
     }

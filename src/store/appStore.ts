@@ -536,6 +536,7 @@ export const useAppStore = create<AppState>()(
 
       // Field actions
       addField: (farmId, field) => {
+        const { currentUserId } = get()
         const tempId = Date.now().toString()
         set((state) => ({
           farms: state.farms.map((f) =>
@@ -552,12 +553,27 @@ export const useAppStore = create<AppState>()(
                 : f
             )
           }))
+          writeAuditLog({
+            actorId: currentUserId,
+            action: 'field.create',
+            entityType: 'field',
+            entityId: saved.id,
+            detail: {
+              farmId,
+              fieldName: field.name,
+              fencePostCount: field.fencePosts?.length ?? 0,
+              categorySubscriptions: field.categorySubscriptions ?? {},
+            },
+          })
         }).catch((err) => {
           console.error('Failed to save field to Supabase:', err)
         })
       },
 
       updateField: (farmId, fieldId, data) => {
+        const { currentUserId, farms } = get()
+        const existingFarm = farms.find(f => f.id === farmId)
+        const existingField = existingFarm?.fields.find(f => f.id === fieldId)
         set((state) => ({
           farms: state.farms.map((f) =>
             f.id === farmId
@@ -570,12 +586,35 @@ export const useAppStore = create<AppState>()(
               : f
           )
         }))
-        updateFieldInFarm(fieldId, data).catch((err) => {
+        updateFieldInFarm(fieldId, data).then(() => {
+          writeAuditLog({
+            actorId: currentUserId,
+            action: 'field.update',
+            entityType: 'field',
+            entityId: fieldId,
+            detail: {
+              farmId,
+              before: {
+                name: existingField?.name,
+                fencePostCount: existingField?.fencePosts?.length ?? 0,
+                categorySubscriptions: existingField?.categorySubscriptions ?? {},
+              },
+              after: {
+                name: data.name ?? existingField?.name,
+                fencePostCount: (data.fencePosts ?? existingField?.fencePosts)?.length ?? 0,
+                categorySubscriptions: data.categorySubscriptions ?? existingField?.categorySubscriptions ?? {},
+              },
+            },
+          })
+        }).catch((err) => {
           console.error('Failed to update field in Supabase:', err)
         })
       },
 
       deleteField: (farmId, fieldId) => {
+        const { currentUserId, farms } = get()
+        const existingFarm = farms.find(f => f.id === farmId)
+        const existingField = existingFarm?.fields.find(f => f.id === fieldId)
         set((state) => ({
           farms: state.farms.map((f) =>
             f.id === farmId
@@ -583,7 +622,19 @@ export const useAppStore = create<AppState>()(
               : f
           )
         }))
-        deleteFieldFromFarm(fieldId).catch((err) => {
+        deleteFieldFromFarm(fieldId).then(() => {
+          writeAuditLog({
+            actorId: currentUserId,
+            action: 'field.delete',
+            entityType: 'field',
+            entityId: fieldId,
+            detail: {
+              farmId,
+              fieldName: existingField?.name,
+              fencePostCount: existingField?.fencePosts?.length ?? 0,
+            },
+          })
+        }).catch((err) => {
           console.error('Failed to delete field from Supabase:', err)
         })
       },
@@ -661,6 +712,21 @@ export const useAppStore = create<AppState>()(
             set((state) => ({
               reports: state.reports.map((r) => r.id === localReport.id ? saved : r)
             }))
+            writeAuditLog({
+              actorId: currentUserId,
+              action: 'report.create',
+              entityType: 'report',
+              entityId: saved.id,
+              detail: {
+                categoryId: saved.categoryId,
+                categoryName: saved.categoryName,
+                location: saved.location,
+                affectedFarmCount: affectedFarmIds.length,
+                affectedFarmerCount: affectedFarmerIds.length,
+                isAnonymous: !currentUserId,
+                reporterContact: localReport.reporterContact ?? null,
+              },
+            })
             // Notify affected farmers in-app + email (Workstream 4)
             if (affectedFarmerIds.length > 0) {
               createNotificationsForFarmers(saved.id, affectedFarmerIds, 'new_report').catch(() => {})
@@ -944,15 +1010,50 @@ export const useAppStore = create<AppState>()(
         })
       },
 
-      deleteReport: (id) => set((state) => ({
-        reports: state.reports.filter((r) => r.id !== id)
-      })),
-      
-      archiveReport: (id) => set((state) => ({
-        reports: state.reports.map((r) => 
-          r.id === id ? { ...r, archived: true } : r
-        )
-      })),
+      deleteReport: (id) => {
+        const { currentUserId, reports } = get()
+        const report = reports.find(r => r.id === id)
+        set((state) => ({ reports: state.reports.filter((r) => r.id !== id) }))
+        import('@/lib/supabase-client').then(({ deleteReport: deleteReportDB }) => {
+          deleteReportDB(id).catch((err: unknown) => {
+            console.error('Failed to delete report from Supabase:', err)
+          })
+        })
+        writeAuditLog({
+          actorId: currentUserId,
+          action: 'report.delete',
+          entityType: 'report',
+          entityId: id,
+          detail: {
+            categoryName: report?.categoryName,
+            status: report?.status,
+            location: report?.location,
+          },
+        })
+      },
+
+      archiveReport: (id) => {
+        const { currentUserId, reports } = get()
+        const report = reports.find(r => r.id === id)
+        set((state) => ({
+          reports: state.reports.map((r) => r.id === id ? { ...r, archived: true } : r)
+        }))
+        import('@/lib/supabase-client').then(({ updateReport }) => {
+          updateReport(id, { archived: true }).catch((err: unknown) => {
+            console.error('Failed to archive report in Supabase:', err)
+          })
+        })
+        writeAuditLog({
+          actorId: currentUserId,
+          action: 'report.archive',
+          entityType: 'report',
+          entityId: id,
+          detail: {
+            categoryName: report?.categoryName,
+            status: report?.status,
+          },
+        })
+      },
       
       batchArchiveReports: (ids) => set((state) => ({
         reports: state.reports.map((r) => 

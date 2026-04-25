@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail, buildInviteEmail } from '@/lib/email'
-import { writeAuditLog } from '@/lib/audit'
+import { writeAuditLogServer } from '@/lib/audit'
 
 // This runs on the server, so we can use service role key
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -138,15 +138,10 @@ export async function POST(request: NextRequest) {
     const { subject, html } = buildInviteEmail({ name: fullName, role })
     await sendEmail({ to: email, subject, html })
 
-    // Audit log
-    await writeAuditLog({
-      actorId: user.id,
-      actorEmail: user.email,
-      action: 'user.invite',
-      entityType: 'user',
-      entityId: authData.user.id,
-      detail: { email, fullName, role },
-    })
+    await writeAuditLogServer(
+      { actorId: user.id, actorEmail: user.email, action: 'user.invite', entityType: 'user', entityId: authData.user.id, detail: { email, fullName, role } },
+      supabaseAdmin, request.headers
+    )
 
     return NextResponse.json({ success: true, user: profile })
 
