@@ -2956,7 +2956,6 @@ function FarmDetailsModal({ farm, owner, onClose, onAddField, onEditField, onDel
 function CreateFieldModal({ farmId, farm, onClose, onCreate }: any) {
   const { reportCategories } = useAppStore()
   const [name, setName] = useState('')
-  const [sheepCount, setSheepCount] = useState('')
   const [fencePosts, setFencePosts] = useState<{lat: number, lng: number}[]>([])
   const [categorySubscriptions, setCategorySubscriptions] = useState<Record<string, boolean>>({})
 
@@ -2986,7 +2985,6 @@ function CreateFieldModal({ farmId, farm, onClose, onCreate }: any) {
     onCreate(farmId, {
       name: name.trim(),
       fencePosts,
-      sheepCount: sheepCount ? parseInt(sheepCount) : undefined,
       color: '#9ED663',
       categorySubscriptions,
     })
@@ -3012,18 +3010,6 @@ function CreateFieldModal({ farmId, farm, onClose, onCreate }: any) {
               className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7D8DCC]"
               placeholder="North Field"
               required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-[#614270] mb-1">Sheep Count (Optional)</label>
-            <input
-              type="number"
-              value={sheepCount}
-              onChange={(e) => setSheepCount(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#7D8DCC]"
-              placeholder="150"
-              min="0"
             />
           </div>
 
@@ -3135,24 +3121,25 @@ function CreateFieldModal({ farmId, farm, onClose, onCreate }: any) {
 function EditFieldModal({ farmId, field, onClose, onSave }: any) {
   const { reportCategories } = useAppStore()
   const [name, setName] = useState(field.name)
+  const [fencePosts, setFencePosts] = useState<{lat: number, lng: number}[]>(field.fencePosts || [])
   const [categorySubscriptions, setCategorySubscriptions] = useState<Record<string, boolean>>(field.categorySubscriptions || {})
+
+  const handleMapClick = (lat: number, lng: number) => setFencePosts(prev => [...prev, { lat, lng }])
+  const handleUndoPost = () => setFencePosts(prev => prev.slice(0, -1))
+  const handleClearPosts = () => setFencePosts([])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name.trim()) {
-      alert('Please enter field name')
-      return
-    }
-
-    onSave(farmId, field.id, {
-      name: name.trim(),
-      categorySubscriptions,
-    })
+    if (!name.trim()) { alert('Please enter field name'); return }
+    if (fencePosts.length < 3) { alert('Field must have at least 3 fence posts.'); return }
+    onSave(farmId, field.id, { name: name.trim(), fencePosts, categorySubscriptions })
   }
 
+  const canSave = name.trim() && fencePosts.length >= 3
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl p-6 max-w-2xl w-full shadow-xl my-8">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-bold text-[#614270]">Edit Field</h3>
           <button onClick={onClose} className="text-[#92998B] hover:text-[#614270] text-2xl">&times;</button>
@@ -3170,9 +3157,45 @@ function EditFieldModal({ farmId, field, onClose, onSave }: any) {
             />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-[#614270] mb-1">
+              Field Boundary ({fencePosts.length} fence posts{fencePosts.length >= 3 ? ' ✓' : ', need 3+'})
+            </label>
+            <p className="text-xs text-[#92998B] mb-2">Click on the map to move or add fence posts. Existing boundary shown in green.</p>
+            <div className="h-96 rounded-lg overflow-hidden shadow border">
+              <Map
+                center={fencePosts[0] ? [fencePosts[0].lat, fencePosts[0].lng] : MAP_CONFIG.DEFAULT_CENTER}
+                zoom={fencePosts.length > 0 ? MAP_CONFIG.STANDARD_ZOOM_5KM : MAP_CONFIG.STANDARD_ZOOM_5KM}
+                onClick={handleMapClick}
+                markers={fencePosts.map((post, idx) => ({
+                  id: `post-${idx}`,
+                  position: [post.lat, post.lng] as [number, number],
+                  popup: `Post ${idx + 1}`,
+                  type: 'fencepost' as const
+                }))}
+                polygons={fencePosts.length >= 3 ? [{
+                  id: 'edit',
+                  positions: fencePosts.map(p => [p.lat, p.lng] as [number, number]),
+                  color: '#9ED663'
+                }] : []}
+              />
+            </div>
+          </div>
+
+          {fencePosts.length > 0 && (
+            <div className="flex gap-2">
+              <button type="button" onClick={handleUndoPost} className="flex-1 py-2 bg-[#D1D9C5] text-[#614270] rounded-lg text-sm">↩ Undo Last Post</button>
+              <button type="button" onClick={handleClearPosts} className="flex-1 py-2 bg-[#FA9335]/10 text-[#FA9335] rounded-lg text-sm">🗑 Clear All</button>
+            </div>
+          )}
+
+          {fencePosts.length >= 3 && (
+            <div className="bg-[#9ED663]/10 rounded-lg p-3 text-sm text-[#614270]">✓ Field boundary ready.</div>
+          )}
+
           {reportCategories.filter((c: any) => c.isActive).length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-[#614270] mb-2">Alert Categories for this Field</label>
+              <label className="block text-sm font-medium text-[#614270] mb-2">Alert Categories</label>
               <div className="flex flex-wrap gap-2">
                 {reportCategories.filter((c: any) => c.isActive).map((cat: any) => {
                   const isCompulsory = cat.subscriptionMode === 'compulsory'
@@ -3198,8 +3221,8 @@ function EditFieldModal({ farmId, field, onClose, onSave }: any) {
           )}
 
           <div className="flex gap-3 pt-4">
-            <button type="button" onClick={onClose} className="flex-1 py-3 bg-[#D1D9C5] text-[#614270] rounded-xl font-semibold hover:bg-[#D1D9C5]">Cancel</button>
-            <button type="submit" className="flex-1 py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold hover:bg-[#6b7db3]">Save Changes</button>
+            <button type="button" onClick={onClose} className="flex-1 py-3 bg-[#D1D9C5] text-[#614270] rounded-xl font-semibold">Cancel</button>
+            <button type="submit" disabled={!canSave} className="flex-1 py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold hover:bg-[#6b7db3] disabled:opacity-40">Save Changes</button>
           </div>
         </form>
       </div>
