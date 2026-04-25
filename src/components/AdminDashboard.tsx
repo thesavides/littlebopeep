@@ -1216,7 +1216,9 @@ export default function AdminDashboard() {
       {showFarmDetailsModal && <FarmDetailsModal
         farm={farms.find(f => f.id === showFarmDetailsModal)!}
         owner={allUsers.find((u: any) => u.id === farms.find(f => f.id === showFarmDetailsModal)?.farmerId)}
+        allFarmers={[...farmers, ...admins]}
         onClose={() => setShowFarmDetailsModal(null)}
+        onSaveFarm={(id: string, data: any) => updateFarm(id, data)}
         onAddField={(farmId: string) => {
           setShowFarmDetailsModal(null)
           setShowCreateFieldModal(farmId)
@@ -2002,8 +2004,7 @@ export default function AdminDashboard() {
                         <span className={`px-2 py-1 rounded text-xs font-medium ${farm.alertsEnabled ? 'bg-[#9ED663]/20 text-[#614270]' : 'bg-[#D1D9C5] text-[#92998B]'}`}>
                           {farm.alertsEnabled ? 'Alerts On' : 'Alerts Off'}
                         </span>
-                        <button onClick={() => setShowFarmDetailsModal(farm.id)} className="px-3 py-1 bg-[#614270]/10 text-[#614270] rounded text-sm hover:bg-[#614270]/20">View Fields</button>
-                        <button onClick={() => setShowEditFarmModal(farm.id)} className="px-3 py-1 bg-[#7D8DCC]/10 text-[#7D8DCC] rounded text-sm hover:bg-[#7D8DCC]/20">Edit</button>
+                        <button onClick={() => setShowFarmDetailsModal(farm.id)} className="px-3 py-1 bg-[#614270]/10 text-[#614270] rounded text-sm hover:bg-[#614270]/20">View / Edit</button>
                         <button onClick={() => confirmDelete(farm.id, 'farm')} className="px-3 py-1 bg-[#FA9335]/10 text-[#FA9335] rounded text-sm hover:bg-[#FA9335]/20">Delete</button>
                       </div>
                     </div>
@@ -2735,9 +2736,14 @@ function EditFarmModal({ farm, allFarmers, onClose, onSave }: {
   )
 }
 
-function FarmDetailsModal({ farm, owner, onClose, onAddField, onEditField, onDeleteField, categories, onUpdateSubscription }: any) {
+function FarmDetailsModal({ farm, owner, onClose, onAddField, onEditField, onDeleteField, categories, onUpdateSubscription, allFarmers, onSaveFarm }: any) {
   const activeCategories = (categories || []).filter((c: any) => c.isActive)
   const [notifPrefsOpen, setNotifPrefsOpen] = useState(false)
+  const [editingSettings, setEditingSettings] = useState(false)
+  const [editName, setEditName] = useState(farm.name)
+  const [editBuffer, setEditBuffer] = useState(farm.alertBufferMeters)
+  const [editAlertsEnabled, setEditAlertsEnabled] = useState(farm.alertsEnabled)
+  const [editFarmerId, setEditFarmerId] = useState(farm.farmerId || '')
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4 overflow-y-auto">
@@ -2753,12 +2759,67 @@ function FarmDetailsModal({ farm, owner, onClose, onAddField, onEditField, onDel
         <div className="px-6 pb-6 pt-4">
 
         <div className="mb-6 p-4 bg-[#D1D9C5] rounded-lg">
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div><span className="font-medium">Alert Buffer:</span> {farm.alertBufferMeters}m</div>
-            <div><span className="font-medium">Alerts:</span> {farm.alertsEnabled ? '✅ Enabled' : '❌ Disabled'}</div>
-            <div><span className="font-medium">Fields:</span> {farm.fields.length}</div>
-            <div><span className="font-medium">Created:</span> {new Date(farm.createdAt).toLocaleDateString()}</div>
-          </div>
+          {!editingSettings ? (
+            <>
+              {!farm.farmerId && (
+                <div className="mb-3 p-2 bg-[#FA9335]/10 border border-[#FA9335]/30 rounded text-xs text-[#FA9335]">
+                  ⚠️ This farm has no owner — edit settings to assign a farmer.
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                <div><span className="font-medium">Alert Buffer:</span> {farm.alertBufferMeters}m</div>
+                <div><span className="font-medium">Alerts:</span> {farm.alertsEnabled ? '✅ Enabled' : '❌ Disabled'}</div>
+                <div><span className="font-medium">Fields:</span> {farm.fields.length}</div>
+                <div><span className="font-medium">Created:</span> {new Date(farm.createdAt).toLocaleDateString()}</div>
+              </div>
+              <button
+                onClick={() => setEditingSettings(true)}
+                className="text-xs px-3 py-1.5 bg-[#7D8DCC]/10 text-[#7D8DCC] rounded-lg hover:bg-[#7D8DCC]/20 font-medium"
+              >Edit Farm Settings</button>
+            </>
+          ) : (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-[#614270] mb-1">Farm Name</label>
+                <input type="text" value={editName} onChange={e => setEditName(e.target.value)}
+                  className="w-full px-3 py-2 border border-[#92998B]/40 rounded-lg text-sm focus:ring-2 focus:ring-[#7D8DCC]" />
+              </div>
+              {allFarmers?.length > 0 && (
+                <div>
+                  <label className="block text-xs font-medium text-[#614270] mb-1">Owner</label>
+                  <select value={editFarmerId} onChange={e => setEditFarmerId(e.target.value)}
+                    className="w-full px-3 py-2 border border-[#92998B]/40 rounded-lg text-sm focus:ring-2 focus:ring-[#7D8DCC]">
+                    <option value="">— Unassigned —</option>
+                    {allFarmers.map((f: any) => (
+                      <option key={f.id} value={f.id}>{f.full_name || f.name || f.email} ({f.email || 'No email'})</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <div>
+                <label className="block text-xs font-medium text-[#614270] mb-1">Alert Buffer (meters)</label>
+                <input type="number" value={editBuffer} onChange={e => setEditBuffer(parseInt(e.target.value) || 0)}
+                  min="0" step="50"
+                  className="w-full px-3 py-2 border border-[#92998B]/40 rounded-lg text-sm focus:ring-2 focus:ring-[#7D8DCC]" />
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={editAlertsEnabled} onChange={e => setEditAlertsEnabled(e.target.checked)} className="rounded" />
+                <span className="text-sm text-[#614270]">Alerts enabled</span>
+              </label>
+              <div className="flex gap-2 pt-1">
+                <button onClick={() => setEditingSettings(false)} className="flex-1 py-2 text-sm bg-white text-[#92998B] rounded-lg border border-[#D1D9C5]">Cancel</button>
+                <button
+                  onClick={() => {
+                    if (!editName.trim()) return
+                    onSaveFarm(farm.id, { name: editName.trim(), alertBufferMeters: editBuffer, alertsEnabled: editAlertsEnabled, farmerId: editFarmerId || null })
+                    setEditingSettings(false)
+                  }}
+                  disabled={!editName.trim()}
+                  className="flex-1 py-2 text-sm bg-[#7D8DCC] text-white rounded-lg font-medium disabled:opacity-40"
+                >Save</button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Map preview of field boundaries */}
