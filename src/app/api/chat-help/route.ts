@@ -2,7 +2,10 @@ import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest } from 'next/server'
 
 const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+  apiKey: process.env.ANTHROPIC_API_KEY ?? process.env.Anthropic_API_KEY,
+  defaultHeaders: {
+    'anthropic-beta': 'prompt-caching-2024-07-31',
+  },
 })
 
 const SYSTEM_PROMPT = `You are the Little Bo Peep help assistant. Little Bo Peep is a real-time countryside reporting platform that connects walkers (members of the public) with farmers so that issues on or near farmland can be reported, claimed, and resolved.
@@ -166,9 +169,16 @@ CONTACT
 
 For issues not covered here, users can contact: info@littlebopeep.app`
 
+const LANGUAGE_NAMES: Record<string, string> = {
+  en: 'English',
+  cy: 'Welsh (Cymraeg)',
+  ga: 'Irish (Gaeilge)',
+  gd: 'Scottish Gaelic (Gàidhlig)',
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const { message, history = [] } = await req.json()
+    const { message, history = [], language = 'en' } = await req.json()
 
     if (!message || typeof message !== 'string') {
       return new Response('Invalid message', { status: 400 })
@@ -178,15 +188,18 @@ export async function POST(req: NextRequest) {
       return new Response('Message too long', { status: 400 })
     }
 
+    const langName = LANGUAGE_NAMES[language] ?? 'English'
+    const userContent = `[The user's interface language is set to ${langName}. Begin your response in ${langName} unless the user writes in a different language.]\n\n${message}`
+
     const messages = [
       ...history.slice(-10).map((m: { role: string; content: string }) => ({
         role: m.role as 'user' | 'assistant',
         content: m.content,
       })),
-      { role: 'user' as const, content: message },
+      { role: 'user' as const, content: userContent },
     ]
 
-    const stream = client.messages.stream({
+    const response = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 600,
       system: [
@@ -199,32 +212,19 @@ export async function POST(req: NextRequest) {
       messages,
     })
 
-    const readable = new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const chunk of stream) {
-            if (
-              chunk.type === 'content_block_delta' &&
-              chunk.delta.type === 'text_delta'
-            ) {
-              controller.enqueue(new TextEncoder().encode(chunk.delta.text))
-            }
-          }
-        } finally {
-          controller.close()
-        }
-      },
-    })
+    const text = response.content
+      .filter((b) => b.type === 'text')
+      .map((b) => (b as { type: 'text'; text: string }).text)
+      .join('')
 
-    return new Response(readable, {
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Transfer-Encoding': 'chunked',
-        'Cache-Control': 'no-cache',
-      },
+    return new Response(JSON.stringify({ reply: text }), {
+      headers: { 'Content-Type': 'application/json' },
     })
   } catch (err) {
     console.error('chat-help error:', err)
-    return new Response('Something went wrong. Please try again.', { status: 500 })
+    return new Response(JSON.stringify({ reply: 'Sorry, something went wrong. Please try again.' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
 }

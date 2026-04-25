@@ -51,8 +51,8 @@ export default function LanguageSelector() {
             aria-hidden="true"
           />
 
-          {/* Menu */}
-          <div className="absolute right-0 mt-2 bg-white rounded-lg shadow-lg py-2 min-w-[220px] z-50 border border-[#92998B]/30">
+          {/* Menu — opens upward so it doesn't clip inside the bottom-sheet drawer */}
+          <div className="absolute right-0 bottom-full mb-2 bg-white rounded-lg shadow-lg py-2 min-w-[220px] z-50 border border-[#92998B]/30">
             <div className="px-4 py-2 border-b border-[#92998B]/30">
               <p className="text-xs font-medium text-[#92998B] uppercase tracking-wide">
                 Select Language

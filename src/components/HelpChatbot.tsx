@@ -47,25 +47,17 @@ export default function HelpChatbot() {
       const res = await fetch('/api/chat-help', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, history: messages }),
+        body: JSON.stringify({ message: text, history: messages, language }),
       })
 
-      if (!res.ok || !res.body) throw new Error('Bad response')
+      const data = await res.json()
+      const reply = data?.reply ?? t('chat.error', {}, 'Sorry, something went wrong. Please try again.')
 
-      const reader = res.body.getReader()
-      const decoder = new TextDecoder()
-      let accumulated = ''
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        accumulated += decoder.decode(value, { stream: true })
-        setMessages((prev) => {
-          const updated = [...prev]
-          updated[updated.length - 1] = { role: 'assistant', content: accumulated }
-          return updated
-        })
-      }
+      setMessages((prev) => {
+        const updated = [...prev]
+        updated[updated.length - 1] = { role: 'assistant', content: reply }
+        return updated
+      })
     } catch {
       setMessages((prev) => {
         const updated = [...prev]
