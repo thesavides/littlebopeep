@@ -782,7 +782,7 @@ export const useAppStore = create<AppState>()(
         notifyWalker(reportId, get().reports.find(r => r.id === reportId)?.reporterId, 'report_claimed', get().getCurrentUser()?.name)
         writeAuditLog({
           actorId: currentUserId,
-          action: 'report.claim',
+          action: 'report.reassign',
           entityType: 'report',
           entityId: reportId,
           detail: { reassignedTo: farmerId },

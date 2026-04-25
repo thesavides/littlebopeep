@@ -664,7 +664,7 @@ export default function AdminDashboard() {
                               <div key={fid} className="flex items-center justify-between bg-[#7D8DCC]/10 rounded-lg px-3 py-2 text-sm">
                                 <span className="text-[#614270] font-medium">🧑‍🌾 {farmer?.full_name || farmer?.email || fid.slice(0, 8)}</span>
                                 <button
-                                  onClick={() => unclaimReportForFarmer(report.id, fid)}
+                                  onClick={() => { unclaimReportForFarmer(report.id, fid); setTimeout(() => fetchAuditLogs({ entityId: report.id }).then(setDetailAuditLogs), 500) }}
                                   className="text-xs text-[#FA9335] hover:text-[#e07820] font-medium"
                                 >
                                   Remove
@@ -1007,6 +1007,7 @@ export default function AdminDashboard() {
                             onClick={() => {
                               if (confirm('Remove all farmers from this report and set status back to Reported?')) {
                                 report.claimedByFarmerIds!.forEach(fid => unclaimReportForFarmer(report.id, fid))
+                                setTimeout(() => fetchAuditLogs({ entityId: report.id }).then(setDetailAuditLogs), 500)
                               }
                             }}
                             className="px-3 py-2 bg-[#FA9335]/10 text-[#FA9335] rounded-lg text-sm hover:bg-[#FA9335]/20"
@@ -1117,7 +1118,11 @@ export default function AdminDashboard() {
                 <button
                   disabled={sendingThankYou}
                   onClick={async () => {
-                    if (!tyReport?.reporterId) return
+                    if (!tyReport?.reporterId) {
+                      alert('This report was submitted anonymously — there is no walker to send a message to.')
+                      setThankYouReportId(null)
+                      return
+                    }
                     setSendingThankYou(true)
                     try {
                       const msg = thankYouText.trim() || 'Thank you for reporting this — the animals have been safely recovered!'
@@ -1125,13 +1130,13 @@ export default function AdminDashboard() {
                       const senderName = senderId
                         ? (senderUser?.full_name || senderUser?.email || undefined)
                         : 'Admin'
-                      await sendThankYouMessage(tyReport.reporterId, thankYouReportId, msg, senderId, senderName)
-                      setThankYouSent(prev => new Set(prev).add(thankYouReportId))
+                      await sendThankYouMessage(tyReport.reporterId, thankYouReportId!, msg, senderId, senderName)
+                      setThankYouSent(prev => new Set(prev).add(thankYouReportId!))
                       setThankYouReportId(null)
                       setThankYouText('')
                       setThankYouSenderId('')
-                    } catch {
-                      alert('Failed to send message. Please try again.')
+                    } catch (err: any) {
+                      alert(`Failed to send message: ${err?.message || 'Please try again.'}`)
                     } finally {
                       setSendingThankYou(false)
                     }
@@ -1323,6 +1328,9 @@ export default function AdminDashboard() {
         onClaim={(reportId: string, farmerId: string) => {
           claimReportForFarmer(reportId, farmerId)
           setShowClaimReportModal(null)
+          if (detailReportId === reportId) {
+            setTimeout(() => fetchAuditLogs({ entityId: reportId }).then(setDetailAuditLogs), 500)
+          }
         }}
       />}
 
@@ -1338,6 +1346,9 @@ export default function AdminDashboard() {
         onClaim={(reportId: string, farmerId: string) => {
           reassignReport(reportId, farmerId)
           setShowReassignReportModal(null)
+          if (detailReportId === reportId) {
+            setTimeout(() => fetchAuditLogs({ entityId: reportId }).then(setDetailAuditLogs), 500)
+          }
         }}
       />}
 

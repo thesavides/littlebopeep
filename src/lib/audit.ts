@@ -27,6 +27,7 @@ export type AuditAction =
   | 'report.create'
   | 'report.claim'
   | 'report.unclaim'
+  | 'report.reassign'
   | 'report.resolve'
   | 'report.reopen'
   | 'report.escalate'
