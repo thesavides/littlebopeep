@@ -3,6 +3,7 @@ import './globals.css'
 import ReportsLoader from '@/components/ReportsLoader'
 import { TranslationProvider } from '@/contexts/TranslationContext'
 import ServiceWorkerSetup from '@/components/ServiceWorkerSetup'
+import HelpChatbot from '@/components/HelpChatbot'
 
 export const metadata: Metadata = {
   title: 'Little Bo Peep, Real-time countryside reporting',
@@ -48,6 +49,7 @@ export default function RootLayout({
           <ServiceWorkerSetup />
           <ReportsLoader />
           {children}
+          <HelpChatbot />
         </TranslationProvider>
       </body>
     </html>
