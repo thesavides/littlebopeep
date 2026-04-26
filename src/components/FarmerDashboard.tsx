@@ -374,14 +374,14 @@ export default function FarmerDashboard() {
     if (!reporterId) return
     setSendingThankYou(true)
     try {
-      const msg = thankYouText.trim() || 'Thank you for reporting this — the animals have been safely recovered!'
+      const msg = thankYouText.trim() || t('farmer.thankYouDefault', {}, 'Thank you for reporting this — the animals have been safely recovered!')
       const senderName = supabaseProfile?.full_name || currentUser?.name || currentUser?.email || undefined
       await sendThankYouMessage(reporterId, reportId, msg, currentUserId ?? undefined, senderName)
       setThankYouSent(prev => new Set(prev).add(reportId))
       setThankYouOpen(null)
       setThankYouText('')
     } catch {
-      alert('Failed to send message. Please try again.')
+      alert(t('farmer.thankYouError', {}, 'Failed to send message. Please try again.'))
     } finally {
       setSendingThankYou(false)
     }
@@ -874,27 +874,59 @@ export default function FarmerDashboard() {
                         </div>
                         <span className="px-2 py-1 rounded text-xs bg-[#9ED663]/20 text-[#614270] font-medium">Resolved</span>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <button
                           onClick={() => reopenReport(report.id)}
                           className="px-4 py-2 bg-[#7D8DCC]/10 text-[#7D8DCC] rounded-lg text-sm hover:bg-[#7D8DCC]/20"
                         >
-                          Reopen
+                          {t('farmer.reopen', {}, 'Reopen')}
                         </button>
                         <button
                           onClick={() => { setFlagOpen(report.id); setFlagNote('') }}
                           className="px-3 py-2 bg-[#FA9335]/10 text-[#FA9335] rounded-lg text-sm hover:bg-[#FA9335]/20"
                         >
-                          🚩 Flag
+                          🚩 {t('farmer.flag', {}, 'Flag')}
                         </button>
+                        {report.reporterId && !thankYouSent.has(report.id) && (
+                          <button
+                            onClick={() => { setThankYouOpen(report.id); setThankYouText('') }}
+                            className="px-3 py-2 bg-[#EADA69]/20 text-[#614270] rounded-lg text-sm hover:bg-[#EADA69]/40"
+                          >
+                            💌 {t('farmer.thankYouBtn', {}, 'Thank You')}
+                          </button>
+                        )}
+                        {thankYouSent.has(report.id) && (
+                          <span className="px-3 py-2 text-[#9ED663] text-sm font-medium">✓ {t('farmer.thankYouSent', {}, 'Sent')}</span>
+                        )}
                       </div>
                       {flagOpen === report.id && (
                         <div className="mt-3 bg-[#FA9335]/10 rounded-lg p-3 space-y-2">
-                          <p className="text-xs text-[#FA9335] font-medium">Describe the issue for admin review:</p>
+                          <p className="text-xs text-[#FA9335] font-medium">{t('farmer.flagDesc', {}, 'Describe the issue for admin review:')}</p>
                           <textarea value={flagNote} onChange={(e) => setFlagNote(e.target.value)} className="w-full text-sm px-3 py-2 border border-[#FA9335]/30 rounded-lg resize-none h-16" />
                           <div className="flex gap-2">
-                            <button onClick={() => { if (flagNote.trim()) { flagReportToAdmin(report.id, flagNote.trim()); setFlagOpen(null) } }} disabled={!flagNote.trim()} className="px-4 py-2 bg-[#FA9335] text-white rounded-lg text-sm disabled:opacity-50">Submit Flag</button>
-                            <button onClick={() => setFlagOpen(null)} className="px-4 py-2 bg-white text-[#614270] rounded-lg text-sm border">Cancel</button>
+                            <button onClick={() => { if (flagNote.trim()) { flagReportToAdmin(report.id, flagNote.trim()); setFlagOpen(null) } }} disabled={!flagNote.trim()} className="px-4 py-2 bg-[#FA9335] text-white rounded-lg text-sm disabled:opacity-50">{t('farmer.flagSubmit', {}, 'Submit Flag')}</button>
+                            <button onClick={() => setFlagOpen(null)} className="px-4 py-2 bg-white text-[#614270] rounded-lg text-sm border">{t('common.cancel', {}, 'Cancel')}</button>
+                          </div>
+                        </div>
+                      )}
+                      {thankYouOpen === report.id && (
+                        <div className="mt-3 bg-[#EADA69]/20 rounded-lg p-3 space-y-2">
+                          <p className="text-xs text-[#614270] font-medium">{t('farmer.thankYouComposeDesc', {}, 'Send an anonymous thank you to the walker who reported this:')}</p>
+                          <textarea
+                            value={thankYouText}
+                            onChange={(e) => setThankYouText(e.target.value)}
+                            placeholder={t('farmer.thankYouPlaceholder', {}, 'Thank you for reporting this — the animals have been safely recovered!')}
+                            className="w-full text-sm px-3 py-2 border border-[#EADA69]/40 rounded-lg resize-none h-20"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleSendThankYou(report.id, report.reporterId)}
+                              disabled={sendingThankYou}
+                              className="px-4 py-2 bg-[#7D8DCC] text-white rounded-lg text-sm hover:bg-[#614270] disabled:opacity-50"
+                            >
+                              {sendingThankYou ? t('common.saving', {}, 'Saving…') : t('farmer.thankYouSendBtn', {}, 'Send')}
+                            </button>
+                            <button onClick={() => setThankYouOpen(null)} className="px-4 py-2 bg-white text-[#614270] rounded-lg text-sm border">{t('common.cancel', {}, 'Cancel')}</button>
                           </div>
                         </div>
                       )}

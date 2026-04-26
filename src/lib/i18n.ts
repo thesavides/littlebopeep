@@ -23,7 +23,7 @@ export interface Translation {
 export type TranslationDictionary = Record<string, string>
 
 const CACHE_PREFIX = 'translations_'
-const CACHE_VERSION = 'v13' // Bumped after seeding NotificationPrefsPanel keys (15 keys)
+const CACHE_VERSION = 'v14' // Bumped after seeding WS7 farmer thank-you + resolved section keys
 const CACHE_DURATION = 24 * 60 * 60 * 1000 // 24 hours
 
 /**
