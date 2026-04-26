@@ -344,7 +344,7 @@ export default function AuthPage() {
               <button onClick={() => setLegalModal(null)}
                 className="w-full py-2.5 rounded-xl font-medium text-sm transition-colors"
                 style={{ backgroundColor: '#614270', color: '#fff' }}>
-                Close
+                {t('legal.close', {}, 'Close')}
               </button>
             </div>
           </div>
