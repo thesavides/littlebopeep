@@ -17,11 +17,20 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
     (c) => c.isActive && c.id !== 'sheep' && c.name.toLowerCase() !== 'sheep'
   )
 
-  const [step, setStep] = useState<Step>('location')
+  // Restore step/location from sessionStorage so iOS camera re-focus doesn't reset state
+  const SESSION_KEY = 'lbp-offline-capture'
+
+  const [step, setStep] = useState<Step>(() => {
+    try { return (sessionStorage.getItem(SESSION_KEY + '.step') as Step) || 'location' } catch { return 'location' }
+  })
   const [locating, setLocating] = useState(false)
   const [locationError, setLocationError] = useState('')
-  const [latitude, setLatitude] = useState<number | null>(null)
-  const [longitude, setLongitude] = useState<number | null>(null)
+  const [latitude, setLatitude] = useState<number | null>(() => {
+    try { const v = sessionStorage.getItem(SESSION_KEY + '.lat'); return v ? parseFloat(v) : null } catch { return null }
+  })
+  const [longitude, setLongitude] = useState<number | null>(() => {
+    try { const v = sessionStorage.getItem(SESSION_KEY + '.lng'); return v ? parseFloat(v) : null } catch { return null }
+  })
   const [accuracy, setAccuracy] = useState<number | null>(null)
 
   const [photoDataUrls, setPhotoDataUrls] = useState<string[]>([])
@@ -35,10 +44,32 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
   const [sheepCount, setSheepCount] = useState(1)
   const [description, setDescription] = useState('')
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
 
-  // Auto-locate on mount
+  // Persist step and location to sessionStorage so iOS camera focus/unfocus doesn't reset state
   useEffect(() => {
-    getLocation()
+    try { sessionStorage.setItem(SESSION_KEY + '.step', step) } catch {}
+  }, [step])
+
+  useEffect(() => {
+    try {
+      if (latitude !== null) sessionStorage.setItem(SESSION_KEY + '.lat', String(latitude))
+      if (longitude !== null) sessionStorage.setItem(SESSION_KEY + '.lng', String(longitude))
+    } catch {}
+  }, [latitude, longitude])
+
+  // Clear session state when the component unmounts after a successful save
+  const clearSession = () => {
+    try {
+      sessionStorage.removeItem(SESSION_KEY + '.step')
+      sessionStorage.removeItem(SESSION_KEY + '.lat')
+      sessionStorage.removeItem(SESSION_KEY + '.lng')
+    } catch {}
+  }
+
+  // Auto-locate on mount (only if location not already restored from session)
+  useEffect(() => {
+    if (latitude === null || longitude === null) getLocation()
   }, [])
 
   const getLocation = () => {
@@ -104,7 +135,14 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
     : activeCategories.find((c) => c.id === categoryId)
 
   const handleSave = async () => {
-    if (!latitude || !longitude) return
+    setSaveError('')
+
+    // Location may have been lost if iOS re-focused after camera — re-prompt
+    if (latitude === null || longitude === null) {
+      setSaveError('Location data was lost. Please go back and re-confirm your location.')
+      return
+    }
+
     setSaving(true)
 
     const report: OfflineReport = {
@@ -125,11 +163,12 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
 
     try {
       await saveOfflineReport(report)
+      clearSession()
       setStep('saved')
       setTimeout(onSaved, 2000)
     } catch (err) {
       console.error('Failed to save offline report', err)
-      alert('Failed to save. Please try again.')
+      setSaveError('Failed to save to device. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -139,7 +178,7 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
     <div className="fixed inset-0 bg-[#1a1025] z-50 flex flex-col">
       {/* Header */}
       <div className="bg-[#614270] px-4 py-3 flex items-center gap-3">
-        <button onClick={onCancel} className="text-[#D1D9C5] hover:text-white text-xl leading-none">
+        <button onClick={() => { clearSession(); onCancel() }} className="text-[#D1D9C5] hover:text-white text-xl leading-none">
           ←
         </button>
         <div className="flex-1">
@@ -385,6 +424,20 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
                 className="w-full bg-[#2d1f3a] text-white rounded-xl px-4 py-3 text-sm placeholder-[#92998B] border border-[#614270]/50 focus:border-[#7D8DCC] focus:outline-none resize-none"
               />
             </div>
+
+            {saveError && (
+              <div className="bg-[#FA9335]/20 border border-[#FA9335]/40 rounded-xl p-3 text-sm text-[#FA9335]">
+                {saveError}
+                {(latitude === null || longitude === null) && (
+                  <button
+                    onClick={() => { setSaveError(''); setStep('location') }}
+                    className="mt-2 block text-xs underline opacity-80"
+                  >
+                    ← Go back and re-confirm location
+                  </button>
+                )}
+              </div>
+            )}
 
             <button
               onClick={handleSave}
