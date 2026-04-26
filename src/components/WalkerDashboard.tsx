@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, getDistanceMeters, MAP_CONFIG } from '@/store/appStore'
 import { supabase, fetchUserNotifications, markAllNotificationsRead, subscribeToUserNotifications, updateEmailAlertPreference } from '@/lib/supabase-client'
+import NotificationPrefsPanel from './NotificationPrefsPanel'
 import type { ReportCategory } from '@/store/appStore'
 import Header from './Header'
 import Map from './Map'
@@ -933,27 +934,12 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
         {/* ===== MY REPORTS VIEW ===== */}
         {viewState === 'my-reports' && (
           <>
-            {/* Notifications + email preference */}
+            {/* Notifications + preferences */}
             {currentUserId && (
               <div className="mb-4">
-                {/* Email alerts toggle */}
-                <div className="flex items-center justify-between px-1 mb-3">
-                  <span className="text-sm text-[#614270] font-medium">📧 {t('walker.emailAlerts', {}, 'Email alerts')}</span>
-                  <button
-                    onClick={async () => {
-                      if (savingEmailPref) return
-                      setSavingEmailPref(true)
-                      const next = !emailAlertsEnabled
-                      setEmailAlertsEnabled(next)
-                      await updateEmailAlertPreference(currentUserId, next)
-                      setSavingEmailPref(false)
-                    }}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${emailAlertsEnabled ? 'bg-[#7D8DCC]' : 'bg-[#92998B]/40'}`}
-                    aria-label="Toggle email alerts"
-                    disabled={savingEmailPref}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${emailAlertsEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-                  </button>
+                {/* Notification preferences panel */}
+                <div className="mb-4">
+                  <NotificationPrefsPanel userId={currentUserId} role="walker" />
                 </div>
 
                 {/* All notifications */}

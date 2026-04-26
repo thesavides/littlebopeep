@@ -372,6 +372,53 @@ export async function updateEmailAlertPreference(userId: string, enabled: boolea
   if (error) console.error('Error updating email alert preference:', error)
 }
 
+export interface NotificationPreferences {
+  email_alerts: boolean
+  in_app_claimed: boolean
+  in_app_resolved: boolean
+  in_app_thankyou: boolean
+  in_app_new_report: boolean
+}
+
+const DEFAULT_NOTIFICATION_PREFS: NotificationPreferences = {
+  email_alerts: false,
+  in_app_claimed: true,
+  in_app_resolved: true,
+  in_app_thankyou: true,
+  in_app_new_report: true,
+}
+
+export async function fetchNotificationPreferences(userId: string): Promise<NotificationPreferences> {
+  const { data, error } = await supabase
+    .from('user_profiles')
+    .select('email_alerts_enabled, notification_preferences')
+    .eq('id', userId)
+    .single()
+  if (error || !data) return DEFAULT_NOTIFICATION_PREFS
+  // Merge: notification_preferences column (if exists) takes precedence; fall back to email_alerts_enabled
+  const prefs = (data as any).notification_preferences || {}
+  return {
+    ...DEFAULT_NOTIFICATION_PREFS,
+    email_alerts: data.email_alerts_enabled ?? false,
+    ...prefs,
+  }
+}
+
+export async function updateNotificationPreferences(
+  userId: string,
+  prefs: NotificationPreferences
+): Promise<void> {
+  // Keep email_alerts_enabled in sync with the JSONB prefs for backwards compat
+  const { error } = await supabase
+    .from('user_profiles')
+    .update({
+      email_alerts_enabled: prefs.email_alerts,
+      notification_preferences: prefs,
+    })
+    .eq('id', userId)
+  if (error) console.error('Error updating notification preferences:', error)
+}
+
 // Send a Thank You message from a farmer (or admin on behalf of farmer) to the walker
 export async function sendThankYouMessage(
   reporterId: string,

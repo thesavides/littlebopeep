@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, Farm, FarmField, MAP_CONFIG, isReportNearFarm } from '@/store/appStore'
 import { supabase, fetchUserNotifications, markAllNotificationsRead, markReportNotificationsRead, NotificationDB, sendThankYouMessage, subscribeToUserNotifications, updateEmailAlertPreference } from '@/lib/supabase-client'
+import NotificationPrefsPanel from './NotificationPrefsPanel'
 import { useTranslation } from '@/contexts/TranslationContext'
 import Header from './Header'
 import Map from './Map'
@@ -1218,27 +1219,10 @@ export default function FarmerDashboard() {
 
         {viewState === 'notifications' && (
           <div className="space-y-4">
-            {/* Email alert preference */}
-            <div className="bg-white rounded-xl shadow p-4 flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold text-[#614270]">📧 {t('farmer.emailAlerts', {}, 'Email alerts')}</p>
-                <p className="text-xs text-[#92998B] mt-0.5">{t('farmer.emailAlertsDesc', {}, 'Get an email when new reports are spotted near your farm')}</p>
-              </div>
-              <button
-                disabled={savingEmailPref}
-                onClick={async () => {
-                  if (!currentUserId) return
-                  setSavingEmailPref(true)
-                  const next = !emailAlertsEnabled
-                  setEmailAlertsEnabled(next)
-                  await updateEmailAlertPreference(currentUserId, next)
-                  setSavingEmailPref(false)
-                }}
-                className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 focus:outline-none ${emailAlertsEnabled ? 'bg-[#7D8DCC]' : 'bg-[#D1D9C5]'}`}
-              >
-                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${emailAlertsEnabled ? 'translate-x-6' : ''}`} />
-              </button>
-            </div>
+            {/* Notification preferences panel */}
+            {currentUserId && (
+              <NotificationPrefsPanel userId={currentUserId} role="farmer" />
+            )}
 
             {/* Incoming report notifications from Supabase */}
             {farmerNotifications.length > 0 && (
