@@ -23,7 +23,7 @@ export interface Translation {
 export type TranslationDictionary = Record<string, string>
 
 const CACHE_PREFIX = 'translations_'
-const CACHE_VERSION = 'v8' // Incremented to clear cached em-dash in seeItDesc fallback
+const CACHE_VERSION = 'v9' // Bumped after seeding public page + FAQ translations (149 + 135 keys)
 const CACHE_DURATION = 24 * 60 * 60 * 1000 // 24 hours
 
 /**
