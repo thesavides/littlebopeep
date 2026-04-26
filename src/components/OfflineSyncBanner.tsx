@@ -84,6 +84,17 @@ export default function OfflineSyncBanner() {
       setSyncResult({ synced, failed })
       await checkPending()
 
+      // Push in-app notification so the bell badge updates
+      if (synced > 0 && currentUserId) {
+        addNotification({
+          userId: currentUserId,
+          type: 'sync_complete',
+          message: `${synced} offline ${synced === 1 ? 'report' : 'reports'} uploaded successfully`,
+          reportId: undefined,
+          read: false,
+        })
+      }
+
       // Register background sync for any remaining failures
       if (failed > 0 && 'serviceWorker' in navigator && 'SyncManager' in window) {
         const reg = await navigator.serviceWorker.ready

@@ -13,7 +13,9 @@ type Step = 'location' | 'photo' | 'details' | 'saved'
 
 export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProps) {
   const { reportCategories } = useAppStore()
-  const activeCategories = reportCategories.filter((c) => c.isActive)
+  const activeCategories = reportCategories.filter(
+    (c) => c.isActive && c.id !== 'sheep' && c.name.toLowerCase() !== 'sheep'
+  )
 
   const [step, setStep] = useState<Step>('location')
   const [locating, setLocating] = useState(false)

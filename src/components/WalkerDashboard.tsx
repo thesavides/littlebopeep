@@ -448,16 +448,12 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
 
       <main className="max-w-4xl mx-auto px-4 py-6 pb-28">
         {/* ===== DASHBOARD VIEW ===== */}
-        {/* Offline mode overlay */}
+        {/* Offline capture — self-contained fixed overlay, no wrapper needed */}
         {showOfflineCapture && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-[#D1D9C5]">
-            <div className="max-w-lg mx-auto px-4 py-6">
-              <OfflineCapture
-                onSaved={() => { setShowOfflineCapture(false) }}
-                onCancel={() => setShowOfflineCapture(false)}
-              />
-            </div>
-          </div>
+          <OfflineCapture
+            onSaved={() => setShowOfflineCapture(false)}
+            onCancel={() => setShowOfflineCapture(false)}
+          />
         )}
 
         {viewState === 'dashboard' && (
@@ -991,6 +987,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                           report_resolved: { icon: '✅', label: notif.sender_name ? `Resolved by ${notif.sender_name}` : 'Your report was resolved' },
                           report_complete: { icon: '🎉', label: 'Report marked complete' },
                           new_report:      { icon: '📍', label: 'New report' },
+                          sync_complete:   { icon: '📡', label: 'Offline reports uploaded' },
                         }
                         const cfg = typeConfig[notif.type] ?? { icon: '🔔', label: 'Update' }
                         return (
@@ -1192,10 +1189,10 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
         currentUserId ? (
           <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#D1D9C5] safe-area-pb px-4 py-3">
             <button
-              onClick={() => setShowCategoryPicker(true)}
+              onClick={() => isOnline ? setShowCategoryPicker(true) : setShowOfflineCapture(true)}
               className="w-full py-4 bg-[#7D8DCC] text-white rounded-xl font-semibold text-base hover:bg-[#7D8DCC]/90 active:scale-[0.98] transition-all focus:outline-none focus:ring-2 focus:ring-[#7D8DCC] focus:ring-offset-2 shadow-sm"
             >
-              Report
+              {isOnline ? 'Report' : '📴 Save offline'}
             </button>
           </nav>
         ) : (
@@ -1224,11 +1221,13 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
               },
             ]}
             fab={{
-              label: 'Report',
-              icon: preferredCategory?.imageUrl
-                ? <img src={preferredCategory.imageUrl} alt={preferredCategory.name} className="w-7 h-7 object-contain" />
-                : <span className="text-2xl">{preferredCategory?.emoji ?? '🐑'}</span>,
-              onClick: () => setShowCategoryPicker(true),
+              label: isOnline ? 'Report' : 'Save offline',
+              icon: isOnline
+                ? (preferredCategory?.imageUrl
+                  ? <img src={preferredCategory.imageUrl} alt={preferredCategory.name} className="w-7 h-7 object-contain" />
+                  : <span className="text-2xl">{preferredCategory?.emoji ?? '🐑'}</span>)
+                : <span className="text-2xl">📴</span>,
+              onClick: () => isOnline ? setShowCategoryPicker(true) : setShowOfflineCapture(true),
             }}
           />
         )
