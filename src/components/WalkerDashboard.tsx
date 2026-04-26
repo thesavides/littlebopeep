@@ -982,14 +982,14 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                         const report = myReports.find(r => r.id === notif.report_id)
                         const isUnread = !notif.read_at
                         const typeConfig: Record<string, { icon: string; label: string }> = {
-                          thank_you:       { icon: '💌', label: notif.sender_name ? `🧑‍🌾 ${notif.sender_name}` : 'A farmer' },
-                          report_claimed:  { icon: '🙋', label: notif.sender_name ? `Claimed by ${notif.sender_name}` : 'Your report was claimed' },
-                          report_resolved: { icon: '✅', label: notif.sender_name ? `Resolved by ${notif.sender_name}` : 'Your report was resolved' },
-                          report_complete: { icon: '🎉', label: 'Report marked complete' },
-                          new_report:      { icon: '📍', label: 'New report' },
-                          sync_complete:   { icon: '📡', label: 'Offline reports uploaded' },
+                          thank_you:       { icon: '💌', label: notif.sender_name ? `🧑‍🌾 ${notif.sender_name}` : t('walker.notif.aFarmer', {}, 'A farmer') },
+                          report_claimed:  { icon: '🙋', label: notif.sender_name ? t('walker.notif.claimedBy', { name: notif.sender_name }, `Claimed by ${notif.sender_name}`) : t('walker.notif.reportClaimed', {}, 'Your report was claimed') },
+                          report_resolved: { icon: '✅', label: notif.sender_name ? t('walker.notif.resolvedBy', { name: notif.sender_name }, `Resolved by ${notif.sender_name}`) : t('walker.notif.reportResolved', {}, 'Your report was resolved') },
+                          report_complete: { icon: '🎉', label: t('walker.notif.reportComplete', {}, 'Report marked complete') },
+                          new_report:      { icon: '📍', label: t('walker.notif.newReport', {}, 'New report') },
+                          sync_complete:   { icon: '📡', label: t('walker.notif.syncComplete', {}, 'Offline reports uploaded') },
                         }
-                        const cfg = typeConfig[notif.type] ?? { icon: '🔔', label: 'Update' }
+                        const cfg = typeConfig[notif.type] ?? { icon: '🔔', label: t('walker.notif.update', {}, 'Update') }
                         return (
                           <div key={notif.id} className={`rounded-lg p-3 text-sm ${isUnread ? 'bg-white border border-[#EADA69]/60 shadow-sm' : 'bg-[#EADA69]/10'}`}>
                             <div className="flex items-center gap-1.5 mb-1">
@@ -1200,14 +1200,14 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
             items={[
               {
                 id: 'map',
-                label: 'Map',
+                label: t('walker.nav.map', {}, 'Map'),
                 icon: '🗺️',
                 active: viewState === 'dashboard',
                 onClick: () => setViewState('dashboard'),
               },
               {
                 id: 'reports',
-                label: 'My Reports',
+                label: t('walker.nav.myReports', {}, 'My Reports'),
                 icon: '📋',
                 active: viewState === 'my-reports',
                 badge: allNotifications.filter(n => !n.read_at).length,
@@ -1215,13 +1215,13 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
               },
               {
                 id: 'profile',
-                label: 'Profile',
+                label: t('walker.nav.profile', {}, 'Profile'),
                 icon: '👤',
                 onClick: () => setProfileOpen(true),
               },
             ]}
             fab={{
-              label: isOnline ? 'Report' : 'Save offline',
+              label: isOnline ? t('walker.nav.report', {}, 'Report') : t('walker.nav.saveOffline', {}, 'Save offline'),
               icon: isOnline
                 ? (preferredCategory?.imageUrl
                   ? <img src={preferredCategory.imageUrl} alt={preferredCategory.name} className="w-7 h-7 object-contain" />
