@@ -1054,7 +1054,7 @@ export default function FarmerDashboard() {
                     <div key={field.id} className="bg-white rounded-xl shadow border border-[#D1D9C5] flex items-center justify-between p-4">
                       <div>
                         <h4 className="font-medium text-[#614270]">{field.name}</h4>
-                        <p className="text-sm text-[#92998B]">{field.fencePosts.length} fence posts</p>
+                        <p className="text-sm text-[#92998B]">{t('farmer.fencePosts', { count: field.fencePosts.length }, `${field.fencePosts.length} fence posts`)}</p>
                       </div>
                       <button
                         onClick={() => {
@@ -1063,7 +1063,7 @@ export default function FarmerDashboard() {
                           setEditFieldModalSubs(field.categorySubscriptions || {})
                         }}
                         className="px-3 py-1.5 bg-[#D1D9C5] text-[#614270] rounded-lg text-sm font-medium hover:bg-[#92998B]/20"
-                      >Edit</button>
+                      >{t('common.edit', {}, 'Edit')}</button>
                     </div>
                   ))}
                 </div>
@@ -1221,8 +1221,8 @@ export default function FarmerDashboard() {
             {/* Email alert preference */}
             <div className="bg-white rounded-xl shadow p-4 flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-[#614270]">📧 Email alerts</p>
-                <p className="text-xs text-[#92998B] mt-0.5">Get an email when new reports are spotted near your farm</p>
+                <p className="text-sm font-semibold text-[#614270]">📧 {t('farmer.emailAlerts', {}, 'Email alerts')}</p>
+                <p className="text-xs text-[#92998B] mt-0.5">{t('farmer.emailAlertsDesc', {}, 'Get an email when new reports are spotted near your farm')}</p>
               </div>
               <button
                 disabled={savingEmailPref}
@@ -1244,7 +1244,7 @@ export default function FarmerDashboard() {
             {farmerNotifications.length > 0 && (
               <div className="bg-white rounded-xl shadow p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-[#614270]">Recent Alerts</h3>
+                  <h3 className="font-semibold text-[#614270]">{t('farmer.recentAlerts', {}, 'Recent Alerts')}</h3>
                   {unreadCount > 0 && (
                     <button
                       onClick={async () => {
@@ -1255,7 +1255,7 @@ export default function FarmerDashboard() {
                       }}
                       className="text-xs text-[#7D8DCC] hover:underline"
                     >
-                      Mark all read
+                      {t('farmer.markAllRead', {}, 'Mark all read')}
                     </button>
                   )}
                 </div>
@@ -1269,7 +1269,7 @@ export default function FarmerDashboard() {
                           <div>
                             {isUnread && <span className="inline-block w-2 h-2 bg-[#EADA69] rounded-full mr-2 mt-1 flex-shrink-0" />}
                             <span className="font-medium text-[#614270]">
-                              {notif.type === 'new_report' ? '🚨 New report near your farm' : notif.type}
+                              {notif.type === 'new_report' ? `🚨 ${t('farmer.notif.newReportNearFarm', {}, 'New report near your farm')}` : notif.type}
                             </span>
                             {report && (
                               <div className="text-xs text-[#92998B] mt-0.5">
@@ -1287,7 +1287,7 @@ export default function FarmerDashboard() {
 
             {myFarms.length > 0 && (
               <div className="bg-white rounded-xl shadow p-4">
-                <p className="text-sm text-[#92998B]">To manage per-field alert categories, open a farm and tap <strong>Edit</strong> on any field.</p>
+                <p className="text-sm text-[#92998B]">{t('farmer.editFieldTip', {}, 'To manage per-field alert categories, open a farm and tap Edit on any field.')}</p>
               </div>
             )}
           </div>
@@ -1300,14 +1300,14 @@ export default function FarmerDashboard() {
           items={[
             {
               id: 'dashboard',
-              label: 'Dashboard',
+              label: t('farmer.nav.dashboard', {}, 'Dashboard'),
               icon: '🏠',
               active: viewState === 'dashboard',
               onClick: () => setViewState('dashboard'),
             },
             {
               id: 'farms',
-              label: 'Farms',
+              label: t('farmer.nav.farms', {}, 'Farms'),
               icon: '🏡',
               active: viewState === 'view-farm' || viewState === 'create-farm' || viewState === 'add-field',
               onClick: () => {
@@ -1321,7 +1321,7 @@ export default function FarmerDashboard() {
             },
             {
               id: 'alerts',
-              label: 'Alerts',
+              label: t('farmer.nav.alerts', {}, 'Alerts'),
               icon: '🔔',
               active: viewState === 'notifications',
               badge: unreadCount,
@@ -1337,7 +1337,7 @@ export default function FarmerDashboard() {
             },
             {
               id: 'profile',
-              label: 'Profile',
+              label: t('farmer.nav.profile', {}, 'Profile'),
               icon: '👤',
               onClick: () => setProfileOpen(true),
             },
@@ -1354,15 +1354,15 @@ export default function FarmerDashboard() {
             <span className="text-lg">🔔</span>
             <span className="text-sm font-medium">
               {unreadCount === 1
-                ? '1 new alert since you last logged in'
-                : `${unreadCount} new alerts since you last logged in`}
+                ? t('farmer.loginBanner.one', {}, '1 new alert since you last logged in')
+                : t('farmer.loginBanner.many', { count: unreadCount }, `${unreadCount} new alerts since you last logged in`)}
             </span>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={() => { setViewState('notifications'); setLoginBannerDismissed(true) }}
               className="text-xs bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg font-medium"
-            >View</button>
+            >{t('farmer.loginBanner.view', {}, 'View')}</button>
             <button onClick={() => setLoginBannerDismissed(true)} className="text-white/70 hover:text-white text-xl leading-none">×</button>
           </div>
         </div>
@@ -1374,12 +1374,12 @@ export default function FarmerDashboard() {
         return (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
             <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
-              <h3 className="text-lg font-bold text-[#614270] mb-1">🤝 Claim this report?</h3>
-              <p className="text-sm text-[#92998B] mb-3">You can optionally send a message to the walker who reported it.</p>
+              <h3 className="text-lg font-bold text-[#614270] mb-1">🤝 {t('farmer.claim.title', {}, 'Claim this report?')}</h3>
+              <p className="text-sm text-[#92998B] mb-3">{t('farmer.claim.desc', {}, 'You can optionally send a message to the walker who reported it.')}</p>
               <textarea
                 value={claimMessageText}
                 onChange={e => setClaimMessageText(e.target.value)}
-                placeholder="e.g. Thanks — I'm heading out to check now."
+                placeholder={t('farmer.claim.placeholder', {}, 'e.g. Thanks — I\'m heading out to check now.')}
                 rows={3}
                 className="w-full px-3 py-2 border border-[#D1D9C5] rounded-lg text-sm mb-4 resize-none focus:outline-none focus:ring-2 focus:ring-[#7D8DCC]"
               />
@@ -1401,8 +1401,8 @@ export default function FarmerDashboard() {
                     setClaimMessageText('')
                   }}
                   className="w-full py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold hover:bg-[#6b7db3]"
-                >{claimMessageText.trim() ? 'Claim & Send Message' : 'Claim'}</button>
-                <button onClick={() => { setClaimMessageOpen(null); setClaimMessageText('') }} className="w-full py-2 text-sm text-[#92998B] hover:text-[#614270]">Cancel</button>
+                >{claimMessageText.trim() ? t('farmer.claim.claimAndSend', {}, 'Claim & Send Message') : t('farmer.claim.claimOnly', {}, 'Claim')}</button>
+                <button onClick={() => { setClaimMessageOpen(null); setClaimMessageText('') }} className="w-full py-2 text-sm text-[#92998B] hover:text-[#614270]">{t('common.cancel', {}, 'Cancel')}</button>
               </div>
             </div>
           </div>
@@ -1415,12 +1415,12 @@ export default function FarmerDashboard() {
         return (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
             <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
-              <h3 className="text-lg font-bold text-[#614270] mb-1">✅ Mark as resolved?</h3>
-              <p className="text-sm text-[#92998B] mb-3">You can optionally send a message to the walker letting them know the outcome.</p>
+              <h3 className="text-lg font-bold text-[#614270] mb-1">✅ {t('farmer.resolve.title', {}, 'Mark as resolved?')}</h3>
+              <p className="text-sm text-[#92998B] mb-3">{t('farmer.resolve.desc', {}, 'You can optionally send a message to the walker letting them know the outcome.')}</p>
               <textarea
                 value={resolveMessageText}
                 onChange={e => setResolveMessageText(e.target.value)}
-                placeholder="e.g. All sorted — the sheep are back in the field. Thank you!"
+                placeholder={t('farmer.resolve.placeholder', {}, 'e.g. All sorted — the sheep are back in the field. Thank you!')}
                 rows={3}
                 className="w-full px-3 py-2 border border-[#D1D9C5] rounded-lg text-sm mb-4 resize-none focus:outline-none focus:ring-2 focus:ring-[#7D8DCC]"
               />
@@ -1436,8 +1436,8 @@ export default function FarmerDashboard() {
                     setResolveMessageText('')
                   }}
                   className="w-full py-3 bg-[#9ED663] text-white rounded-xl font-semibold hover:bg-[#7ec44d]"
-                >{resolveMessageText.trim() ? 'Resolve & Send Message' : 'Mark Resolved'}</button>
-                <button onClick={() => { setResolveMessageOpen(null); setResolveMessageText('') }} className="w-full py-2 text-sm text-[#92998B] hover:text-[#614270]">Cancel</button>
+                >{resolveMessageText.trim() ? t('farmer.resolve.resolveAndSend', {}, 'Resolve & Send Message') : t('farmer.resolve.resolveOnly', {}, 'Mark Resolved')}</button>
+                <button onClick={() => { setResolveMessageOpen(null); setResolveMessageText('') }} className="w-full py-2 text-sm text-[#92998B] hover:text-[#614270]">{t('common.cancel', {}, 'Cancel')}</button>
               </div>
             </div>
           </div>
@@ -1449,13 +1449,13 @@ export default function FarmerDashboard() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-[#614270]">Edit Field</h3>
+              <h3 className="text-xl font-bold text-[#614270]">{t('farmer.editField.title', {}, 'Edit Field')}</h3>
               <button onClick={() => setEditFieldModal(null)} className="text-[#92998B] hover:text-[#614270] text-2xl leading-none">&times;</button>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[#614270] mb-1">Field Name *</label>
+                <label className="block text-sm font-medium text-[#614270] mb-1">{t('farmer.editField.nameLabel', {}, 'Field Name *')}</label>
                 <input
                   type="text"
                   value={editFieldModalName}
@@ -1466,7 +1466,7 @@ export default function FarmerDashboard() {
 
               {reportCategories.filter(c => c.isActive).length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-[#614270] mb-2">Alert me about</label>
+                  <label className="block text-sm font-medium text-[#614270] mb-2">{t('farmer.editField.alertMeAbout', {}, 'Alert me about')}</label>
                   <div className="flex flex-wrap gap-2">
                     {reportCategories.filter(c => c.isActive).map(cat => {
                       const isCompulsory = cat.subscriptionMode === 'compulsory'
@@ -1500,21 +1500,21 @@ export default function FarmerDashboard() {
                   setViewState('add-field')
                 }}
                 className="w-full py-2.5 bg-[#D1D9C5] text-[#614270] rounded-xl text-sm font-medium hover:bg-[#92998B]/20"
-              >📍 Redraw Boundary</button>
+              >📍 {t('farmer.editField.redrawBoundary', {}, 'Redraw Boundary')}</button>
 
               <button
                 onClick={() => {
-                  if (confirm('Delete this field?')) {
+                  if (confirm(t('farmer.editField.deleteConfirm', {}, 'Delete this field?'))) {
                     deleteField(editFieldModal.farmId, editFieldModal.field.id)
                     setEditFieldModal(null)
                   }
                 }}
                 className="w-full py-2.5 bg-[#FA9335]/10 text-[#FA9335] rounded-xl text-sm hover:bg-[#FA9335]/20"
-              >Delete Field</button>
+              >{t('farmer.editField.deleteField', {}, 'Delete Field')}</button>
             </div>
 
             <div className="flex gap-3 mt-5">
-              <button onClick={() => setEditFieldModal(null)} className="flex-1 py-3 bg-[#D1D9C5] text-[#614270] rounded-xl text-sm">Cancel</button>
+              <button onClick={() => setEditFieldModal(null)} className="flex-1 py-3 bg-[#D1D9C5] text-[#614270] rounded-xl text-sm">{t('common.cancel', {}, 'Cancel')}</button>
               <button
                 onClick={() => {
                   if (!editFieldModalName.trim()) return
@@ -1526,7 +1526,7 @@ export default function FarmerDashboard() {
                 }}
                 disabled={!editFieldModalName.trim()}
                 className="flex-1 py-3 bg-[#7D8DCC] text-white rounded-xl text-sm font-semibold disabled:opacity-40"
-              >Save Changes</button>
+              >{t('farmer.editField.saveChanges', {}, 'Save Changes')}</button>
             </div>
           </div>
         </div>
