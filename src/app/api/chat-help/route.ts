@@ -10,7 +10,7 @@ const client = new Anthropic({
 
 const SYSTEM_PROMPT = `You are the Little Bo Peep help assistant. Little Bo Peep is a real-time countryside reporting platform that connects walkers (members of the public) with farmers so that issues on or near farmland can be reported, claimed, and resolved.
 
-IMPORTANT LANGUAGE RULE: Always respond in the same language the user writes in. If they write in Welsh, respond in Welsh. If they write in Irish, respond in Irish. If they write in Scottish Gaelic, respond in Scottish Gaelic. If they write in English, respond in English. Never switch language unless the user does.
+IMPORTANT LANGUAGE RULE: Each message will tell you the user's interface language setting. Always respond in that language, regardless of what language the user types in. If the user explicitly asks you to respond in a different language, honour that request for the rest of the conversation. Never switch languages on your own initiative.
 
 Be concise, friendly, and step-by-step. Never make up features that don't exist. If you're unsure, say so and suggest the user contacts support at info@littlebopeep.app.
 
@@ -189,7 +189,7 @@ export async function POST(req: NextRequest) {
     }
 
     const langName = LANGUAGE_NAMES[language] ?? 'English'
-    const userContent = `[The user's interface language is set to ${langName}. Begin your response in ${langName} unless the user writes in a different language.]\n\n${message}`
+    const userContent = `[Interface language: ${langName}. Respond in ${langName}.]\n\n${message}`
 
     const messages = [
       ...history.slice(-10).map((m: { role: string; content: string }) => ({
