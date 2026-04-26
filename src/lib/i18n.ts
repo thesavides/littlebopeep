@@ -23,7 +23,7 @@ export interface Translation {
 export type TranslationDictionary = Record<string, string>
 
 const CACHE_PREFIX = 'translations_'
-const CACHE_VERSION = 'v15' // Bumped after seeding sync.authError key
+const CACHE_VERSION = 'v16' // Bumped after seeding all offline.* keys (33 × 4 languages)
 const CACHE_DURATION = 24 * 60 * 60 * 1000 // 24 hours
 
 /**

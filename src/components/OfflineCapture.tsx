@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAppStore } from '@/store/appStore'
 import { saveOfflineReport, OfflineReport } from '@/lib/offline-db'
+import { useTranslation } from '@/contexts/TranslationContext'
 
 interface OfflineCaptureProps {
   onSaved: () => void
@@ -12,6 +13,7 @@ interface OfflineCaptureProps {
 type Step = 'location' | 'photo' | 'details' | 'saved'
 
 export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProps) {
+  const { t } = useTranslation()
   const { reportCategories } = useAppStore()
   const activeCategories = reportCategories.filter(
     (c) => c.isActive && c.id !== 'sheep' && c.name.toLowerCase() !== 'sheep'
@@ -77,7 +79,7 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
     setLocationError('')
 
     if (!navigator.geolocation) {
-      setLocationError('Geolocation is not supported by your device')
+      setLocationError(t('offline.loc.unsupported', {}, 'Geolocation is not supported by your device'))
       setLocating(false)
       return
     }
@@ -92,8 +94,8 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
       (err) => {
         setLocationError(
           err.code === 1
-            ? 'Location permission denied — please allow location access in your device settings'
-            : 'Could not get your location. Try again.'
+            ? t('offline.loc.denied', {}, 'Location permission denied — please allow location access in your device settings')
+            : t('offline.loc.failed', {}, 'Could not get your location. Try again.')
         )
         setLocating(false)
       },
@@ -139,7 +141,7 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
 
     // Location may have been lost if iOS re-focused after camera — re-prompt
     if (latitude === null || longitude === null) {
-      setSaveError('Location data was lost. Please go back and re-confirm your location.')
+      setSaveError(t('offline.details.locationLost', {}, 'Location data was lost. Please go back and re-confirm your location.'))
       return
     }
 
@@ -168,7 +170,7 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
       setTimeout(onSaved, 2000)
     } catch (err) {
       console.error('Failed to save offline report', err)
-      setSaveError('Failed to save to device. Please try again.')
+      setSaveError(t('offline.details.saveFailed', {}, 'Failed to save to device. Please try again.'))
     } finally {
       setSaving(false)
     }
@@ -182,8 +184,8 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
           ←
         </button>
         <div className="flex-1">
-          <p className="text-white font-semibold text-sm">📴 Offline Capture</p>
-          <p className="text-[#D1D9C5] text-xs opacity-70">Saved to device — syncs when you're back in signal</p>
+          <p className="text-white font-semibold text-sm">📴 {t('offline.title', {}, 'Offline Capture')}</p>
+          <p className="text-[#D1D9C5] text-xs opacity-70">{t('offline.subtitle', {}, "Saved to device — syncs when you're back in signal")}</p>
         </div>
         <div className="flex gap-1">
           {(['location', 'photo', 'details'] as Step[]).map((s, i) => (
@@ -204,16 +206,16 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
           <div className="flex flex-col items-center justify-center h-full gap-6 text-center">
             <div className="text-6xl">📍</div>
             <div>
-              <h2 className="text-white text-xl font-bold mb-2">Capturing your location</h2>
+              <h2 className="text-white text-xl font-bold mb-2">{t('offline.loc.heading', {}, 'Capturing your location')}</h2>
               <p className="text-[#D1D9C5] text-sm opacity-70">
-                GPS works without internet — your phone satellite position is being recorded
+                {t('offline.loc.desc', {}, 'GPS works without internet — your phone satellite position is being recorded')}
               </p>
             </div>
 
             {locating && (
               <div className="flex items-center gap-3 text-[#D1D9C5]">
                 <div className="w-5 h-5 border-2 border-[#9ED663] border-t-transparent rounded-full animate-spin" />
-                <span className="text-sm">Getting GPS fix...</span>
+                <span className="text-sm">{t('offline.loc.getting', {}, 'Getting GPS fix...')}</span>
               </div>
             )}
 
@@ -225,8 +227,8 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
                 </p>
                 {accuracy && (
                   <p className="text-[#D1D9C5] text-xs mt-1 opacity-70">
-                    Accuracy: ±{accuracy}m
-                    {accuracy > 50 && ' — move to open ground for better accuracy'}
+                    {t('offline.loc.accuracy', { accuracy }, 'Accuracy: ±{accuracy}m')}
+                    {accuracy > 50 && ` — ${t('offline.loc.accuracyHint', {}, 'move to open ground for better accuracy')}`}
                   </p>
                 )}
               </div>
@@ -239,7 +241,7 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
                   onClick={getLocation}
                   className="mt-2 text-[#FA9335] text-xs underline opacity-80"
                 >
-                  Try again
+                  {t('offline.loc.tryAgain', {}, 'Try again')}
                 </button>
               </div>
             )}
@@ -249,7 +251,7 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
               disabled={!latitude || !longitude}
               className="w-full py-4 bg-[#7D8DCC] text-white rounded-2xl font-semibold disabled:bg-[#2d1f3a] disabled:text-[#D1D9C5]/40 transition-colors"
             >
-              {latitude ? 'Location saved — next' : 'Waiting for GPS...'}
+              {latitude ? t('offline.loc.next', {}, 'Location saved — next') : t('offline.loc.waiting', {}, 'Waiting for GPS...')}
             </button>
           </div>
         )}
@@ -259,8 +261,8 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
           <div className="flex flex-col gap-5">
             <div className="text-center">
               <div className="text-5xl mb-2">📸</div>
-              <h2 className="text-white text-xl font-bold">Take a photo</h2>
-              <p className="text-[#D1D9C5] text-sm mt-1 opacity-70">Optional but really helpful — up to 3 photos</p>
+              <h2 className="text-white text-xl font-bold">{t('offline.photo.heading', {}, 'Take a photo')}</h2>
+              <p className="text-[#D1D9C5] text-sm mt-1 opacity-70">{t('offline.photo.desc', {}, 'Optional but really helpful — up to 3 photos')}</p>
             </div>
 
             {/* Camera input — single shot, no multiple (Android compatible) */}
@@ -289,14 +291,14 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
                   className="flex-1 h-36 border-2 border-dashed border-[#614270] rounded-2xl flex flex-col items-center justify-center gap-2 text-[#D1D9C5] hover:border-[#7D8DCC] hover:text-[#7D8DCC] transition-colors"
                 >
                   <span className="text-3xl">📷</span>
-                  <span className="text-xs">Take photo</span>
+                  <span className="text-xs">{t('offline.photo.takePhoto', {}, 'Take photo')}</span>
                 </button>
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   className="flex-1 h-36 border-2 border-dashed border-[#614270] rounded-2xl flex flex-col items-center justify-center gap-2 text-[#D1D9C5] hover:border-[#7D8DCC] hover:text-[#7D8DCC] transition-colors"
                 >
                   <span className="text-3xl">🖼️</span>
-                  <span className="text-xs">From gallery</span>
+                  <span className="text-xs">{t('offline.photo.fromGallery', {}, 'From gallery')}</span>
                 </button>
               </div>
             ) : (
@@ -318,7 +320,7 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
                     className="aspect-square rounded-xl border-2 border-dashed border-[#614270] flex flex-col items-center justify-center text-[#D1D9C5] hover:border-[#7D8DCC] transition-colors gap-1"
                   >
                     <span className="text-xl">📷</span>
-                    <span className="text-[10px]">Add</span>
+                    <span className="text-[10px]">{t('offline.photo.add', {}, 'Add')}</span>
                   </button>
                 )}
               </div>
@@ -329,7 +331,7 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
                 onClick={() => setStep('details')}
                 className="flex-1 py-4 bg-[#7D8DCC] text-white rounded-2xl font-semibold hover:bg-[#6b7bb8] transition-colors"
               >
-                {photoDataUrls.length > 0 ? 'Photos added — next' : 'Skip photos'}
+                {photoDataUrls.length > 0 ? t('offline.photo.next', {}, 'Photos added — next') : t('offline.photo.skip', {}, 'Skip photos')}
               </button>
             </div>
           </div>
@@ -340,12 +342,12 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
           <div className="flex flex-col gap-4">
             <div className="text-center">
               <div className="text-5xl mb-2">📝</div>
-              <h2 className="text-white text-xl font-bold">What did you see?</h2>
+              <h2 className="text-white text-xl font-bold">{t('offline.details.heading', {}, 'What did you see?')}</h2>
             </div>
 
             {/* Category */}
             <div>
-              <label className="block text-[#D1D9C5] text-xs uppercase tracking-wider mb-2 opacity-70">Category</label>
+              <label className="block text-[#D1D9C5] text-xs uppercase tracking-wider mb-2 opacity-70">{t('offline.details.category', {}, 'Category')}</label>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => handleCategoryChange('sheep')}
@@ -372,7 +374,7 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
             {/* Condition */}
             {selectedCategory && selectedCategory.conditions.length > 0 && (
               <div>
-                <label className="block text-[#D1D9C5] text-xs uppercase tracking-wider mb-2 opacity-70">Condition</label>
+                <label className="block text-[#D1D9C5] text-xs uppercase tracking-wider mb-2 opacity-70">{t('offline.details.condition', {}, 'Condition')}</label>
                 <div className="grid grid-cols-2 gap-2">
                   {selectedCategory.conditions.map((c) => (
                     <button
@@ -393,7 +395,7 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
             {selectedCategory?.showCount !== false && (
               <div>
                 <label className="block text-[#D1D9C5] text-xs uppercase tracking-wider mb-2 opacity-70">
-                  {selectedCategory?.countLabel || 'Quantity'}
+                  {selectedCategory?.countLabel || t('offline.details.quantity', {}, 'Quantity')}
                 </label>
                 <div className="flex items-center gap-4 bg-[#2d1f3a] rounded-xl px-4 py-3">
                   <button
@@ -415,11 +417,11 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
 
             {/* Notes */}
             <div>
-              <label className="block text-[#D1D9C5] text-xs uppercase tracking-wider mb-2 opacity-70">Notes (optional)</label>
+              <label className="block text-[#D1D9C5] text-xs uppercase tracking-wider mb-2 opacity-70">{t('offline.details.notes', {}, 'Notes (optional)')}</label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Any extra details..."
+                placeholder={t('offline.details.placeholder', {}, 'Any extra details...')}
                 rows={3}
                 className="w-full bg-[#2d1f3a] text-white rounded-xl px-4 py-3 text-sm placeholder-[#92998B] border border-[#614270]/50 focus:border-[#7D8DCC] focus:outline-none resize-none"
               />
@@ -433,7 +435,7 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
                     onClick={() => { setSaveError(''); setStep('location') }}
                     className="mt-2 block text-xs underline opacity-80"
                   >
-                    ← Go back and re-confirm location
+                    {t('offline.details.goBack', {}, '← Go back and re-confirm location')}
                   </button>
                 )}
               </div>
@@ -444,7 +446,7 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
               disabled={saving}
               className="w-full py-4 bg-[#7D8DCC] text-white rounded-2xl font-bold text-lg hover:bg-[#6b7bb8] disabled:bg-[#2d1f3a] disabled:text-[#D1D9C5]/40 transition-colors mt-2"
             >
-              {saving ? 'Saving...' : 'Save to device'}
+              {saving ? t('offline.details.saving', {}, 'Saving...') : t('offline.details.save', {}, 'Save to device')}
             </button>
           </div>
         )}
@@ -456,11 +458,9 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
               ✓
             </div>
             <div>
-              <h2 className="text-white text-2xl font-bold mb-2">Saved!</h2>
+              <h2 className="text-white text-2xl font-bold mb-2">{t('offline.saved.heading', {}, 'Saved!')}</h2>
               <p className="text-[#D1D9C5] text-sm leading-relaxed opacity-70">
-                Your sighting is stored on this device.
-                <br />
-                It will upload automatically when you get back to signal.
+                {t('offline.saved.desc', {}, 'Your sighting is stored on this device. It will upload automatically when you get back to signal.')}
               </p>
             </div>
           </div>
