@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 import { getPendingReports, markReportSynced, OfflineReport } from '@/lib/offline-db'
-import { createReport } from '@/lib/supabase-client'
+import { createReport, supabase } from '@/lib/supabase-client'
 import { useAppStore } from '@/store/appStore'
 import { useTranslation } from '@/contexts/TranslationContext'
 
@@ -14,6 +14,7 @@ export default function OfflineSyncBanner() {
   const [pendingCount, setPendingCount] = useState(0)
   const [syncing, setSyncing] = useState(false)
   const [syncResult, setSyncResult] = useState<{ synced: number; failed: number } | null>(null)
+  const [syncError, setSyncError] = useState<string | null>(null)
   const [dismissed, setDismissed] = useState(false)
 
   const checkPending = useCallback(async () => {
@@ -52,11 +53,28 @@ export default function OfflineSyncBanner() {
   const handleSync = async () => {
     setSyncing(true)
     setSyncResult(null)
+    setSyncError(null)
 
     try {
+      // Force-refresh the Supabase session before uploading.
+      // When the device was offline the JWT may have expired; refreshing here
+      // ensures we have a valid authenticated token before any INSERT.
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      if (!session) {
+        // Try an explicit refresh (covers the race condition where autoRefreshToken
+        // hasn't completed yet after coming back online)
+        const { error: refreshError } = await supabase.auth.refreshSession()
+        if (refreshError) {
+          setSyncError('auth')
+          setSyncing(false)
+          return
+        }
+      }
+
       const reports = await getPendingReports()
       let synced = 0
       let failed = 0
+      let lastError: any = null
 
       for (const report of reports) {
         try {
@@ -77,13 +95,23 @@ export default function OfflineSyncBanner() {
           })
           await markReportSynced(report.id)
           synced++
-        } catch (err) {
+        } catch (err: any) {
           console.error('Failed to sync report', report.id, err)
+          lastError = err
           failed++
         }
       }
 
       setSyncResult({ synced, failed })
+      if (failed > 0 && lastError) {
+        // Surface a human-readable hint from the Supabase error
+        const msg = lastError?.message || lastError?.error_description || null
+        if (msg?.toLowerCase().includes('jwt') || msg?.toLowerCase().includes('auth') || msg?.toLowerCase().includes('401') || lastError?.status === 401) {
+          setSyncError('auth')
+        } else {
+          setSyncError(msg || 'unknown')
+        }
+      }
       await checkPending()
 
       // Push in-app notification so the bell badge updates
@@ -143,6 +171,16 @@ export default function OfflineSyncBanner() {
           {syncResult?.failed && syncResult.failed > 0 && (
             <p className="text-[#FA9335] text-xs mt-1">
               {t('sync.failedCount', { count: syncResult.failed }, `${syncResult.failed} failed to upload — tap Retry to try again`)}
+            </p>
+          )}
+          {syncError === 'auth' && (
+            <p className="text-[#FA9335] text-xs mt-1">
+              {t('sync.authError', {}, 'Session expired — please reload the app and try again')}
+            </p>
+          )}
+          {syncError && syncError !== 'auth' && (
+            <p className="text-[#FA9335] text-xs mt-1 font-mono break-all">
+              {syncError}
             </p>
           )}
 
