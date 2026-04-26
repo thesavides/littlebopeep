@@ -109,6 +109,7 @@ export default function AdminDashboard() {
   const [filterDateFrom, setFilterDateFrom] = useState<string>('')
   const [filterDateTo, setFilterDateTo] = useState<string>('')
   const [filterKeyword, setFilterKeyword] = useState<string>('')
+  const [filterReporterId, setFilterReporterId] = useState<string>('all')
   const [selectedReports, setSelectedReports] = useState<string[]>([])
   const [reportsPerPage, setReportsPerPage] = useState<number>(10)
   const [reportsPage, setReportsPage] = useState<number>(1)
@@ -294,6 +295,11 @@ export default function AdminDashboard() {
       result = result.filter(r => new Date(r.timestamp).getTime() <= to)
     }
 
+    // Filter by reporter/walker (Workstream 6)
+    if (filterReporterId !== 'all') {
+      result = result.filter(r => r.reporterId === filterReporterId)
+    }
+
     // Filter by keyword or report ID (Workstream 6)
     if (filterKeyword.trim()) {
       const kw = filterKeyword.trim().toLowerCase()
@@ -318,10 +324,10 @@ export default function AdminDashboard() {
     }
 
     return result
-  }, [reports, filterStatus, filterArchive, sortBy, filterFarmerId, filterFarmId, farms, filterDateFrom, filterDateTo, filterKeyword])
+  }, [reports, filterStatus, filterArchive, sortBy, filterFarmerId, filterFarmId, farms, filterDateFrom, filterDateTo, filterKeyword, filterReporterId])
 
   // Reset to page 1 whenever filters change
-  useEffect(() => { setReportsPage(1) }, [filterStatus, filterArchive, sortBy, filterFarmerId, filterFarmId, filterDateFrom, filterDateTo, filterKeyword])
+  useEffect(() => { setReportsPage(1) }, [filterStatus, filterArchive, sortBy, filterFarmerId, filterFarmId, filterDateFrom, filterDateTo, filterKeyword, filterReporterId])
 
   // Pagination
   const totalReportPages = reportsPerPage === 0 ? 1 : Math.max(1, Math.ceil(filteredReports.length / reportsPerPage))
@@ -1819,6 +1825,16 @@ export default function AdminDashboard() {
                       <option key={f.id} value={f.id}>{f.name}</option>
                     ))}
                   </select>
+                  <select
+                    value={filterReporterId}
+                    onChange={(e) => setFilterReporterId(e.target.value)}
+                    className="px-3 py-2 border rounded-lg text-sm"
+                  >
+                    <option value="all">All Reporters</option>
+                    {walkers.map((u: any) => (
+                      <option key={u.id} value={u.id}>{u.full_name || u.name || u.email}</option>
+                    ))}
+                  </select>
                 </div>
                 {/* Workstream 6 — date range + keyword search */}
                 <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t w-full">
@@ -1843,9 +1859,9 @@ export default function AdminDashboard() {
                     className="px-3 py-2 border rounded-lg text-sm"
                     title="To date"
                   />
-                  {(filterKeyword || filterDateFrom || filterDateTo) && (
+                  {(filterKeyword || filterDateFrom || filterDateTo || filterReporterId !== 'all') && (
                     <button
-                      onClick={() => { setFilterKeyword(''); setFilterDateFrom(''); setFilterDateTo('') }}
+                      onClick={() => { setFilterKeyword(''); setFilterDateFrom(''); setFilterDateTo(''); setFilterReporterId('all') }}
                       className="px-3 py-2 text-sm text-[#7D8DCC] hover:underline"
                     >
                       Clear
