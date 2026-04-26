@@ -12,6 +12,9 @@ import PhotoGallery from './PhotoGallery'
 import BottomNav from './BottomNav'
 import ProfileDrawer from './ProfileDrawer'
 import Button from './Button'
+import OfflineSyncBanner from './OfflineSyncBanner'
+import OfflineCapture from './OfflineCapture'
+import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 import { btn, input, label, card, text, badge as statusBadge } from '@/lib/ui'
 import { useTranslation } from '@/contexts/TranslationContext'
 
@@ -23,6 +26,7 @@ interface WalkerDashboardProps {
 
 export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps = {}) {
   const { t } = useTranslation()
+  const isOnline = useOnlineStatus()
   const {
     currentUserId,
     currentReportStep,
@@ -42,6 +46,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
   } = useAppStore()
   
   const [viewState, setViewState] = useState<ViewState>('dashboard')
+  const [showOfflineCapture, setShowOfflineCapture] = useState(false)
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false)
   const [nearbyReports, setNearbyReports] = useState<typeof reports>([])
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null)
@@ -443,8 +448,40 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
 
       <main className="max-w-4xl mx-auto px-4 py-6 pb-28">
         {/* ===== DASHBOARD VIEW ===== */}
+        {/* Offline mode overlay */}
+        {showOfflineCapture && (
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-[#D1D9C5]">
+            <div className="max-w-lg mx-auto px-4 py-6">
+              <OfflineCapture
+                onSaved={() => { setShowOfflineCapture(false) }}
+                onCancel={() => setShowOfflineCapture(false)}
+              />
+            </div>
+          </div>
+        )}
+
         {viewState === 'dashboard' && (
           <>
+            {/* Offline sync banner — shown when back online with pending reports */}
+            <OfflineSyncBanner />
+
+            {/* Offline mode notice */}
+            {!isOnline && (
+              <div className="mb-4 rounded-2xl bg-[#EADA69]/20 border border-[#EADA69]/40 p-4 flex items-start gap-3">
+                <span className="text-2xl flex-shrink-0">📡</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-[#614270] text-sm">{t('walker.offlineMode', {}, 'Offline mode')}</p>
+                  <p className="text-[#92998B] text-xs mt-0.5">{t('walker.offlineModeDesc', {}, 'No connection detected. You can still save a report and upload it when you\'re back online.')}</p>
+                  <button
+                    onClick={() => setShowOfflineCapture(true)}
+                    className="mt-2 px-4 py-2 bg-[#614270] text-white rounded-xl text-sm font-semibold hover:bg-[#614270]/90"
+                  >
+                    {t('walker.saveForLater', {}, 'Save for later')}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Nearby reports warning */}
             {recentNearbyReports.length > 0 && (
               <div className="bg-[#EADA69]/20 border border-[#EADA69]/40 rounded-xl p-4 mb-4">
@@ -529,8 +566,8 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                         </div>
                       )
                     })()}
-                    {/* Other active categories — exclude built-in 'sheep' (shown above) */}
-                    {reportCategories.filter(c => c.isActive && c.id !== 'sheep').sort((a, b) => a.sortOrder - b.sortOrder).map((cat) => {
+                    {/* Other active categories — exclude built-in 'sheep' (shown above, matched by id or name) */}
+                    {reportCategories.filter(c => c.isActive && c.id !== 'sheep' && c.name.toLowerCase() !== 'sheep').sort((a, b) => a.sortOrder - b.sortOrder).map((cat) => {
                       const isDefault = preferredCategoryId === cat.id
                       return (
                         <div key={cat.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-colors ${isDefault ? 'border-[#D1D9C5] bg-[#D1D9C5]/50' : 'border-[#D1D9C5] bg-[#D1D9C5]/20 hover:border-[#92998B] hover:bg-white'}`}>
@@ -558,7 +595,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                         </div>
                       )
                     })}
-                    {reportCategories.filter(c => c.isActive && c.id !== 'sheep').length === 0 && (
+                    {reportCategories.filter(c => c.isActive && c.id !== 'sheep' && c.name.toLowerCase() !== 'sheep').length === 0 && (
                       <p className="text-center text-[#92998B] text-sm py-4">Only sheep reporting is available.</p>
                     )}
                   </div>
@@ -573,9 +610,10 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
               <ul className="text-sm text-[#614270] space-y-1">
                 <li>• {t('walker.tip1', {}, 'Check the map for recent reports before submitting')}</li>
                 <li>• {t('walker.tip2', {}, 'Be as accurate as possible with the location')}</li>
-                <li>• {t('walker.tip3', {}, 'Note any markings or ear tags if visible')}</li>
-                <li>• {t('walker.tip4', {}, 'Report injured sheep as priority')}</li>
-                <li>• {t('walker.tip5', {}, "Don't approach aggressive animals")}</li>
+                <li>• {t('walker.tip3', {}, 'Add a photo if it is safe to do so')}</li>
+                <li>• {t('walker.tip4', {}, 'Report injured or at-risk animals as a priority')}</li>
+                <li>• {t('walker.tip5', {}, "Keep a safe distance from any animals")}</li>
+                <li>• {t('walker.tip6', {}, 'You can report any countryside issue — gates, fencing, fly-tipping, and more')}</li>
               </ul>
             </div>
           </>
@@ -857,16 +895,18 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                     </span>
                     <span className="text-[#614270] font-medium">{draftReport.sheepCount || 1}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-[#92998B]">{t('walker.condition', {}, 'Condition')}</span>
-                    <span className="text-[#614270] font-medium capitalize">{draftReport.condition || 'Unknown'}</span>
+                  <div className="flex justify-between items-start gap-2">
+                    <span className="text-sm text-[#92998B] flex-shrink-0">{t('walker.condition', {}, 'Condition')}</span>
+                    <span className="text-[#614270] font-medium capitalize text-right">
+                      {draftReport.conditions?.length
+                        ? draftReport.conditions.join(', ')
+                        : draftReport.condition || t('walker.conditionUnknown', {}, 'Not sure')}
+                    </span>
                   </div>
-                  {draftReport.description && (
-                    <div>
-                      <span className="text-sm text-[#92998B]">{t('walker.details', {}, 'Details')}</span>
-                      <p className="text-[#614270] mt-1">{draftReport.description}</p>
-                    </div>
-                  )}
+                  <div>
+                    <span className="text-sm text-[#92998B]">{t('walker.details', {}, 'Details')}</span>
+                    <p className="text-[#614270] mt-1">{draftReport.description || '—'}</p>
+                  </div>
                   {draftReport.reporterContact && (
                     <div className="flex justify-between">
                       <span className="text-sm text-[#92998B]">{t('walker.contact', {}, 'Contact')}</span>

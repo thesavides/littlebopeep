@@ -8,7 +8,7 @@ import { useAppStore } from '@/store/appStore'
 
 export default function OfflineSyncBanner() {
   const isOnline = useOnlineStatus()
-  const { currentUserId } = useAppStore()
+  const { currentUserId, addNotification } = useAppStore()
   const [pendingCount, setPendingCount] = useState(0)
   const [syncing, setSyncing] = useState(false)
   const [syncResult, setSyncResult] = useState<{ synced: number; failed: number } | null>(null)

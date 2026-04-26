@@ -1,8 +1,8 @@
 'use client'
 
-import Link from 'next/link'
-import { useState } from 'react'
 import { useTranslation } from '@/contexts/TranslationContext'
+import SiteNav from '@/components/SiteNav'
+import SiteFooter from '@/components/SiteFooter'
 
 function Callout({ children }: { children: React.ReactNode }) {
   return (
@@ -50,66 +50,23 @@ function LegalTable({ rows }: { rows: [string, string][] }) {
 }
 
 export default function PrivacyPage() {
-  const { t, language, changeLanguage, languages } = useTranslation()
-  const [langOpen, setLangOpen] = useState(false)
-  const currentLang = languages.find((l) => l.code === language)
+  const { t } = useTranslation()
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#D1D9C5' }}>
 
-      {/* Nav */}
-      <nav className="sticky top-0 z-40 border-b" style={{ backgroundColor: '#D1D9C5', borderColor: 'rgba(97,66,112,0.12)' }}>
-        <div className="mx-auto max-w-5xl flex items-center justify-between px-5 py-3">
-          <Link href="/" className="flex items-center gap-2.5 no-underline">
-            <img src="/logo-pin.svg" alt="" aria-hidden="true" className="w-8 h-8" />
-            <span className="font-serif font-semibold text-lg tracking-tight leading-none">
-              <span style={{ color: '#614270' }}>Little </span>
-              <span style={{ color: '#92998B' }}>Bo </span>
-              <span style={{ color: '#614270' }}>Peep</span>
-            </span>
-          </Link>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <button onClick={() => setLangOpen(o => !o)}
-                className="flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium border transition-colors"
-                style={{ borderColor: '#92998B', color: '#92998B' }}>
-                <span>{currentLang?.flag_emoji ?? '🌐'}</span>
-                <span>{currentLang?.code?.toUpperCase() ?? 'EN'}</span>
-                <svg className="w-3 h-3 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              {langOpen && (
-                <div className="absolute right-0 mt-1 rounded-xl shadow-lg border overflow-hidden z-50"
-                  style={{ backgroundColor: '#D1D9C5', borderColor: '#92998B', minWidth: '140px' }}>
-                  {languages.map(lang => (
-                    <button key={lang.code} onClick={() => { changeLanguage(lang.code); setLangOpen(false) }}
-                      className="flex items-center gap-2 w-full px-3 py-2 text-xs text-left transition-colors hover:opacity-80"
-                      style={{ backgroundColor: lang.code === language ? 'rgba(97,66,112,0.1)' : 'transparent', color: '#614270', fontWeight: lang.code === language ? 600 : 400 }}>
-                      <span>{lang.flag_emoji}</span><span>{lang.name_native}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <Link href="/auth" className="rounded-full px-4 py-1.5 text-xs font-semibold transition-opacity hover:opacity-80"
-              style={{ backgroundColor: '#7D8DCC', color: '#fff' }}>
-              {t('auth.signIn', {}, 'Sign in')}
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <SiteNav />
 
       {/* Header */}
       <section className="mx-auto max-w-3xl px-5 pt-10 pb-4 text-center">
         <p className="inline-block rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-widest mb-5"
           style={{ backgroundColor: 'rgba(125,141,204,0.15)', color: '#7D8DCC' }}>
-          Legal
+          {t('legal.eyebrow', {}, 'Legal')}
         </p>
         <h1 className="font-serif text-3xl sm:text-4xl leading-snug" style={{ color: '#614270' }}>
-          Privacy Policy
+          {t('privacy.title', {}, 'Privacy Policy')}
         </h1>
-        <p className="mt-2 text-sm" style={{ color: '#92998B' }}>Version 1.0 · Effective 1 May 2025 · Last reviewed April 2025</p>
+        <p className="mt-2 text-sm" style={{ color: '#92998B' }}>{t('privacy.version', {}, 'Version 1.0 · Effective 1 May 2025 · Last reviewed April 2025')}</p>
       </section>
 
       {/* Body */}
@@ -119,23 +76,38 @@ export default function PrivacyPage() {
 
           {/* ToC */}
           <div className="rounded-xl p-4 mb-8 text-xs" style={{ backgroundColor: 'rgba(209,217,197,0.4)', color: '#614270' }}>
-            <p className="font-semibold uppercase tracking-widest mb-2 text-xs" style={{ color: '#92998B' }}>Contents</p>
+            <p className="font-semibold uppercase tracking-widest mb-2 text-xs" style={{ color: '#92998B' }}>{t('legal.toc', {}, 'Contents')}</p>
             <ol className="list-decimal pl-5 columns-2 gap-x-8 space-y-1">
-              {['Who We Are','Scope','Data We Collect','How We Use Data','Legal Bases','Cookies','Sharing Data','International Transfers','Data Retention','Your Rights','Children','Security','Policy Changes','Contact Us'].map((s, i) => (
+              {[
+                t('privacy.toc.1', {}, 'Who We Are'),
+                t('privacy.toc.2', {}, 'Scope'),
+                t('privacy.toc.3', {}, 'Data We Collect'),
+                t('privacy.toc.4', {}, 'How We Use Data'),
+                t('privacy.toc.5', {}, 'Legal Bases'),
+                t('privacy.toc.6', {}, 'Cookies'),
+                t('privacy.toc.7', {}, 'Sharing Data'),
+                t('privacy.toc.8', {}, 'International Transfers'),
+                t('privacy.toc.9', {}, 'Data Retention'),
+                t('privacy.toc.10', {}, 'Your Rights'),
+                t('privacy.toc.11', {}, 'Children'),
+                t('privacy.toc.12', {}, 'Security'),
+                t('privacy.toc.13', {}, 'Policy Changes'),
+                t('privacy.toc.14', {}, 'Contact Us'),
+              ].map((s, i) => (
                 <li key={i}><a href={`#s${i+1}`} className="hover:underline" style={{ color: '#614270' }}>{s}</a></li>
               ))}
             </ol>
           </div>
 
-          <SectionTitle id="s1">1. Who We Are</SectionTitle>
+          <SectionTitle id="s1">{t('privacy.s1.title', {}, '1. Who We Are')}</SectionTitle>
           <p className="mb-3">Little Bo Peep Ltd (&ldquo;<strong>we</strong>&rdquo;, &ldquo;<strong>us</strong>&rdquo;, &ldquo;<strong>our</strong>&rdquo;) is a private limited company incorporated and registered in England and Wales. We operate the Little Bo Peep digital platform and mobile-progressive web application (collectively, the &ldquo;<strong>Service</strong>&rdquo;), accessible at <strong>littlebopeep.app</strong>.</p>
           <p className="mb-3">For the purposes of the UK GDPR and the Data Protection Act 2018, Little Bo Peep Ltd is the <strong>data controller</strong> of personal data processed through the Service.</p>
           <Callout><strong>Data Controller:</strong> Little Bo Peep Ltd · Email: <a href="mailto:info@littlebopeep.app" style={{ color: '#614270' }}>info@littlebopeep.app</a></Callout>
 
-          <SectionTitle id="s2">2. Scope of This Policy</SectionTitle>
+          <SectionTitle id="s2">{t('privacy.s2.title', {}, '2. Scope of This Policy')}</SectionTitle>
           <p className="mb-3">This Privacy Policy applies to all personal data we collect when you visit or register on our platform, use the Service as a Walker or Farmer, or contact us by any means. It does not apply to third-party websites linked from our platform.</p>
 
-          <SectionTitle id="s3">3. Data We Collect</SectionTitle>
+          <SectionTitle id="s3">{t('privacy.s3.title', {}, '3. Data We Collect')}</SectionTitle>
           <Sub>3.1 Data you provide</Sub>
           <LegalTable rows={[
             ['Category', 'Examples'],
@@ -158,7 +130,7 @@ export default function PrivacyPage() {
           <Sub>3.3 Data from third parties</Sub>
           <p>We may receive limited data from third-party authentication providers or mapping service providers (such as Mapbox) in connection with your use of the Service.</p>
 
-          <SectionTitle id="s4">4. How We Use Your Data</SectionTitle>
+          <SectionTitle id="s4">{t('privacy.s4.title', {}, '4. How We Use Your Data')}</SectionTitle>
           <ul className="list-disc pl-5 space-y-1.5 mb-3">
             <li><strong>Operating the Service:</strong> account management, enabling report submission and receipt.</li>
             <li><strong>Communications:</strong> service notifications, report alerts, account confirmations.</li>
@@ -169,7 +141,7 @@ export default function PrivacyPage() {
           </ul>
           <p>We will not use your data for automated decision-making producing legal effects without your explicit consent.</p>
 
-          <SectionTitle id="s5">5. Legal Bases for Processing</SectionTitle>
+          <SectionTitle id="s5">{t('privacy.s5.title', {}, '5. Legal Bases for Processing')}</SectionTitle>
           <LegalTable rows={[
             ['Processing Activity', 'Lawful Basis'],
             ['Account creation and management', 'Performance of a contract (Art. 6(1)(b))'],
@@ -181,7 +153,7 @@ export default function PrivacyPage() {
             ['Marketing communications', 'Consent (Art. 6(1)(a)) — withdraw at any time'],
           ]} />
 
-          <SectionTitle id="s6">6. Cookies &amp; Tracking Technologies</SectionTitle>
+          <SectionTitle id="s6">{t('privacy.s6.title', {}, '6. Cookies & Tracking Technologies')}</SectionTitle>
           <ul className="list-disc pl-5 space-y-1.5 mb-3">
             <li><strong>Strictly necessary:</strong> required for login and core features.</li>
             <li><strong>Functional:</strong> remember your preferences (map layers, language).</li>
@@ -189,7 +161,7 @@ export default function PrivacyPage() {
           </ul>
           <p>You may control non-essential cookies via your browser settings, though this may affect Service functionality.</p>
 
-          <SectionTitle id="s7">7. Sharing Your Data</SectionTitle>
+          <SectionTitle id="s7">{t('privacy.s7.title', {}, '7. Sharing Your Data')}</SectionTitle>
           <p className="mb-3">We do not sell, rent or trade your personal data. We may share data with:</p>
           <ul className="list-disc pl-5 space-y-1.5 mb-3">
             <li><strong>Registered Farmers:</strong> report data (location, photos, description) shared with Farmers whose alert zones cover the sighting area.</li>
@@ -199,10 +171,10 @@ export default function PrivacyPage() {
           </ul>
           <Callout><strong>Note to Walkers:</strong> Report data — including location, photos and descriptions — will be visible to Farmers with registered zones covering the relevant area. Do not include personal information about third parties without their consent.</Callout>
 
-          <SectionTitle id="s8">8. International Data Transfers</SectionTitle>
+          <SectionTitle id="s8">{t('privacy.s8.title', {}, '8. International Data Transfers')}</SectionTitle>
           <p className="mb-3">We host primarily within the UK and EEA. Where transfers occur outside these areas without an adequacy decision, we rely on UK IDTAs, Standard Contractual Clauses, or other ICO-approved mechanisms. Contact us for details: <a href="mailto:info@littlebopeep.app" style={{ color: '#614270' }}>info@littlebopeep.app</a>.</p>
 
-          <SectionTitle id="s9">9. Data Retention</SectionTitle>
+          <SectionTitle id="s9">{t('privacy.s9.title', {}, '9. Data Retention')}</SectionTitle>
           <LegalTable rows={[
             ['Data Category', 'Retention Period'],
             ['Account and profile data', 'Duration of account plus 12 months after closure'],
@@ -214,7 +186,7 @@ export default function PrivacyPage() {
           ]} />
           <Callout><strong>Right to erasure:</strong> Where you request erasure we will delete or anonymise your data, subject to overriding legal obligations (e.g. HMRC financial records).</Callout>
 
-          <SectionTitle id="s10">10. Your Rights Under UK GDPR</SectionTitle>
+          <SectionTitle id="s10">{t('privacy.s10.title', {}, '10. Your Rights Under UK GDPR')}</SectionTitle>
           <Sub>10.1 Right of Access</Sub>
           <p className="mb-3">Request a copy of the data we hold about you (Subject Access Request). We will respond within one calendar month, free of charge.</p>
           <Sub>10.2 Right to Rectification</Sub>
@@ -241,10 +213,10 @@ export default function PrivacyPage() {
           <Sub>10.10 How to Exercise Your Rights</Sub>
           <p>Email <a href="mailto:info@littlebopeep.app" style={{ color: '#614270' }}>info@littlebopeep.app</a> with &ldquo;<strong>Data Rights Request</strong>&rdquo; in the subject line. We may verify your identity before actioning a request.</p>
 
-          <SectionTitle id="s11">11. Children&apos;s Privacy</SectionTitle>
+          <SectionTitle id="s11">{t('privacy.s11.title', {}, "11. Children's Privacy")}</SectionTitle>
           <p>The Service is not intended for persons under 16. If you believe a child has provided personal data without consent, contact us at <a href="mailto:info@littlebopeep.app" style={{ color: '#614270' }}>info@littlebopeep.app</a> and we will delete it promptly.</p>
 
-          <SectionTitle id="s12">12. Security of Your Personal Data</SectionTitle>
+          <SectionTitle id="s12">{t('privacy.s12.title', {}, '12. Security of Your Personal Data')}</SectionTitle>
           <ul className="list-disc pl-5 space-y-1.5 mb-3">
             <li>Encrypted data transmission via TLS/HTTPS</li>
             <li>Password hashing and credential protection</li>
@@ -254,10 +226,10 @@ export default function PrivacyPage() {
           <Callout><strong>Important:</strong> No internet transmission is 100% secure. You accept this inherent risk by using the Service. Never share your account credentials.</Callout>
           <p>In the event of a breach likely to risk your rights and freedoms, we will notify the ICO within 72 hours and affected users without undue delay.</p>
 
-          <SectionTitle id="s13">13. Changes to This Privacy Policy</SectionTitle>
+          <SectionTitle id="s13">{t('privacy.s13.title', {}, '13. Changes to This Privacy Policy')}</SectionTitle>
           <p className="mb-3">We may update this Policy at any time. Material changes will be communicated via the Service or by email. Continued use after an update constitutes acceptance of the revised Policy.</p>
 
-          <SectionTitle id="s14">14. How to Contact Us</SectionTitle>
+          <SectionTitle id="s14">{t('privacy.s14.title', {}, '14. How to Contact Us')}</SectionTitle>
           <Callout>
             <strong>Little Bo Peep Ltd</strong> — Data Privacy Enquiries<br />
             Email: <a href="mailto:info@littlebopeep.app" style={{ color: '#614270' }}>info@littlebopeep.app</a><br />
@@ -268,31 +240,7 @@ export default function PrivacyPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 border-t" style={{ backgroundColor: '#D1D9C5', borderColor: 'rgba(146,153,139,0.3)' }}>
-        <div className="mx-auto max-w-5xl px-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-2 no-underline opacity-70 hover:opacity-100 transition-opacity">
-            <img src="/logo-pin.svg" alt="" aria-hidden="true" className="w-5 h-5" />
-            <span className="text-xs font-serif font-semibold tracking-tight leading-none">
-              <span style={{ color: '#614270' }}>Little </span>
-              <span style={{ color: '#92998B' }}>Bo </span>
-              <span style={{ color: '#614270' }}>Peep</span>
-            </span>
-          </Link>
-          <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2">
-            {[
-              { label: t('home.landing.aboutUs', {}, 'About us'), href: '/about' },
-              { label: t('home.landing.privacyPolicy', {}, 'Privacy policy'), href: '/privacy' },
-              { label: t('home.landing.termsConditions', {}, 'Terms & conditions'), href: '/terms' },
-              { label: t('auth.signIn', {}, 'Sign in'), href: '/auth' },
-              { label: t('home.landing.farmerSignup', {}, 'Farmer sign-up'), href: '/auth?mode=signup&role=farmer' },
-            ].map(link => (
-              <Link key={link.href} href={link.href} className="text-xs hover:opacity-80 transition-opacity" style={{ color: '#92998B' }}>
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   )
 }

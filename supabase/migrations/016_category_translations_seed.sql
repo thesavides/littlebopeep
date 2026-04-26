@@ -170,17 +170,17 @@ UPDATE report_categories SET
   condition_translations = $t${
     "cy": {
       "In field": "Yn y cae",
-      "Near lifestock": "Ger da byw",
+      "Near livestock": "Ger da byw",
       "Nearby": "Gerllaw"
     },
     "ga": {
       "In field": "Sa ghort",
-      "Near lifestock": "In aice le beostoic",
+      "Near livestock": "In aice le beostoic",
       "Nearby": "In aice láimhe"
     },
     "gd": {
       "In field": "Anns an achadh",
-      "Near lifestock": "Faisg air sprèidh",
+      "Near livestock": "Faisg air sprèidh",
       "Nearby": "Faisg air làimh"
     }
   }$t$::jsonb
