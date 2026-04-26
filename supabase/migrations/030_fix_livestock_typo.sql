@@ -31,12 +31,7 @@ SET condition_translations = jsonb_build_object(
 WHERE name = 'Predator'
   AND condition_translations IS NOT NULL;
 
--- 3. Fix typo in any existing reports that selected this condition
-UPDATE sheep_reports
-SET conditions = array_replace(conditions, 'Near lifestock', 'Near livestock')
-WHERE 'Near lifestock' = ANY(conditions);
-
--- 4. Also fix the single condition field (legacy)
+-- 3. Fix typo in existing reports (single condition field)
 UPDATE sheep_reports
 SET condition = 'Near livestock'
 WHERE condition = 'Near lifestock';
