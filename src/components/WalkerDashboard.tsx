@@ -393,8 +393,8 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 className="text-xl font-bold text-[#614270]">Report Submitted!</h2>
-            <p className="text-[#92998B] text-sm">Thank you for helping local farmers.</p>
+            <h2 className="text-xl font-bold text-[#614270]">{t('walker.reportSubmitted', {}, 'Report Submitted!')}</h2>
+            <p className="text-[#92998B] text-sm">{t('walker.thankYouFarmers', {}, 'Thank you for helping local farmers.')}</p>
           </div>
         </div>
       )}
@@ -409,8 +409,8 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
             </div>
             <p className="text-[#614270] text-center mb-6">
               {nearbyReports.length === 1
-                ? `A ${nearbyReports[0].categoryName || 'report'} has already been submitted within 100m of this location in the past 12 hours. Do you still want to submit a new one?`
-                : `${nearbyReports.length} reports of this type have already been submitted within 100m of this location in the past 12 hours. Do you still want to submit a new one?`
+                ? t('walker.duplicateOne', { name: nearbyReports[0].categoryName || 'report' }, `A ${nearbyReports[0].categoryName || 'report'} has already been submitted within 100m of this location in the past 12 hours. Do you still want to submit a new one?`)
+                : t('walker.duplicateMany', { count: nearbyReports.length }, `${nearbyReports.length} reports of this type have already been submitted within 100m of this location in the past 12 hours. Do you still want to submit a new one?`)
               }
             </p>
             <div className="space-y-3">
@@ -483,7 +483,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
               <div className="bg-[#EADA69]/20 border border-[#EADA69]/40 rounded-xl p-4 mb-4">
                 <h3 className="font-semibold text-[#614270] mb-1">📍 {t('walker.reportsNearYou', {}, 'Reports Near You')}</h3>
                 <p className="text-[#614270] text-sm">
-                  {recentNearbyReports.length} {recentNearbyReports.length === 1 ? 'report has' : 'reports have'} been submitted within 100m of your location in the last 12 hours. Check the map to see if they already cover what you&apos;ve spotted.
+                  {t('walker.nearbyReportsDesc', { count: recentNearbyReports.length }, `${recentNearbyReports.length} ${recentNearbyReports.length === 1 ? 'report has' : 'reports have'} been submitted within 100m of your location in the last 12 hours. Check the map to see if they already cover what you've spotted.`)}
                 </p>
               </div>
             )}
@@ -533,7 +533,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
               <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-[60] p-0 sm:p-4" onClick={() => setShowCategoryPicker(false)}>
                 <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg shadow-xl animate-slide-up sm:animate-none" onClick={e => e.stopPropagation()}>
                   <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-[#D1D9C5]">
-                    <h3 className="text-lg font-bold text-[#614270]">What are you reporting?</h3>
+                    <h3 className="text-lg font-bold text-[#614270]">{t('walker.categoryPickerTitle', {}, 'What are you reporting?')}</h3>
                     <button onClick={() => setShowCategoryPicker(false)} className="text-[#92998B] hover:text-[#614270] text-2xl leading-none">×</button>
                   </div>
                   <div className="p-4 space-y-2 max-h-[70vh] sm:max-h-[80vh] overflow-y-auto safe-area-pb">
@@ -622,10 +622,10 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
             {currentReportStep === 1 && (
               <div>
                 <h2 className="text-lg font-semibold text-[#614270] mb-2">
-                  Where did you spot the {activeCategory ? activeCategory.name.toLowerCase() : 'sheep'}?
+                  {t('walker.step1Title', { name: activeCategory ? activeCategory.name.toLowerCase() : 'sheep' }, `Where did you spot the ${activeCategory ? activeCategory.name.toLowerCase() : 'sheep'}?`)}
                 </h2>
                 <p className="text-[#614270] mb-4">
-                  Tap on the map to mark the location. Recent reports (last 12 hours) are shown as {activeCategory ? activeCategory.emoji : '🐑'} markers.
+                  {t('walker.step1Desc', { emoji: activeCategory ? activeCategory.emoji : '🐑' }, `Tap on the map to mark the location. Recent reports (last 12 hours) are shown as ${activeCategory ? activeCategory.emoji : '🐑'} markers.`)}
                 </p>
                 
                 {/* Location — prominent auto-locate; tap map to refine */}
@@ -686,7 +686,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
             {currentReportStep === 2 && (
               <div>
                 <h2 className="text-lg font-semibold text-[#614270] mb-4">
-                  Tell us about the {activeCategory ? activeCategory.name.toLowerCase() : 'sheep'}
+                  {t('walker.step2Title', { name: activeCategory ? activeCategory.name.toLowerCase() : 'sheep' }, `Tell us about the ${activeCategory ? activeCategory.name.toLowerCase() : 'sheep'}`)}
                 </h2>
                 <div className="space-y-4">
                   {/* Quantity — quick-pick 1-10 + stepper for larger */}
@@ -733,7 +733,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                   {/* Conditions — multi-select chips */}
                   <div>
                     <label className="block text-sm font-medium text-[#614270] mb-2">
-                      {t('walker.condition', {}, 'Condition')} <span className="text-[#92998B] font-normal text-xs">— select all that apply</span>
+                      {t('walker.condition', {}, 'Condition')} <span className="text-[#92998B] font-normal text-xs">— {t('walker.selectAllThatApply', {}, 'select all that apply')}</span>
                     </label>
                     {(() => {
                       const opts = activeCategory?.conditions?.length
@@ -742,8 +742,8 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                             t('walker.conditionHealthy', {}, 'Healthy'),
                             t('walker.conditionInjured', {}, 'Injured'),
                             t('walker.conditionDead', {}, 'Dead'),
-                            'In road',
-                            'Lost / straying',
+                            t('walker.conditionInRoad', {}, 'In road'),
+                            t('walker.conditionLost', {}, 'Lost / straying'),
                             t('walker.conditionUnknown', {}, 'Not sure'),
                           ]
                       const selected: string[] = draftReport.conditions?.length
@@ -875,7 +875,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                 <div className="bg-white rounded-xl p-4 shadow space-y-3 border border-[#D1D9C5]">
                   {activeCategory && (
                     <div className="flex justify-between">
-                      <span className="text-sm text-[#92998B]">Category</span>
+                      <span className="text-sm text-[#92998B]">{t('walker.category', {}, 'Category')}</span>
                       <span className="text-[#614270] font-medium">{activeCategory.emoji} {activeCategory.name}</span>
                     </div>
                   )}
@@ -938,7 +938,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
               <div className="mb-4">
                 {/* Email alerts toggle */}
                 <div className="flex items-center justify-between px-1 mb-3">
-                  <span className="text-sm text-[#614270] font-medium">📧 Email alerts</span>
+                  <span className="text-sm text-[#614270] font-medium">📧 {t('walker.emailAlerts', {}, 'Email alerts')}</span>
                   <button
                     onClick={async () => {
                       if (savingEmailPref) return
@@ -961,7 +961,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                   <div className="bg-[#EADA69]/20 border border-[#EADA69]/40 rounded-xl p-4">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-semibold text-[#614270]">
-                        🔔 Updates ({allNotifications.length})
+                        🔔 {t('walker.updates', { count: allNotifications.length }, `Updates (${allNotifications.length})`)}
                       </h3>
                       {allNotifications.some(n => !n.read_at) && (
                         <button
@@ -973,7 +973,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                           }}
                           className="text-xs text-[#614270] hover:underline"
                         >
-                          Mark all read
+                          {t('walker.markAllRead', {}, 'Mark all read')}
                         </button>
                       )}
                     </div>
@@ -1088,7 +1088,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                                 }}
                                 className="px-2 py-1 text-xs bg-[#D1D9C5] text-[#614270] rounded-lg hover:bg-[#D1D9C5]/70"
                               >
-                                {isEditing ? 'Cancel' : 'Edit'}
+                                {isEditing ? t('common.cancel', {}, 'Cancel') : t('common.edit', {}, 'Edit')}
                               </button>
                             )}
                           </div>
@@ -1112,10 +1112,10 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
 
                       {isEditing && (
                         <div className="border-t border-[#D1D9C5] bg-[#D1D9C5]/20 p-4 space-y-4">
-                          <h4 className="font-semibold text-[#614270] text-sm">Edit Report</h4>
+                          <h4 className="font-semibold text-[#614270] text-sm">{t('walker.editReport', {}, 'Edit Report')}</h4>
 
                           <div>
-                            <label className="block text-xs font-medium text-[#614270] mb-1">Quantity</label>
+                            <label className="block text-xs font-medium text-[#614270] mb-1">{t('walker.quantity', {}, 'Quantity')}</label>
                             <div className="flex items-center gap-2">
                               <button type="button" onClick={() => setEditFields(f => ({ ...f, sheepCount: Math.max(1, f.sheepCount - 1) }))}
                                 className="w-9 h-9 rounded-lg bg-white border border-[#D1D9C5] font-bold text-lg flex items-center justify-center">−</button>
@@ -1128,9 +1128,9 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                           </div>
 
                           <div>
-                            <label className="block text-xs font-medium text-[#614270] mb-1">Conditions</label>
+                            <label className="block text-xs font-medium text-[#614270] mb-1">{t('walker.condition', {}, 'Condition')}</label>
                             <div className="flex flex-wrap gap-2">
-                              {['Healthy','Injured','Dead','In road','Lost / straying','Not sure'].map(opt => {
+                              {[t('walker.conditionHealthy',{},'Healthy'),t('walker.conditionInjured',{},'Injured'),t('walker.conditionDead',{},'Dead'),t('walker.conditionInRoad',{},'In road'),t('walker.conditionLost',{},'Lost / straying'),t('walker.conditionUnknown',{},'Not sure')].map(opt => {
                                 const sel = editFields.conditions.includes(opt)
                                 return (
                                   <button key={opt} type="button"
@@ -1146,7 +1146,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                           </div>
 
                           <div>
-                            <label className="block text-xs font-medium text-[#614270] mb-1">Details</label>
+                            <label className="block text-xs font-medium text-[#614270] mb-1">{t('walker.details', {}, 'Details')}</label>
                             <textarea value={editFields.description}
                               onChange={e => setEditFields(f => ({ ...f, description: e.target.value }))}
                               rows={2}
@@ -1154,7 +1154,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                           </div>
 
                           <div>
-                            <label className="block text-xs font-medium text-[#614270] mb-1">Photos</label>
+                            <label className="block text-xs font-medium text-[#614270] mb-1">{t('walker.photos', {}, 'Photos (optional)')}</label>
                             <PhotoUpload
                               reportId={report.id}
                               onPhotosUploaded={(urls) => setEditFields(f => ({ ...f, photoUrls: [...new Set([...f.photoUrls, ...urls])] }))}
@@ -1171,7 +1171,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                             disabled={savingEdit}
                             className="w-full py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold hover:bg-[#7D8DCC]/90 disabled:opacity-50"
                           >
-                            {savingEdit ? 'Saving…' : 'Save Changes'}
+                            {savingEdit ? t('common.saving', {}, 'Saving…') : t('farmer.editField.saveChanges', {}, 'Save Changes')}
                           </button>
                         </div>
                       )}
@@ -1192,7 +1192,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
               onClick={() => isOnline ? setShowCategoryPicker(true) : setShowOfflineCapture(true)}
               className="w-full py-4 bg-[#7D8DCC] text-white rounded-xl font-semibold text-base hover:bg-[#7D8DCC]/90 active:scale-[0.98] transition-all focus:outline-none focus:ring-2 focus:ring-[#7D8DCC] focus:ring-offset-2 shadow-sm"
             >
-              {isOnline ? 'Report' : '📴 Save offline'}
+              {isOnline ? t('walker.nav.report', {}, 'Report') : `📴 ${t('walker.nav.saveOffline', {}, 'Save offline')}`}
             </button>
           </nav>
         ) : (

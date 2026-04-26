@@ -5,9 +5,11 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 import { getPendingReports, markReportSynced, OfflineReport } from '@/lib/offline-db'
 import { createReport } from '@/lib/supabase-client'
 import { useAppStore } from '@/store/appStore'
+import { useTranslation } from '@/contexts/TranslationContext'
 
 export default function OfflineSyncBanner() {
   const isOnline = useOnlineStatus()
+  const { t } = useTranslation()
   const { currentUserId, addNotification } = useAppStore()
   const [pendingCount, setPendingCount] = useState(0)
   const [syncing, setSyncing] = useState(false)
@@ -118,9 +120,9 @@ export default function OfflineSyncBanner() {
         <span className="text-2xl">✓</span>
         <div>
           <p className="text-[#1a3a00] font-semibold text-sm">
-            {syncResult.synced} offline {syncResult.synced === 1 ? 'report' : 'reports'} uploaded!
+            {t('sync.uploadedCount', { count: syncResult.synced }, `${syncResult.synced} offline ${syncResult.synced === 1 ? 'report' : 'reports'} uploaded!`)}
           </p>
-          <p className="text-[#2a5200] text-xs">All your sightings are now live on the map</p>
+          <p className="text-[#2a5200] text-xs">{t('sync.nowLive', {}, 'All your sightings are now live on the map')}</p>
         </div>
       </div>
     )
@@ -132,15 +134,15 @@ export default function OfflineSyncBanner() {
         <span className="text-2xl flex-shrink-0">📡</span>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-[#614270] text-sm">
-            {pendingCount} offline {pendingCount === 1 ? 'sighting' : 'sightings'} waiting to upload
+            {t('sync.pendingCount', { count: pendingCount }, `${pendingCount} offline ${pendingCount === 1 ? 'sighting' : 'sightings'} waiting to upload`)}
           </p>
           <p className="text-[#92998B] text-xs mt-0.5">
-            You're back online — your reports from the field are ready to sync
+            {t('sync.backOnline', {}, "You're back online — your reports from the field are ready to sync")}
           </p>
 
           {syncResult?.failed && syncResult.failed > 0 && (
             <p className="text-[#FA9335] text-xs mt-1">
-              {syncResult.failed} failed to upload — tap Retry to try again
+              {t('sync.failedCount', { count: syncResult.failed }, `${syncResult.failed} failed to upload — tap Retry to try again`)}
             </p>
           )}
 
@@ -153,17 +155,17 @@ export default function OfflineSyncBanner() {
               {syncing ? (
                 <>
                   <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Syncing...
+                  {t('sync.syncing', {}, 'Syncing...')}
                 </>
               ) : (
-                syncResult?.failed ? 'Retry' : 'Upload now'
+                syncResult?.failed ? t('sync.retry', {}, 'Retry') : t('sync.uploadNow', {}, 'Upload now')
               )}
             </button>
             <button
               onClick={() => setDismissed(true)}
               className="px-3 py-2 text-[#614270] text-xs hover:opacity-70 transition-opacity"
             >
-              Later
+              {t('sync.later', {}, 'Later')}
             </button>
           </div>
         </div>

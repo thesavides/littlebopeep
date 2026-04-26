@@ -23,7 +23,7 @@ export interface Translation {
 export type TranslationDictionary = Record<string, string>
 
 const CACHE_PREFIX = 'translations_'
-const CACHE_VERSION = 'v11' // Bumped after seeding walker dashboard nav + notification keys (14 keys)
+const CACHE_VERSION = 'v12' // Bumped after seeding OfflineSyncBanner + WalkerDashboard UX strings (28 keys)
 const CACHE_DURATION = 24 * 60 * 60 * 1000 // 24 hours
 
 /**
