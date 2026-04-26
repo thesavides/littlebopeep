@@ -175,7 +175,7 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
   }
 
   return (
-    <div className="fixed inset-0 bg-[#1a1025] z-50 flex flex-col">
+    <div className="fixed inset-0 bg-[#1a1025] z-[60] flex flex-col">
       {/* Header */}
       <div className="bg-[#614270] px-4 py-3 flex items-center gap-3">
         <button onClick={() => { clearSession(); onCancel() }} className="text-[#D1D9C5] hover:text-white text-xl leading-none">

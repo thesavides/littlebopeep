@@ -401,7 +401,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
 
       {/* Duplicate Warning Modal */}
       {showDuplicateWarning && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
             <div className="text-center mb-4">
               <div className="text-4xl mb-2">⚠️</div>
@@ -530,7 +530,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
 
             {/* Category Picker Modal */}
             {showCategoryPicker && (
-              <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4" onClick={() => setShowCategoryPicker(false)}>
+              <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-[60] p-0 sm:p-4" onClick={() => setShowCategoryPicker(false)}>
                 <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg shadow-xl animate-slide-up sm:animate-none" onClick={e => e.stopPropagation()}>
                   <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-[#D1D9C5]">
                     <h3 className="text-lg font-bold text-[#614270]">What are you reporting?</h3>
