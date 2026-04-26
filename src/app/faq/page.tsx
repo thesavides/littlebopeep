@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { useTranslation } from '@/contexts/TranslationContext'
+import SiteNav from '@/components/SiteNav'
+import SiteFooter from '@/components/SiteFooter'
 
 interface FaqItem {
   q: string
@@ -17,10 +18,8 @@ interface FaqSection {
 }
 
 export default function FaqPage() {
-  const { t, language, changeLanguage, languages } = useTranslation()
+  const { t } = useTranslation()
   const [openItem, setOpenItem] = useState<string | null>(null)
-  const [langOpen, setLangOpen] = useState(false)
-  const currentLang = languages.find((l) => l.code === language)
 
   const sections: FaqSection[] = [
     {
@@ -257,66 +256,7 @@ export default function FaqPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#D1D9C5' }}>
 
-      {/* Nav */}
-      <nav className="sticky top-0 z-40 border-b" style={{ backgroundColor: '#D1D9C5', borderColor: 'rgba(97,66,112,0.12)' }}>
-        <div className="mx-auto max-w-3xl flex items-center justify-between px-5 py-3">
-          <Link href="/" className="flex items-center gap-2.5 no-underline">
-            <img src="/logo-pin.svg" alt="" aria-hidden="true" className="w-7 h-7" />
-            <span className="font-serif font-semibold text-base tracking-tight leading-none">
-              <span style={{ color: '#614270' }}>Little </span>
-              <span style={{ color: '#92998B' }}>Bo </span>
-              <span style={{ color: '#614270' }}>Peep</span>
-            </span>
-          </Link>
-
-          <div className="flex items-center gap-3">
-            {/* Language selector */}
-            <div className="relative">
-              <button
-                onClick={() => setLangOpen((o) => !o)}
-                className="flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium border transition-colors"
-                style={{ borderColor: '#92998B', color: '#92998B' }}
-              >
-                <span>{currentLang?.flag_emoji ?? '🌐'}</span>
-                <span>{currentLang?.code?.toUpperCase() ?? 'EN'}</span>
-                <svg className="w-3 h-3 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              {langOpen && (
-                <div
-                  className="absolute right-0 mt-1 rounded-xl shadow-lg border overflow-hidden z-50"
-                  style={{ backgroundColor: '#D1D9C5', borderColor: '#92998B', minWidth: '140px' }}
-                >
-                  {languages.map((lang) => (
-                    <button
-                      key={lang.code}
-                      onClick={() => { changeLanguage(lang.code); setLangOpen(false) }}
-                      className="flex items-center gap-2 w-full px-3 py-2 text-xs text-left transition-colors hover:opacity-80"
-                      style={{
-                        backgroundColor: lang.code === language ? 'rgba(97,66,112,0.1)' : 'transparent',
-                        color: '#614270',
-                        fontWeight: lang.code === language ? 600 : 400,
-                      }}
-                    >
-                      <span>{lang.flag_emoji}</span>
-                      <span>{lang.name_native}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <Link
-              href="/auth"
-              className="rounded-full px-4 py-1.5 text-xs font-semibold transition-opacity hover:opacity-80"
-              style={{ backgroundColor: '#7D8DCC', color: '#fff' }}
-            >
-              {t('auth.signIn', {}, 'Sign in')}
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <SiteNav />
 
       {/* Header */}
       <header className="py-10 text-center" style={{ backgroundColor: '#fff' }}>
@@ -428,31 +368,7 @@ export default function FaqPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="py-8 border-t" style={{ backgroundColor: '#D1D9C5', borderColor: 'rgba(146,153,139,0.3)' }}>
-        <div className="mx-auto max-w-3xl px-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-2 no-underline opacity-70 hover:opacity-100 transition-opacity">
-            <img src="/logo-pin.svg" alt="" aria-hidden="true" className="w-5 h-5" />
-            <span className="text-xs font-serif font-semibold tracking-tight leading-none">
-              <span style={{ color: '#614270' }}>Little </span>
-              <span style={{ color: '#92998B' }}>Bo </span>
-              <span style={{ color: '#614270' }}>Peep</span>
-            </span>
-          </Link>
-          <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2">
-            {[
-              { label: t('home.landing.aboutUs', {}, 'About us'), href: '/about' },
-              { label: t('home.landing.privacyPolicy', {}, 'Privacy policy'), href: '/privacy' },
-              { label: t('home.landing.termsConditions', {}, 'Terms & conditions'), href: '/terms' },
-              { label: t('auth.signIn', {}, 'Sign in'), href: '/auth' },
-            ].map((link) => (
-              <Link key={link.href} href={link.href} className="text-xs hover:opacity-80 transition-opacity" style={{ color: '#92998B' }}>
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   )
 }

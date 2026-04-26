@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAppStore } from '@/store/appStore'
@@ -8,14 +8,15 @@ import { useTranslation } from '@/contexts/TranslationContext'
 import WalkerDashboard from '@/components/WalkerDashboard'
 import FarmerDashboard from '@/components/FarmerDashboard'
 import AdminDashboard from '@/components/AdminDashboard'
+import SiteNav from '@/components/SiteNav'
+import SiteFooter from '@/components/SiteFooter'
 
 // ─── Landing page (logged-out view) ──────────────────────────────────────────
 
 function LandingPage() {
-  const { t, language, changeLanguage, languages } = useTranslation()
-  const [langOpen, setLangOpen] = useState(false)
-
-  const currentLang = languages.find((l) => l.code === language)
+  const { t } = useTranslation()
+  const { currentRole } = useAppStore()
+  const isLoggedIn = !!currentRole
 
   const cards = [
     {
@@ -64,70 +65,7 @@ function LandingPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#D1D9C5' }}>
 
-      {/* ── Nav ──────────────────────────────────────────────────────────── */}
-      <nav className="sticky top-0 z-40 border-b" style={{ backgroundColor: '#D1D9C5', borderColor: 'rgba(97,66,112,0.12)' }}>
-        <div className="mx-auto max-w-5xl flex items-center justify-between px-5 py-3">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 no-underline">
-            <img src="/logo-pin.svg" alt="" aria-hidden="true" className="w-8 h-8" />
-            <span className="font-serif font-semibold text-lg tracking-tight leading-none">
-              <span style={{ color: '#614270' }}>Little </span>
-              <span style={{ color: '#92998B' }}>Bo </span>
-              <span style={{ color: '#614270' }}>Peep</span>
-            </span>
-          </Link>
-
-          {/* Right: language + sign in */}
-          <div className="flex items-center gap-3">
-            {/* Language selector */}
-            <div className="relative">
-              <button
-                onClick={() => setLangOpen((o) => !o)}
-                className="flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium border transition-colors"
-                style={{ borderColor: '#92998B', color: '#92998B' }}
-              >
-                <span>{currentLang?.flag_emoji ?? '🌐'}</span>
-                <span>{currentLang?.code?.toUpperCase() ?? 'EN'}</span>
-                <svg className="w-3 h-3 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              {langOpen && (
-                <div
-                  className="absolute right-0 mt-1 rounded-xl shadow-lg border overflow-hidden z-50"
-                  style={{ backgroundColor: '#D1D9C5', borderColor: '#92998B', minWidth: '140px' }}
-                >
-                  {languages.map((lang) => (
-                    <button
-                      key={lang.code}
-                      onClick={() => { changeLanguage(lang.code); setLangOpen(false) }}
-                      className="flex items-center gap-2 w-full px-3 py-2 text-xs text-left transition-colors hover:opacity-80"
-                      style={{
-                        backgroundColor: lang.code === language ? 'rgba(97,66,112,0.1)' : 'transparent',
-                        color: '#614270',
-                        fontWeight: lang.code === language ? 600 : 400,
-                      }}
-                    >
-                      <span>{lang.flag_emoji}</span>
-                      <span>{lang.name_native}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Sign in */}
-            <Link
-              href="/auth"
-              className="rounded-full px-4 py-1.5 text-xs font-semibold transition-opacity hover:opacity-80"
-              style={{ backgroundColor: '#7D8DCC', color: '#fff' }}
-            >
-              {t('auth.signIn', {}, 'Sign in')}
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <SiteNav />
 
       {/* ── Hero (with sheep-on-road background) ─────────────────────────── */}
       <section
@@ -215,27 +153,35 @@ function LandingPage() {
       </section>
 
       {/* ── CTAs ─────────────────────────────────────────────────────────── */}
-      {/* Sits between the three-step (above the fold) and the How-it-works
-          section. On mobile this lands at/near the bottom of the viewport on
-          first load; on desktop it's a balanced band between the two white
-          step sections. */}
       <section
         className="mx-auto max-w-5xl px-5 py-6 sm:py-8 flex flex-col items-stretch gap-3 sm:items-center"
       >
-        <Link
-          href="/auth?mode=signup"
-          className="rounded-full px-8 py-3.5 sm:py-4 text-base font-semibold text-center transition-opacity hover:opacity-90 w-full sm:w-auto sm:min-w-[280px]"
-          style={{ backgroundColor: '#7D8DCC', color: '#fff' }}
-        >
-          {t('home.landing.ctaPrimary', {}, 'Sign up & report')}
-        </Link>
-        <Link
-          href="/auth?mode=signup&role=farmer"
-          className="rounded-full px-8 py-3 sm:py-3.5 text-sm font-medium text-center border transition-colors hover:opacity-80 w-full sm:w-auto sm:min-w-[280px]"
-          style={{ borderColor: '#614270', color: '#614270' }}
-        >
-          {t('home.landing.ctaFarmer', {}, 'Farmer? Sign up to get alerts')}
-        </Link>
+        {isLoggedIn ? (
+          <button
+            onClick={() => useAppStore.getState().setShowHomePage(false)}
+            className="rounded-full px-8 py-3.5 sm:py-4 text-base font-semibold text-center transition-opacity hover:opacity-90 w-full sm:w-auto sm:min-w-[280px]"
+            style={{ backgroundColor: '#7D8DCC', color: '#fff' }}
+          >
+            {t('home.landing.goToDashboard', {}, 'Go to your dashboard →')}
+          </button>
+        ) : (
+          <>
+            <Link
+              href="/auth?mode=signup"
+              className="rounded-full px-8 py-3.5 sm:py-4 text-base font-semibold text-center transition-opacity hover:opacity-90 w-full sm:w-auto sm:min-w-[280px]"
+              style={{ backgroundColor: '#7D8DCC', color: '#fff' }}
+            >
+              {t('home.landing.ctaPrimary', {}, 'Sign up & report')}
+            </Link>
+            <Link
+              href="/auth?mode=signup&role=farmer"
+              className="rounded-full px-8 py-3 sm:py-3.5 text-sm font-medium text-center border transition-colors hover:opacity-80 w-full sm:w-auto sm:min-w-[280px]"
+              style={{ borderColor: '#614270', color: '#614270' }}
+            >
+              {t('home.landing.ctaFarmer', {}, 'Farmer? Sign up to get alerts')}
+            </Link>
+          </>
+        )}
       </section>
 
       {/* ── How it works ─────────────────────────────────────────────────── */}
@@ -264,17 +210,6 @@ function LandingPage() {
                 </p>
               </div>
             ))}
-          </div>
-          {/* About us link */}
-          <div className="mt-6 text-center">
-            <Link
-              href="/about"
-              className="inline-flex items-center gap-1 text-sm font-medium hover:opacity-80 transition-opacity"
-              style={{ color: '#7D8DCC' }}
-            >
-              {t('home.landing.aboutUs', {}, 'About us')}
-              <span aria-hidden="true">→</span>
-            </Link>
           </div>
         </div>
       </section>
@@ -312,42 +247,7 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* ── Footer ───────────────────────────────────────────────────────── */}
-      <footer className="py-8 border-t" style={{ backgroundColor: '#D1D9C5', borderColor: 'rgba(146,153,139,0.3)' }}>
-        <div className="mx-auto max-w-5xl px-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 no-underline opacity-70 hover:opacity-100 transition-opacity">
-            <img src="/logo-pin.svg" alt="" aria-hidden="true" className="w-5 h-5" />
-            <span className="text-xs font-serif font-semibold tracking-tight leading-none">
-              <span style={{ color: '#614270' }}>Little </span>
-              <span style={{ color: '#92998B' }}>Bo </span>
-              <span style={{ color: '#614270' }}>Peep</span>
-            </span>
-          </Link>
-
-          {/* Links */}
-          <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2">
-            {[
-              { label: t('home.landing.aboutUs', {}, 'About us'), href: '/about' },
-              { label: t('home.landing.faq', {}, 'FAQ'), href: '/faq' },
-              { label: t('home.landing.privacyPolicy', {}, 'Privacy policy'), href: '/privacy' },
-              { label: t('home.landing.termsConditions', {}, 'Terms & conditions'), href: '/terms' },
-              { label: t('auth.signIn', {}, 'Sign in'), href: '/auth' },
-              { label: t('home.landing.farmerSignup', {}, 'Farmer sign-up'), href: '/auth?mode=signup&role=farmer' },
-            ].map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-xs hover:opacity-80 transition-opacity"
-                style={{ color: '#92998B' }}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-      </footer>
-
+      <SiteFooter />
     </div>
   )
 }

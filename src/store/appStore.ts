@@ -261,9 +261,9 @@ export interface Farm {
 export interface Notification {
   id: string
   userId: string
-  type: 'thank_you' | 'claimed' | 'resolved'
+  type: 'thank_you' | 'claimed' | 'resolved' | 'sync_complete'
   message: string
-  reportId: string
+  reportId: string | undefined
   read: boolean
   createdAt: Date
 }
