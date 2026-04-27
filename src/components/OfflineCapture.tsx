@@ -14,7 +14,7 @@ type Step = 'location' | 'photo' | 'details' | 'saved'
 
 export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProps) {
   const { t } = useTranslation()
-  const { reportCategories } = useAppStore()
+  const { reportCategories, currentUserId } = useAppStore()
   const activeCategories = reportCategories.filter(
     (c) => c.isActive && c.id !== 'sheep' && c.name.toLowerCase() !== 'sheep'
   )
@@ -198,6 +198,16 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
           ))}
         </div>
       </div>
+
+      {/* Not signed in — warn that report won't auto-upload */}
+      {!currentUserId && step !== 'saved' && (
+        <div className="bg-[#FA9335]/20 border-b border-[#FA9335]/30 px-4 py-2 flex items-center gap-2">
+          <span className="text-sm">⚠️</span>
+          <p className="text-[#FA9335] text-xs">
+            {t('offline.notSignedIn', {}, "You're not signed in — sign in before syncing so your report uploads")}
+          </p>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto p-4">
 

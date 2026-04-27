@@ -140,6 +140,31 @@ export default function OfflineSyncBanner() {
   // Nothing to show
   if (!isOnline || pendingCount === 0 || dismissed) return null
 
+  // No session at all — user never signed in or explicitly signed out
+  if (!currentUserId) {
+    return (
+      <div className="mx-4 mb-4 rounded-2xl border border-[#7D8DCC]/40 bg-[#7D8DCC]/10 p-4 shadow-sm">
+        <div className="flex items-start gap-3">
+          <span className="text-2xl flex-shrink-0">📡</span>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-[#614270] text-sm">
+              {t('sync.pendingCount', { count: pendingCount }, `${pendingCount} offline ${pendingCount === 1 ? 'sighting' : 'sightings'} waiting to upload`)}
+            </p>
+            <p className="text-[#92998B] text-xs mt-0.5">
+              {t('sync.signInToUpload', {}, 'Sign in to upload your saved reports')}
+            </p>
+            <a
+              href="/auth"
+              className="inline-block mt-3 px-4 py-2 bg-[#7D8DCC] text-white rounded-xl text-sm font-semibold hover:bg-[#6b7bb8] transition-colors"
+            >
+              {t('sync.signIn', {}, 'Sign in')}
+            </a>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // Show success briefly then auto-dismiss
   if (syncResult && syncResult.failed === 0) {
     setTimeout(() => setDismissed(true), 3000)

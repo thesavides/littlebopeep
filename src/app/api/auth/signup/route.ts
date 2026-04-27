@@ -45,12 +45,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create user in Supabase Auth
-    // email_confirm: true auto-confirms without sending email
+    // Create user in Supabase Auth.
+    // email_confirm is intentionally omitted (defaults to false) so Supabase sends
+    // a real email-confirmation email to the user. Login is NOT blocked pending
+    // confirmation — the Supabase project must have "Confirm email" disabled in
+    // Authentication > Providers > Email so users can sign in immediately while
+    // their email gets verified in the background.
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: true, // Auto-confirm email (no confirmation email sent)
       user_metadata: {
         full_name: fullName
       }
