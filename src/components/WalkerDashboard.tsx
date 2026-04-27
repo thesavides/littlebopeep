@@ -19,7 +19,7 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 import { btn, input, label, card, text, badge as statusBadge } from '@/lib/ui'
 import { useTranslation } from '@/contexts/TranslationContext'
 
-type ViewState = 'dashboard' | 'reporting' | 'my-reports'
+type ViewState = 'dashboard' | 'reporting' | 'my-reports' | 'notifications'
 
 interface WalkerDashboardProps {
   onExitToAdmin?: () => void
@@ -297,6 +297,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
       return `Report ${catName} (${displayStep}/${totalSteps})`
     }
     if (viewState === 'my-reports') return t('walker.myReports', {}, 'My Reports')
+    if (viewState === 'notifications') return t('walker.alerts', {}, 'Alerts')
     return ''
   }
 
@@ -333,32 +334,16 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
         showBackButton={viewState !== 'dashboard'}
         onBack={handleBack}
         title={getTitle()}
-        rightSlot={currentUserId && viewState !== 'reporting' ? (
-          <div className="flex items-center gap-2">
-            {/* My Reports */}
-            <button
-              onClick={() => setViewState('my-reports')}
-              aria-label="My Reports"
-              className="relative w-9 h-9 rounded-full bg-[#D1D9C5] hover:bg-[#92998B]/30 flex items-center justify-center text-[#614270] transition-colors"
-            >
-              <span className="text-base leading-none">📋</span>
-              {allNotifications.filter(n => !n.read_at).length > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-[#FA9335] text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
-                  {allNotifications.filter(n => !n.read_at).length > 99 ? '99+' : allNotifications.filter(n => !n.read_at).length}
-                </span>
-              )}
-            </button>
-            {/* Profile */}
-            <button
-              onClick={() => setProfileOpen(true)}
-              aria-label="Profile"
-              className="w-9 h-9 rounded-full bg-[#D1D9C5] hover:bg-[#92998B]/30 flex items-center justify-center text-[#614270] transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </button>
-          </div>
+        rightSlot={!currentUserId && viewState !== 'reporting' ? (
+          <button
+            onClick={() => setProfileOpen(true)}
+            aria-label="Profile"
+            className="w-9 h-9 rounded-full bg-[#D1D9C5] hover:bg-[#92998B]/30 flex items-center justify-center text-[#614270] transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </button>
         ) : undefined}
       />
 
@@ -370,7 +355,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
           </span>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => { setViewState('my-reports'); setLoginBannerDismissed(true) }}
+              onClick={() => { setViewState('notifications'); setLoginBannerDismissed(true) }}
               className="text-sm underline text-[#EADA69] hover:text-white"
             >
               View
@@ -915,75 +900,64 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
           </>
         )}
 
+        {/* ===== NOTIFICATIONS VIEW ===== */}
+        {viewState === 'notifications' && currentUserId && (
+          <div className="space-y-4">
+            <NotificationPrefsPanel userId={currentUserId} role="walker" />
+
+            {allNotifications.length === 0 ? (
+              <div className="bg-white rounded-xl shadow p-8 text-center">
+                <div className="text-4xl mb-3">🔔</div>
+                <p className="text-[#614270] font-medium mb-1">{t('walker.notif.empty', {}, 'No updates yet')}</p>
+                <p className="text-[#92998B] text-sm">{t('walker.notif.emptyHint', {}, "You'll see claim, resolve, and thank-you messages here")}</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl shadow p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-[#614270]">
+                    {t('walker.updates', { count: allNotifications.length }, `Updates (${allNotifications.length})`)}
+                  </h3>
+                </div>
+                <div className="space-y-2">
+                  {allNotifications.map(notif => {
+                    const report = myReports.find(r => r.id === notif.report_id)
+                    const isUnread = !notif.read_at
+                    const typeConfig: Record<string, { icon: string; label: string }> = {
+                      thank_you:       { icon: '💌', label: notif.sender_name ? `🧑‍🌾 ${notif.sender_name}` : t('walker.notif.aFarmer', {}, 'A farmer') },
+                      report_claimed:  { icon: '🙋', label: notif.sender_name ? t('walker.notif.claimedBy', { name: notif.sender_name }, `Claimed by ${notif.sender_name}`) : t('walker.notif.reportClaimed', {}, 'Your report was claimed') },
+                      report_resolved: { icon: '✅', label: notif.sender_name ? t('walker.notif.resolvedBy', { name: notif.sender_name }, `Resolved by ${notif.sender_name}`) : t('walker.notif.reportResolved', {}, 'Your report was resolved') },
+                      report_complete: { icon: '🎉', label: t('walker.notif.reportComplete', {}, 'Report marked complete') },
+                      new_report:      { icon: '📍', label: t('walker.notif.newReport', {}, 'New report') },
+                      sync_complete:   { icon: '📡', label: t('walker.notif.syncComplete', {}, 'Offline reports uploaded') },
+                    }
+                    const cfg = typeConfig[notif.type] ?? { icon: '🔔', label: t('walker.notif.update', {}, 'Update') }
+                    return (
+                      <div key={notif.id} className={`rounded-lg p-3 text-sm ${isUnread ? 'bg-[#EADA69]/20 border border-[#EADA69]/40' : 'bg-[#D1D9C5]/40'}`}>
+                        <div className="flex items-center gap-1.5 mb-1">
+                          {isUnread && <span className="inline-block w-2 h-2 bg-[#EADA69] rounded-full flex-shrink-0" />}
+                          <span className="text-xs font-semibold text-[#614270]">{cfg.icon} {cfg.label}</span>
+                          <span className="text-xs text-[#92998B] ml-auto">{new Date(notif.sent_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+                        </div>
+                        {notif.message_text && (
+                          <p className="text-[#614270] italic">&ldquo;{notif.message_text}&rdquo;</p>
+                        )}
+                        {report && (
+                          <p className="text-xs text-[#92998B] mt-1">
+                            Re: {report.categoryEmoji} {report.categoryName}
+                          </p>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ===== MY REPORTS VIEW ===== */}
         {viewState === 'my-reports' && (
           <>
-            {/* Notifications + preferences */}
-            {currentUserId && (
-              <div className="mb-4">
-                {/* Notification preferences panel */}
-                <div className="mb-4">
-                  <NotificationPrefsPanel userId={currentUserId} role="walker" />
-                </div>
-
-                {/* All notifications */}
-                {allNotifications.length > 0 && (
-                  <div className="bg-[#EADA69]/20 border border-[#EADA69]/40 rounded-xl p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-semibold text-[#614270]">
-                        🔔 {t('walker.updates', { count: allNotifications.length }, `Updates (${allNotifications.length})`)}
-                      </h3>
-                      {allNotifications.some(n => !n.read_at) && (
-                        <button
-                          onClick={async () => {
-                            await markAllNotificationsRead(currentUserId)
-                            setAllNotifications(prev => prev.map(n => ({ ...n, read_at: n.read_at || new Date().toISOString() })))
-                            setThankYouMessages(prev => prev.map(n => ({ ...n, read_at: n.read_at || new Date().toISOString() })))
-                            setLoginBannerDismissed(true)
-                          }}
-                          className="text-xs text-[#614270] hover:underline"
-                        >
-                          {t('walker.markAllRead', {}, 'Mark all read')}
-                        </button>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      {allNotifications.map(notif => {
-                        const report = myReports.find(r => r.id === notif.report_id)
-                        const isUnread = !notif.read_at
-                        const typeConfig: Record<string, { icon: string; label: string }> = {
-                          thank_you:       { icon: '💌', label: notif.sender_name ? `🧑‍🌾 ${notif.sender_name}` : t('walker.notif.aFarmer', {}, 'A farmer') },
-                          report_claimed:  { icon: '🙋', label: notif.sender_name ? t('walker.notif.claimedBy', { name: notif.sender_name }, `Claimed by ${notif.sender_name}`) : t('walker.notif.reportClaimed', {}, 'Your report was claimed') },
-                          report_resolved: { icon: '✅', label: notif.sender_name ? t('walker.notif.resolvedBy', { name: notif.sender_name }, `Resolved by ${notif.sender_name}`) : t('walker.notif.reportResolved', {}, 'Your report was resolved') },
-                          report_complete: { icon: '🎉', label: t('walker.notif.reportComplete', {}, 'Report marked complete') },
-                          new_report:      { icon: '📍', label: t('walker.notif.newReport', {}, 'New report') },
-                          sync_complete:   { icon: '📡', label: t('walker.notif.syncComplete', {}, 'Offline reports uploaded') },
-                        }
-                        const cfg = typeConfig[notif.type] ?? { icon: '🔔', label: t('walker.notif.update', {}, 'Update') }
-                        return (
-                          <div key={notif.id} className={`rounded-lg p-3 text-sm ${isUnread ? 'bg-white border border-[#EADA69]/60 shadow-sm' : 'bg-[#EADA69]/10'}`}>
-                            <div className="flex items-center gap-1.5 mb-1">
-                              {isUnread && <span className="inline-block w-2 h-2 bg-[#EADA69] rounded-full flex-shrink-0" />}
-                              <span className="text-xs font-semibold text-[#614270]">{cfg.icon} {cfg.label}</span>
-                              <span className="text-xs text-[#92998B] ml-auto">{new Date(notif.sent_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
-                            </div>
-                            {notif.message_text && (
-                              <p className="text-[#614270] italic">&ldquo;{notif.message_text}&rdquo;</p>
-                            )}
-                            {report && (
-                              <p className="text-xs text-[#92998B] mt-1">
-                                Re: {report.categoryEmoji} {report.categoryName}
-                              </p>
-                            )}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
             {myReports.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">🐑</div>
@@ -1156,51 +1130,56 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
 
       {/* Bottom Navigation — hidden during active report flow */}
       {viewState !== 'reporting' && (
-        currentUserId ? (
-          <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#D1D9C5] safe-area-pb px-4 py-3">
-            <button
-              onClick={() => isOnline ? setShowCategoryPicker(true) : setShowOfflineCapture(true)}
-              className="w-full py-4 bg-[#7D8DCC] text-white rounded-xl font-semibold text-base hover:bg-[#7D8DCC]/90 active:scale-[0.98] transition-all focus:outline-none focus:ring-2 focus:ring-[#7D8DCC] focus:ring-offset-2 shadow-sm"
-            >
-              {isOnline ? t('walker.nav.report', {}, 'Report') : `📴 ${t('walker.nav.saveOffline', {}, 'Save offline')}`}
-            </button>
-          </nav>
-        ) : (
-          <BottomNav
-            items={[
-              {
-                id: 'map',
-                label: t('walker.nav.map', {}, 'Map'),
-                icon: '🗺️',
-                active: viewState === 'dashboard',
-                onClick: () => setViewState('dashboard'),
+        <BottomNav
+          items={[
+            {
+              id: 'map',
+              label: t('walker.nav.map', {}, 'Map'),
+              icon: '🗺️',
+              active: viewState === 'dashboard',
+              onClick: () => setViewState('dashboard'),
+            },
+            {
+              id: 'reports',
+              label: t('walker.nav.myReports', {}, 'My Reports'),
+              icon: '📋',
+              active: viewState === 'my-reports',
+              onClick: () => setViewState('my-reports'),
+            },
+            ...(currentUserId ? [{
+              id: 'alerts',
+              label: t('walker.nav.alerts', {}, 'Alerts'),
+              icon: '🔔',
+              active: viewState === 'notifications',
+              badge: allNotifications.filter(n => !n.read_at).length,
+              onClick: async () => {
+                setViewState('notifications')
+                setLoginBannerDismissed(true)
+                if (currentUserId && allNotifications.some(n => !n.read_at)) {
+                  await markAllNotificationsRead(currentUserId)
+                  setAllNotifications(prev => prev.map(n => ({ ...n, read_at: n.read_at || new Date().toISOString() })))
+                  setThankYouMessages(prev => prev.map(n => ({ ...n, read_at: n.read_at || new Date().toISOString() })))
+                }
               },
-              {
-                id: 'reports',
-                label: t('walker.nav.myReports', {}, 'My Reports'),
-                icon: '📋',
-                active: viewState === 'my-reports',
-                badge: allNotifications.filter(n => !n.read_at).length,
-                onClick: () => setViewState('my-reports'),
-              },
-              {
-                id: 'profile',
-                label: t('walker.nav.profile', {}, 'Profile'),
-                icon: '👤',
-                onClick: () => setProfileOpen(true),
-              },
-            ]}
-            fab={{
-              label: isOnline ? t('walker.nav.report', {}, 'Report') : t('walker.nav.saveOffline', {}, 'Save offline'),
-              icon: isOnline
-                ? (preferredCategory?.imageUrl
-                  ? <img src={preferredCategory.imageUrl} alt={preferredCategory.name} className="w-7 h-7 object-contain" />
-                  : <span className="text-2xl">{preferredCategory?.emoji ?? '🐑'}</span>)
-                : <span className="text-2xl">📴</span>,
-              onClick: () => isOnline ? setShowCategoryPicker(true) : setShowOfflineCapture(true),
-            }}
-          />
-        )
+            }] : []),
+            {
+              id: 'profile',
+              label: t('walker.nav.profile', {}, 'Profile'),
+              icon: '👤',
+              active: false,
+              onClick: () => setProfileOpen(true),
+            },
+          ]}
+          fab={{
+            label: isOnline ? t('walker.nav.report', {}, 'Report') : t('walker.nav.saveOffline', {}, 'Save offline'),
+            icon: isOnline
+              ? (preferredCategory?.imageUrl
+                ? <img src={preferredCategory.imageUrl} alt={preferredCategory.name} className="w-7 h-7 object-contain" />
+                : <span className="text-2xl">{preferredCategory?.emoji ?? '🐑'}</span>)
+              : <span className="text-2xl">📴</span>,
+            onClick: () => isOnline ? setShowCategoryPicker(true) : setShowOfflineCapture(true),
+          }}
+        />
       )}
 
       <ProfileDrawer open={profileOpen} onClose={() => setProfileOpen(false)} />
