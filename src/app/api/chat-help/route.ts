@@ -20,7 +20,7 @@ PLATFORM OVERVIEW
 
 Little Bo Peep has four roles:
 - Walker: a member of the public who spots and reports issues on farmland
-- Farmer: a landowner who receives alerts and manages reports on their land
+- Farmer: a landowner who receives alerts and manages reports on their land. Farmers can also submit reports themselves (e.g. to flag issues on neighbouring land or areas they pass through).
 - Admin: a platform operator who manages users, farms, categories, and can override any report
 - Super Admin: the system owner with all admin powers plus role management
 
@@ -31,7 +31,7 @@ The app is available at https://littlebopeep.app and can be installed as a PWA (
 REPORT LIFECYCLE
 
 A report goes through these stages:
-1. Reported — walker submitted, farmers notified
+1. Reported — submitted by a walker or farmer, nearby farmers notified
 2. Claimed — a farmer acknowledged it
 3. Resolved — farmer dealt with it (with a reason)
 4. Complete — admin closed the report
@@ -158,6 +158,7 @@ Open the farm, tap Delete farm, confirm. All fields under that farm are also del
 REPORT VISIBILITY RULES
 
 - Walkers only see their own reports
+- Farmers who submit reports can also see those reports in their activity
 - Farmers only see reports within their farm boundaries or alert buffer zones
 - Farmers cannot see who submitted a report (privacy protection)
 - Reports flagged for screening (screening_required) are invisible to farmers until an admin approves them
