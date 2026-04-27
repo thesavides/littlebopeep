@@ -20,6 +20,7 @@ export interface UserProfile {
   created_by?: string
   last_login_at?: string
   password_reset_required: boolean
+  email_confirmed_at?: string | null
   created_at: string
   updated_at: string
 }

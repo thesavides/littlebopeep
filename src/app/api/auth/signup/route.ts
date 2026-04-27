@@ -68,6 +68,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Create user profile (using service role key bypasses RLS)
+    // New users start as 'pending_verification' — login is not blocked, but
+    // email confirmation upgrades status to 'active' and sets email_confirmed_at.
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('user_profiles')
       .insert([{
@@ -75,7 +77,7 @@ export async function POST(request: NextRequest) {
         email,
         full_name: fullName,
         role,
-        status: 'active',
+        status: 'pending_verification',
         password_reset_required: false,
         email_alerts_enabled: emailAlerts === true,
         terms_accepted_at: termsAcceptedAt || new Date().toISOString(),
@@ -100,6 +102,12 @@ export async function POST(request: NextRequest) {
 
     await writeAuditLogServer(
       { actorId: authData.user.id, actorEmail: email, action: 'user.signup', entityType: 'user', entityId: authData.user.id, detail: { fullName, role } },
+      supabaseAdmin, request.headers
+    )
+
+    // Record that a verification email was dispatched (for admin follow-up tracking)
+    await writeAuditLogServer(
+      { actorId: authData.user.id, actorEmail: email, action: 'user.email_verification_sent', entityType: 'user', entityId: authData.user.id, detail: { email, fullName } },
       supabaseAdmin, request.headers
     )
 

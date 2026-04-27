@@ -525,7 +525,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                 <span>📍</span> {t('walker.yourLocation', {}, 'Your location')}
               </div>
               <div className="flex items-center gap-1">
-                <span>🐑</span> {t('walker.reportedSheep12h', {}, 'Reported sheep (last 12h)')}
+                <span>📌</span> {t('walker.reportedSheep12h', {}, 'Recent reports (last 12h)')}
               </div>
             </div>
 
@@ -690,27 +690,11 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                   {t('walker.step2Title', { name: activeCategory ? activeCategory.name.toLowerCase() : 'sheep' }, `Tell us about the ${activeCategory ? activeCategory.name.toLowerCase() : 'sheep'}`)}
                 </h2>
                 <div className="space-y-4">
-                  {/* Quantity — quick-pick 1-10 + stepper for larger */}
+                  {/* Quantity — +/- stepper */}
                   <div>
                     <label className="block text-sm font-medium text-[#614270] mb-2">
-                      {activeCategory ? (activeCategory.countLabel || 'Quantity') : t('walker.sheepCount', {}, 'Number of sheep')}
+                      {activeCategory ? (activeCategory.countLabel || 'Quantity') : t('walker.quantity', {}, 'Quantity')}
                     </label>
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                        <button
-                          key={n}
-                          type="button"
-                          onClick={() => updateDraftReport({ sheepCount: n })}
-                          className={`w-11 h-11 rounded-lg font-semibold text-sm border-2 transition-colors ${
-                            (draftReport.sheepCount || 1) === n
-                              ? 'bg-[#7D8DCC] text-white border-[#7D8DCC]'
-                              : 'bg-white text-[#614270] border-[#D1D9C5] hover:border-[#7D8DCC]'
-                          }`}
-                        >
-                          {n}
-                        </button>
-                      ))}
-                    </div>
                     <div className="flex items-center gap-3">
                       <button
                         type="button"
@@ -799,7 +783,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                       onPhotosUploaded={(urls) => updateDraftReport({ photoUrls: urls })}
                     />
                     <p className="text-xs text-[#92998B] mt-2">
-                      {t('walker.photoHelp', {}, 'Photos help farmers identify the sheep. Max 3 photos.')}
+                      {t('walker.photoHelp', {}, 'Photos help farmers identify the issue. Max 3 photos.')}
                     </p>
                   </div>
                 </div>

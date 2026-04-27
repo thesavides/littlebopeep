@@ -69,6 +69,7 @@ export default function AdminDashboard() {
   const [loadingUsers, setLoadingUsers] = useState(true)
   const [auditLogs, setAuditLogs] = useState<any[]>([])
   const [loadingAudit, setLoadingAudit] = useState(false)
+  const [resendingVerification, setResendingVerification] = useState<string | null>(null)
 
   // Modal states for CRUD operations
   const [showCreateFarmerModal, setShowCreateFarmerModal] = useState(false)
@@ -158,6 +159,28 @@ export default function AdminDashboard() {
       alert(`Password reset email sent to ${email}`)
     } else {
       alert(error || 'Failed to send password reset email')
+    }
+  }
+
+  const handleResendVerification = async (userId: string, email: string) => {
+    if (!confirm(`Resend email verification to "${email}"?`)) return
+    setResendingVerification(userId)
+    try {
+      const res = await fetch('/api/admin/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, actorId: currentUserId }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        alert(`Verification email resent to ${email}`)
+      } else {
+        alert(data.error || 'Failed to resend verification email')
+      }
+    } catch {
+      alert('Failed to resend verification email')
+    } finally {
+      setResendingVerification(null)
     }
   }
 
@@ -1639,6 +1662,7 @@ export default function AdminDashboard() {
                     const userReports = reports.filter(r => r.reporterId === user.id)
                     const displayName = user.full_name || user.name || '-'
                     const isActive = user.status !== 'suspended'
+                    const isPendingVerification = user.status === 'pending_verification'
                     return (
                       <tr key={user.id} className={!isActive ? 'bg-[#D1D9C5] opacity-60' : ''}>
                         <td className="px-4 py-4 whitespace-nowrap">
@@ -1657,6 +1681,8 @@ export default function AdminDashboard() {
                             <span className="px-2 py-1 text-xs font-semibold rounded-full bg-[#FA9335]/10 text-[#FA9335]">Suspended</span>
                           ) : user.status === 'password_reset_required' ? (
                             <span className="px-2 py-1 text-xs font-semibold rounded-full bg-[#FA9335]/10 text-[#FA9335]">Reset Required</span>
+                          ) : user.status === 'pending_verification' ? (
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-[#EADA69]/30 text-[#8a7400]" title="Email confirmation not yet received">✉️ Email Pending</span>
                           ) : (
                             <span className="px-2 py-1 text-xs font-semibold rounded-full bg-[#EADA69]/20 text-[#614270]">Pending</span>
                           )}
@@ -1676,6 +1702,16 @@ export default function AdminDashboard() {
                               <button onClick={() => handleSuspend(user.id)} className="px-2 py-1 bg-[#EADA69]/20 text-[#614270] rounded text-xs font-medium hover:bg-[#EADA69]/30">Suspend</button>
                             ) : (
                               <button onClick={() => handleActivate(user.id)} className="px-2 py-1 bg-[#9ED663]/20 text-[#614270] rounded text-xs font-medium hover:bg-[#9ED663]/30">Activate</button>
+                            )}
+                            {isPendingVerification && user.email && (
+                              <button
+                                onClick={() => handleResendVerification(user.id, user.email)}
+                                disabled={resendingVerification === user.id}
+                                className="px-2 py-1 bg-[#EADA69]/30 text-[#8a7400] rounded text-xs font-medium hover:bg-[#EADA69]/50 disabled:opacity-50"
+                                title="Resend email verification"
+                              >
+                                {resendingVerification === user.id ? '…' : 'Resend ✉️'}
+                              </button>
                             )}
                             {user.email && (
                               <button onClick={() => handleResetUserPassword(user.id, user.email)} className="px-2 py-1 bg-[#7D8DCC]/10 text-[#7D8DCC] rounded text-xs font-medium hover:bg-[#7D8DCC]/20">Reset</button>
@@ -1726,6 +1762,7 @@ export default function AdminDashboard() {
                     const userFarms = farms.filter(f => f.farmerId === user.id)
                     const displayName = user.full_name || user.name || '-'
                     const isActive = user.status !== 'suspended'
+                    const isPendingVerification = user.status === 'pending_verification'
                     return (
                       <tr key={user.id} className={!isActive ? 'bg-[#D1D9C5] opacity-60' : ''}>
                         <td className="px-4 py-4 whitespace-nowrap">
@@ -1744,6 +1781,8 @@ export default function AdminDashboard() {
                             <span className="px-2 py-1 text-xs font-semibold rounded-full bg-[#FA9335]/10 text-[#FA9335]">Suspended</span>
                           ) : user.status === 'password_reset_required' ? (
                             <span className="px-2 py-1 text-xs font-semibold rounded-full bg-[#FA9335]/10 text-[#FA9335]">Reset Required</span>
+                          ) : user.status === 'pending_verification' ? (
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-[#EADA69]/30 text-[#8a7400]" title="Email confirmation not yet received">✉️ Email Pending</span>
                           ) : (
                             <span className="px-2 py-1 text-xs font-semibold rounded-full bg-[#EADA69]/20 text-[#614270]">Pending</span>
                           )}
@@ -1763,6 +1802,16 @@ export default function AdminDashboard() {
                               <button onClick={() => handleSuspend(user.id)} className="px-2 py-1 bg-[#EADA69]/20 text-[#614270] rounded text-xs font-medium hover:bg-[#EADA69]/30">Suspend</button>
                             ) : (
                               <button onClick={() => handleActivate(user.id)} className="px-2 py-1 bg-[#9ED663]/20 text-[#614270] rounded text-xs font-medium hover:bg-[#9ED663]/30">Activate</button>
+                            )}
+                            {isPendingVerification && user.email && (
+                              <button
+                                onClick={() => handleResendVerification(user.id, user.email)}
+                                disabled={resendingVerification === user.id}
+                                className="px-2 py-1 bg-[#EADA69]/30 text-[#8a7400] rounded text-xs font-medium hover:bg-[#EADA69]/50 disabled:opacity-50"
+                                title="Resend email verification"
+                              >
+                                {resendingVerification === user.id ? '…' : 'Resend ✉️'}
+                              </button>
                             )}
                             {user.email && (
                               <button onClick={() => handleResetUserPassword(user.id, user.email)} className="px-2 py-1 bg-[#7D8DCC]/10 text-[#7D8DCC] rounded text-xs font-medium hover:bg-[#7D8DCC]/20">Reset</button>

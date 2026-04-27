@@ -455,7 +455,7 @@ export const englishTranslations: TranslationEntry[] = [
   },
   {
     key: 'walker.detailsPlaceholder',
-    value: 'e.g., Near the old stone wall, white sheep with black face, ear tag visible...',
+    value: 'e.g., Near the old stone wall, on the south side of the footpath...',
     namespace: 'walker',
   },
   {
@@ -542,7 +542,7 @@ export const englishTranslations: TranslationEntry[] = [
   },
   {
     key: 'walker.photoHelp',
-    value: 'Photos help farmers identify the sheep. Max 3 photos.',
+    value: 'Photos help farmers identify the issue. Max 3 photos.',
     namespace: 'walker',
   },
   {
@@ -562,7 +562,7 @@ export const englishTranslations: TranslationEntry[] = [
   },
   {
     key: 'walker.reportedSheep12h',
-    value: 'Reported sheep (last 12h)',
+    value: 'Recent reports (last 12h)',
     namespace: 'walker',
   },
   {
@@ -602,17 +602,22 @@ export const englishTranslations: TranslationEntry[] = [
   },
   {
     key: 'walker.tip3',
-    value: 'Note any markings or ear tags if visible',
+    value: 'Add a photo if it is safe to do so',
     namespace: 'walker',
   },
   {
     key: 'walker.tip4',
-    value: 'Report injured sheep as priority',
+    value: 'Report injured or distressed animals as a priority',
     namespace: 'walker',
   },
   {
     key: 'walker.tip5',
-    value: "Don't approach aggressive animals",
+    value: 'Keep a safe distance from any animals',
+    namespace: 'walker',
+  },
+  {
+    key: 'walker.tip6',
+    value: 'You can report any countryside issue — gates, fencing, fly-tipping, and more',
     namespace: 'walker',
   },
   {
