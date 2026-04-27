@@ -1487,33 +1487,29 @@ For anything beyond FAQ help, the bot directs users to `info@littlebopeep.app`.
 | 27 Apr 2026 | Walker Alerts tab | Dedicated **🔔 Alerts** tab added to walker bottom nav (logged-in only). Badge shows unread count. Auto-marks all read on open. `NotificationPrefsPanel` shown above the notification list. Matches farmer Alerts tab experience. |
 | 27 Apr 2026 | Generic countryside copy | Removed sheep-specific language from reporting UI: tips now generic, map legend changed to "Recent reports (last 12h)", photo caption updated, description placeholder updated. DB translations updated (migration 033 / direct upsert). |
 | 27 Apr 2026 | Quantity input simplified | Removed 1–10 quick-pick button grid from the report form. Only the +/− stepper + numeric input remains. |
+| 27 Apr 2026 | Offline photo upload on sync | `dataUrlToFile()` + `uploadPhotoFromDataUrl()` added to `photo-upload.ts`. `OfflineSyncBanner` now uploads base64 photos to Supabase Storage before creating the report. |
+| 27 Apr 2026 | cy/ga/gd translations | 8 missing keys (sync.signIn*, offline.notSignedIn, walker.nav.alerts, walker.alerts, walker.notif.*, home.landing.aboutUs) translated into Welsh, Irish, and Scottish Gaelic via `scripts/seed-missing-translations.mjs`. |
+| 27 Apr 2026 | Outstanding features audit | Verified WS5 (admin detail panel), WS6 (admin filters), WS7 (thank-you messaging), PPAP Req 5 (notification prefs), PPAP Req 11 (farmer bottom nav) all fully implemented. Section 15 updated to show completed status. |
 
 ---
 
 ## SECTION 15 — OUTSTANDING FEATURES
 
-Features that have been specced, discussed, or partially built but not yet complete.
+Features that have been specced, discussed, or partially built but not yet complete as of the dates shown.
 
-### 🔴 Immediate Action Required
+### ✅ Completed (previously listed as outstanding)
 
-| # | Item | Detail |
-|---|---|---|
-| 1 | **Apply migration 032 to production DB** | `email_confirmed_at TIMESTAMPTZ` column not yet added to Supabase. Run via Supabase Dashboard → SQL Editor. See SQL below. |
-| 2 | **Supabase Auth setting** | Authentication → Providers → Email → disable **"Confirm email"**. Required so new users can log in immediately while email confirmation runs in the background. Without this, Supabase blocks login until email is confirmed. |
-
-**Migration 032 SQL (run in Supabase SQL Editor):**
-```sql
-ALTER TABLE user_profiles
-  ADD COLUMN IF NOT EXISTS email_confirmed_at TIMESTAMPTZ DEFAULT NULL;
-
-UPDATE user_profiles
-  SET email_confirmed_at = updated_at
-  WHERE status = 'active' AND email_confirmed_at IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_user_profiles_pending_verification
-  ON user_profiles (status)
-  WHERE status = 'pending_verification';
-```
+| # | Item | Completed | Detail |
+|---|---|---|---|
+| 1 | **Migration 032 applied** | 27 Apr 2026 | `email_confirmed_at TIMESTAMPTZ` added to `user_profiles`. Back-fill applied. Partial index created. |
+| 2 | **Supabase Auth "Confirm email" disabled** | 27 Apr 2026 | Users can sign in immediately. Confirmation email is cosmetic / trust signal only. |
+| 5 | **Offline photo upload on sync** | 27 Apr 2026 | `dataUrlToFile()` + `uploadPhotoFromDataUrl()` in `photo-upload.ts`. `OfflineSyncBanner.handleSync` uploads base64 photos to Supabase Storage before `createReport()`. |
+| 7 | **cy/ga/gd translations for new keys** | 27 Apr 2026 | 8 keys × 3 languages seeded via `scripts/seed-missing-translations.mjs --translate`. |
+| WS5 | **Admin report detail panel** | Apr 2026 | GPS mini-map (Leaflet, report coordinates), notification history (all notifications for the report with read status), audit trail (all `report.*` events), photos, affected farms/farmers, edit controls, comments. |
+| WS6 | **Admin report filter improvements** | Apr 2026 | Date range picker (from/to), reporter/walker dropdown, keyword/report ID text search, Clear button. All filter logic in `filteredReports` useMemo. |
+| WS7 | **Farmer → Walker Thank You messaging** | Apr 2026 | Farmer sends from claimed/resolved report cards. Admin can send on behalf of any farmer from detail panel. Walker receives in Alerts tab with icon, sender name, message text, and report context. |
+| PPAP 5 | **Notification preferences UI** | Apr 2026 | `NotificationPrefsPanel` shown in Alerts tab for both walker and farmer. Toggles: email_alerts, in_app_claimed, in_app_resolved, in_app_thankyou (walker); email_alerts, in_app_new_report (farmer). Persisted via `notification_preferences` JSONB column. |
+| PPAP 11 | **Farmer dashboard mobile menu** | Apr 2026 | `BottomNav` with 4 tabs: 🏠 Dashboard, 🏡 Farms, 🔔 Alerts (with unread badge), 👤 Profile. Hidden during registration flow. |
 
 ### 🟡 Infrastructure / Integration Gaps
 
@@ -1521,14 +1517,7 @@ CREATE INDEX IF NOT EXISTS idx_user_profiles_pending_verification
 |---|---|---|
 | 3 | **Stripe billing integration** | `cancelSubscription()` is a local Zustand stub only — no real Stripe checkout, webhook, or billing portal. UI shows "Powered by Stripe" but no payments process. Full integration requires Stripe account, `stripe` npm package, webhook endpoint, and price ID configuration. |
 | 4 | **PWA app icon badge** | In-app unread badge exists but the installed home screen icon does not show a count. Requires Web Push API + service worker push handler. iOS 16.4+ and Android Chrome both support badge counts for installed PWAs. Estimated effort: 2–3 days. |
-| 5 | **Offline photo upload on sync** | Photos taken offline are stored as base64 data URLs in IndexedDB and are NOT uploaded to Supabase Storage when the report syncs. Only text data syncs. Full fix requires re-uploading data URLs to storage on connection restore. |
 | 6 | **SMS notifications** | Subscription feature comparison mentions "SMS notifications" but this is not built. Email alerts exist; SMS does not. Would require a provider (e.g. Twilio or AWS SNS). |
-
-### 🟢 Translation Gaps
-
-| # | Item | Detail |
-|---|---|---|
-| 7 | **New keys not translated for cy/ga/gd** | The following keys have English fallbacks only and are not yet seeded for Welsh, Irish, and Scottish Gaelic: `sync.signInToUpload`, `sync.signIn`, `offline.notSignedIn`, `walker.nav.alerts`, `walker.alerts`, `walker.notif.empty`, `walker.notif.emptyHint`, `home.landing.aboutUs`. Run the AI translation script for these keys when ready. |
 
 ### ⚪ Explicitly Deferred
 
