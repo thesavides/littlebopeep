@@ -70,7 +70,7 @@ Standard flow:
 |---|---|
 | `active` | Can sign in and use the system |
 | `suspended` | Cannot sign in; account frozen |
-| `pending_verification` | Email not yet verified |
+| `pending_verification` | Self-registered, email confirmation not yet received. **Login is not blocked** — user can sign in immediately. Status upgrades to `active` automatically when the user clicks the confirmation link. |
 | `password_reset_required` | Must change password on next login |
 | `invited` | Admin-sent invite; user has not yet accepted |
 
@@ -439,10 +439,20 @@ any        → deleted   (admin hard delete)
 
 #### User Lifecycle
 
+**Self-registration (walker or farmer):**
+1. User completes signup form at `/auth?mode=signup`
+2. Account created with `status = pending_verification`; Supabase sends a confirmation email
+3. User can sign in immediately — login is **not** blocked by unverified status
+4. User clicks confirmation link in email → lands on `/auth/email-confirmed` → code exchanged → `POST /api/auth/confirm-email` → `status → active`, `email_confirmed_at` stamped
+5. Admin can see `✉️ Email Pending` badge on users whose status is still `pending_verification` and can use the **Resend ✉️** button to trigger a new confirmation email
+
+**Admin-invited user:**
 1. Super admin or admin invites user by email → Resend sends branded invite email
 2. User clicks invite link → lands on `/auth?mode=signup` with role pre-populated
 3. User sets password and completes profile
-4. Account becomes `active`
+4. Account becomes `active` (no email verification step for admin-invited users)
+
+**Ongoing:**
 5. Admin can suspend, reactivate, reset password, change role, or delete
 6. Deletion: removes from auth and `user_profiles`; farms deleted; reports retained with denormalised `submitted_by_user_name`
 
@@ -462,7 +472,7 @@ any        → deleted   (admin hard delete)
 
 1. Walker taps the **+** FAB button (bottom centre of WalkerDashboard) or the "Report" primary button
 2. **Step 1 — Location:** Map opens. Walker taps "Use my location" or pins location manually. GPS accuracy shown. Walker taps "Confirm location"
-3. **Step 2 — Category and Conditions:** Category picker shown (categories from DB, defaulting to user/system default). Walker selects category. Conditions for that category shown as multi-select chips. Walker selects all applicable conditions. If `showCount = true` for the category, count input shown (quick-pick grid 1–10 + stepper)
+3. **Step 2 — Category and Conditions:** Category picker shown (categories from DB, defaulting to user/system default). Walker selects category. Conditions for that category shown as multi-select chips. Walker selects all applicable conditions. If `showCount = true` for the category, count input shown as a **+/− stepper** with a numeric input field (direct input supported)
 4. **Step 3 — Details:** Free-text description field. Photo upload section: Walker can take a photo (Camera button, uses `capture="environment"`) or choose from library (Library button). Up to 3 photos. Submit button disabled while upload in progress. Guest fields (name, email, phone) shown only if not signed in
 5. Walker taps "Submit Report"
 6. Report saved optimistically to local Zustand store immediately
@@ -510,13 +520,17 @@ Same as above except:
 5. Walker taps Edit: inline edit form opens below the card with editable description, count, conditions, and photo upload
 6. Walker saves: `editOwnReport()` called optimistically then synced to Supabase
 
-#### 4.1.6 Notification Inbox
+#### 4.1.6 Notification Inbox (Alerts tab)
 
-1. Walker taps the bell icon or notification banner
-2. Inbox shows all notifications: `thank_you`, `report_claimed`, `report_resolved`, `report_complete`
-3. Each notification shows message text, timestamp, report reference
-4. Walker taps "Mark all read" to clear badge
-5. Walker can toggle email alerts on/off via the toggle in the notifications view
+1. Walker taps the **🔔 Alerts** tab in the bottom nav (badge count shown when unread items exist)
+2. All notifications auto-marked read on tab open
+3. Inbox shows all notifications: `thank_you`, `report_claimed`, `report_resolved`, `report_complete`, `sync_complete`
+4. Each card shows: icon, type label, sender name (if known), date, message text, and associated report category
+5. Unread items have an amber highlight and a yellow dot indicator
+6. Empty state shown when no notifications have been received yet
+7. Notification preferences panel (email toggle, per-type toggles) shown above the list on the same screen
+
+**Note:** The bottom nav **🔔 Alerts** tab is only shown to signed-in walkers. Guest walkers see the Map / My Reports / Profile tabs only.
 
 ---
 
@@ -1467,7 +1481,62 @@ For anything beyond FAQ help, the bot directs users to `info@littlebopeep.app`.
 | 26 Apr 2026 | Offline sync auth fix | `OfflineSyncBanner.handleSync` now calls `supabase.auth.refreshSession()` before any inserts. Clear "Session expired" error shown if refresh fails |
 | 26 Apr 2026 | OfflineCapture fully i18n'd | All 33 user-visible strings in the offline capture overlay wrapped in `t()`. 132 keys seeded (33 × en/cy/ga/gd). Cache version bumped to v16 |
 | 26 Apr 2026 | Translation cache v16 | Includes: notifPrefs.* (15 keys), farmer.thankYou* (11 keys), sync.authError (1 key), offline.* (33 keys) across all 4 languages |
+| 27 Apr 2026 | Email verification flow | New signups get `status = pending_verification`. Confirmation email sent by Supabase. Clicking link → `/auth/email-confirmed` → `POST /api/auth/confirm-email` → `status → active` + `email_confirmed_at` stamped. Audit events: `user.email_verification_sent` and `user.email_verified`. Migration 032 adds `email_confirmed_at TIMESTAMPTZ` to `user_profiles`. |
+| 27 Apr 2026 | Admin email verification UI | `✉️ Email Pending` badge on walker and farmer rows for `pending_verification` users. **Resend ✉️** button triggers `POST /api/admin/resend-verification` (uses Supabase Admin API `generateLink`). Loading state per user. |
+| 27 Apr 2026 | Auth callback updated | `/auth/callback` now detects `type=signup` or `type=email` and redirects to `/auth/email-confirmed` instead of `/auth/reset-password`. |
+| 27 Apr 2026 | Walker Alerts tab | Dedicated **🔔 Alerts** tab added to walker bottom nav (logged-in only). Badge shows unread count. Auto-marks all read on open. `NotificationPrefsPanel` shown above the notification list. Matches farmer Alerts tab experience. |
+| 27 Apr 2026 | Generic countryside copy | Removed sheep-specific language from reporting UI: tips now generic, map legend changed to "Recent reports (last 12h)", photo caption updated, description placeholder updated. DB translations updated (migration 033 / direct upsert). |
+| 27 Apr 2026 | Quantity input simplified | Removed 1–10 quick-pick button grid from the report form. Only the +/− stepper + numeric input remains. |
 
 ---
 
-*Document last updated: 26 April 2026. Engineering changes after this date should be reflected by updating the relevant sections.*
+## SECTION 15 — OUTSTANDING FEATURES
+
+Features that have been specced, discussed, or partially built but not yet complete.
+
+### 🔴 Immediate Action Required
+
+| # | Item | Detail |
+|---|---|---|
+| 1 | **Apply migration 032 to production DB** | `email_confirmed_at TIMESTAMPTZ` column not yet added to Supabase. Run via Supabase Dashboard → SQL Editor. See SQL below. |
+| 2 | **Supabase Auth setting** | Authentication → Providers → Email → disable **"Confirm email"**. Required so new users can log in immediately while email confirmation runs in the background. Without this, Supabase blocks login until email is confirmed. |
+
+**Migration 032 SQL (run in Supabase SQL Editor):**
+```sql
+ALTER TABLE user_profiles
+  ADD COLUMN IF NOT EXISTS email_confirmed_at TIMESTAMPTZ DEFAULT NULL;
+
+UPDATE user_profiles
+  SET email_confirmed_at = updated_at
+  WHERE status = 'active' AND email_confirmed_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_user_profiles_pending_verification
+  ON user_profiles (status)
+  WHERE status = 'pending_verification';
+```
+
+### 🟡 Infrastructure / Integration Gaps
+
+| # | Item | Detail |
+|---|---|---|
+| 3 | **Stripe billing integration** | `cancelSubscription()` is a local Zustand stub only — no real Stripe checkout, webhook, or billing portal. UI shows "Powered by Stripe" but no payments process. Full integration requires Stripe account, `stripe` npm package, webhook endpoint, and price ID configuration. |
+| 4 | **PWA app icon badge** | In-app unread badge exists but the installed home screen icon does not show a count. Requires Web Push API + service worker push handler. iOS 16.4+ and Android Chrome both support badge counts for installed PWAs. Estimated effort: 2–3 days. |
+| 5 | **Offline photo upload on sync** | Photos taken offline are stored as base64 data URLs in IndexedDB and are NOT uploaded to Supabase Storage when the report syncs. Only text data syncs. Full fix requires re-uploading data URLs to storage on connection restore. |
+| 6 | **SMS notifications** | Subscription feature comparison mentions "SMS notifications" but this is not built. Email alerts exist; SMS does not. Would require a provider (e.g. Twilio or AWS SNS). |
+
+### 🟢 Translation Gaps
+
+| # | Item | Detail |
+|---|---|---|
+| 7 | **New keys not translated for cy/ga/gd** | The following keys have English fallbacks only and are not yet seeded for Welsh, Irish, and Scottish Gaelic: `sync.signInToUpload`, `sync.signIn`, `offline.notSignedIn`, `walker.nav.alerts`, `walker.alerts`, `walker.notif.empty`, `walker.notif.emptyHint`, `home.landing.aboutUs`. Run the AI translation script for these keys when ready. |
+
+### ⚪ Explicitly Deferred
+
+| # | Item | Detail |
+|---|---|---|
+| 8 | **Video support (PPAP Req 12)** | Spec decision: do not implement. If ever needed: Supabase Storage policy increase, `video/mp4` MIME type in PhotoUpload, thumbnail generation, VideoPlayer component alongside PhotoGallery. |
+| 9 | **Guest offline capture** | Offline mode requires a signed-in session. Anonymous/guest offline reporting is not supported by design — a session is needed to upload the report on sync. |
+
+---
+
+*Document last updated: 27 April 2026. Engineering changes after this date should be reflected by updating the relevant sections.*
