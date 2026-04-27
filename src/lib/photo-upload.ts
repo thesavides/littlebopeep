@@ -194,6 +194,42 @@ export async function uploadMultiplePhotos(
 }
 
 /**
+ * Convert a base64 data URL (e.g. from IndexedDB offline storage) to a File object
+ * so it can be passed to uploadPhoto().
+ */
+export function dataUrlToFile(dataUrl: string, filename: string): File {
+  const [header, base64] = dataUrl.split(',')
+  const mime = header.match(/:(.*?);/)?.[1] || 'image/jpeg'
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  return new File([bytes], filename, { type: mime })
+}
+
+/**
+ * Upload a photo from a base64 data URL directly to Supabase Storage.
+ * Used during offline-report sync to upload photos that were captured offline.
+ */
+export async function uploadPhotoFromDataUrl(
+  dataUrl: string,
+  reportId: string,
+  index: number
+): Promise<PhotoUploadResult> {
+  try {
+    if (!dataUrl || !dataUrl.startsWith('data:')) {
+      return { success: false, error: 'Invalid data URL' }
+    }
+    const file = dataUrlToFile(dataUrl, `offline-photo-${index}.jpg`)
+    return uploadPhoto(file, reportId)
+  } catch (error) {
+    console.error('uploadPhotoFromDataUrl error:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+  }
+}
+
+/**
  * Delete photo from Supabase Storage
  */
 export async function deletePhoto(photoUrl: string): Promise<boolean> {

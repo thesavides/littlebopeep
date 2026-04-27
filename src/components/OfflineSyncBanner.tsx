@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 import { getPendingReports, markReportSynced, OfflineReport } from '@/lib/offline-db'
 import { createReport, supabase } from '@/lib/supabase-client'
+import { uploadPhotoFromDataUrl } from '@/lib/photo-upload'
 import { useAppStore } from '@/store/appStore'
 import { useTranslation } from '@/contexts/TranslationContext'
 
@@ -78,6 +79,19 @@ export default function OfflineSyncBanner() {
 
       for (const report of reports) {
         try {
+          // Upload any photos that were captured offline as base64 data URLs
+          let uploadedPhotoUrls: string[] = []
+          if (report.photoDataUrls && report.photoDataUrls.length > 0) {
+            const uploadResults = await Promise.all(
+              report.photoDataUrls.map((dataUrl, i) =>
+                uploadPhotoFromDataUrl(dataUrl, report.id, i)
+              )
+            )
+            uploadedPhotoUrls = uploadResults
+              .filter(r => r.success && r.url)
+              .map(r => r.url!)
+          }
+
           await createReport({
             location: { lat: report.latitude, lng: report.longitude },
             timestamp: new Date(report.timestamp),
@@ -88,7 +102,7 @@ export default function OfflineSyncBanner() {
             reporterId: currentUserId || undefined,
             status: 'reported' as const,
             archived: false,
-            photoUrls: [], // Photos stored as data URLs — full upload requires connectivity to storage
+            photoUrls: uploadedPhotoUrls,
             categoryId: report.categoryId,
             categoryName: report.categoryName,
             categoryEmoji: report.categoryEmoji,
