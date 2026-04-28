@@ -85,7 +85,7 @@ export default function HelpChatbot() {
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label={open ? t('chat.close', {}, 'Close help chat') : t('chat.open', {}, 'Open help chat')}
-        className="fixed bottom-6 right-5 z-50 w-13 h-13 rounded-full shadow-xl flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
+        className="fixed bottom-24 sm:bottom-6 right-5 z-50 w-13 h-13 rounded-full shadow-xl flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
         style={{
           width: 52,
           height: 52,
@@ -108,7 +108,7 @@ export default function HelpChatbot() {
       {/* Chat panel */}
       {open && (
         <div
-          className="fixed bottom-[72px] right-4 z-50 w-[340px] max-w-[calc(100vw-2rem)] rounded-2xl shadow-2xl flex flex-col overflow-hidden border"
+          className="fixed bottom-[106px] sm:bottom-[72px] right-4 z-50 w-[340px] max-w-[calc(100vw-2rem)] rounded-2xl shadow-2xl flex flex-col overflow-hidden border"
           style={{
             backgroundColor: '#fff',
             borderColor: 'rgba(97,66,112,0.2)',

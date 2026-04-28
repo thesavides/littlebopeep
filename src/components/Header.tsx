@@ -14,11 +14,13 @@ interface HeaderProps {
 
 export default function Header({ showBackButton = false, onBack, title, onTitleClick, rightSlot }: HeaderProps) {
   const { t } = useTranslation()
-  const { isAdmin, setShowHomePage, setRole, setAdmin } = useAppStore()
+  const { isAdmin, setShowHomePage, setAdmin } = useAppStore()
 
   const handleLogoClick = () => {
-    setAdmin(false)
-    setRole(null)
+    // Only clear admin flag when in admin mode.
+    // Do NOT call setRole(null) — that wipes the user's role and makes
+    // the landing page think they're logged out.
+    if (isAdmin) setAdmin(false)
     setShowHomePage(true)
   }
 

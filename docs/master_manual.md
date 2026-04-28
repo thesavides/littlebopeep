@@ -1490,6 +1490,7 @@ For anything beyond FAQ help, the bot directs users to `info@littlebopeep.app`.
 | 27 Apr 2026 | Offline photo upload on sync | `dataUrlToFile()` + `uploadPhotoFromDataUrl()` added to `photo-upload.ts`. `OfflineSyncBanner` now uploads base64 photos to Supabase Storage before creating the report. |
 | 27 Apr 2026 | cy/ga/gd translations | 8 missing keys (sync.signIn*, offline.notSignedIn, walker.nav.alerts, walker.alerts, walker.notif.*, home.landing.aboutUs) translated into Welsh, Irish, and Scottish Gaelic via `scripts/seed-missing-translations.mjs`. |
 | 27 Apr 2026 | Outstanding features audit | Verified WS5 (admin detail panel), WS6 (admin filters), WS7 (thank-you messaging), PPAP Req 5 (notification prefs), PPAP Req 11 (farmer bottom nav) all fully implemented. Section 15 updated to show completed status. |
+| 28 Apr 2026 | PWA app icon badge + Web Push (#4) | Badge API: `useAppBadge` hook syncs unread count to installed PWA home screen icon (Android Chrome 81+, iOS 16.4+, macOS Safari 17+). Web Push: `push-sender.ts` implements RFC 8291 aesgcm encryption + RFC 8292 VAPID JWT using pure Web Crypto API (Cloudflare Workers compatible). `PushPermissionBanner` shown in Alerts tab for opt-in. `createWalkerNotification` and `sendThankYouMessage` fire push via `/api/push/send`. Service worker handles `push` event and `notificationclick`. Push subscriptions stored in `push_subscriptions` table (migration 034). VAPID keys: P-256 pair, private key stored as Cloudflare Worker secret. |
 
 ---
 
@@ -1510,13 +1511,13 @@ Features that have been specced, discussed, or partially built but not yet compl
 | WS7 | **Farmer → Walker Thank You messaging** | Apr 2026 | Farmer sends from claimed/resolved report cards. Admin can send on behalf of any farmer from detail panel. Walker receives in Alerts tab with icon, sender name, message text, and report context. |
 | PPAP 5 | **Notification preferences UI** | Apr 2026 | `NotificationPrefsPanel` shown in Alerts tab for both walker and farmer. Toggles: email_alerts, in_app_claimed, in_app_resolved, in_app_thankyou (walker); email_alerts, in_app_new_report (farmer). Persisted via `notification_preferences` JSONB column. |
 | PPAP 11 | **Farmer dashboard mobile menu** | Apr 2026 | `BottomNav` with 4 tabs: 🏠 Dashboard, 🏡 Farms, 🔔 Alerts (with unread badge), 👤 Profile. Hidden during registration flow. |
+| 4 | **PWA app icon badge + Web Push** | 28 Apr 2026 | `useAppBadge` hook syncs unread count to installed PWA home screen icon via Badge API (Android Chrome 81+, iOS 16.4+, macOS Safari 17+). `push-sender.ts` implements RFC 8291 aesgcm encryption + RFC 8292 VAPID JWT using pure Web Crypto API (Cloudflare Workers compatible, no npm deps). `PushPermissionBanner` shown in Alerts tab for opt-in. `createWalkerNotification` and `sendThankYouMessage` fire background push via `/api/push/send` edge route. Service worker handles `push` event (shows notification), `notificationclick` (focuses open tab or opens new window), and `SET_BADGE`/`CLEAR_BADGE` messages. Push subscriptions stored in `push_subscriptions` table (migration 034). VAPID keys: P-256 pair; private key stored as Cloudflare Worker secret (`wrangler secret put VAPID_PRIVATE_KEY`); public key in `wrangler.toml [vars]` and `.env.local`. |
 
 ### 🟡 Infrastructure / Integration Gaps
 
 | # | Item | Detail |
 |---|---|---|
 | 3 | **Stripe billing integration** | `cancelSubscription()` is a local Zustand stub only — no real Stripe checkout, webhook, or billing portal. UI shows "Powered by Stripe" but no payments process. Full integration requires Stripe account, `stripe` npm package, webhook endpoint, and price ID configuration. |
-| 4 | **PWA app icon badge** | In-app unread badge exists but the installed home screen icon does not show a count. Requires Web Push API + service worker push handler. iOS 16.4+ and Android Chrome both support badge counts for installed PWAs. Estimated effort: 2–3 days. |
 | 6 | **SMS notifications** | Subscription feature comparison mentions "SMS notifications" but this is not built. Email alerts exist; SMS does not. Would require a provider (e.g. Twilio or AWS SNS). |
 
 ### ⚪ Explicitly Deferred
@@ -1528,4 +1529,4 @@ Features that have been specced, discussed, or partially built but not yet compl
 
 ---
 
-*Document last updated: 27 April 2026. Engineering changes after this date should be reflected by updating the relevant sections.*
+*Document last updated: 28 April 2026. Engineering changes after this date should be reflected by updating the relevant sections.*

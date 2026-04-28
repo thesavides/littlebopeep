@@ -92,7 +92,12 @@ export default function OfflineSyncBanner() {
               .map(r => r.url!)
           }
 
+          // Generate a UUID client-side so the INSERT never relies on a
+          // DB-level default — guards against "null value in column id" on
+          // Supabase instances where gen_random_uuid() default is absent.
+          const newId = crypto.randomUUID()
           await createReport({
+            id: newId,
             location: { lat: report.latitude, lng: report.longitude },
             timestamp: new Date(report.timestamp),
             sheepCount: report.sheepCount,
