@@ -504,6 +504,9 @@ export default function FarmerDashboard() {
         {/* ===== DASHBOARD ===== */}
         {viewState === 'dashboard' && (
           <>
+            {/* Push permission prompt — shown on dashboard if not yet granted */}
+            {currentUserId && <PushPermissionBanner userId={currentUserId} />}
+
             {/* Subscription Banner */}
             {currentUser?.subscriptionStatus === 'trial' && currentUser.trialEndsAt && (
               <div className="bg-[#7D8DCC]/10 border border-[#7D8DCC]/30 rounded-xl p-4 mb-4">

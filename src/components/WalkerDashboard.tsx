@@ -118,7 +118,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
     })
 
     return unsubscribe
-  }, [])
+  }, [currentUserId])
 
   // Show notification banner if there are unread notifications
   useEffect(() => {
@@ -451,6 +451,9 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
 
         {viewState === 'dashboard' && (
           <>
+            {/* Push permission prompt — shown on dashboard if not yet granted */}
+            {currentUserId && <PushPermissionBanner userId={currentUserId} />}
+
             {/* Offline sync banner — shown when back online with pending reports */}
             <OfflineSyncBanner />
 
