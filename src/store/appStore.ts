@@ -232,6 +232,12 @@ export interface SheepReport {
   metadataCompletenessScore?: number
   /** URL to OpenStreetMap viewer at the report location, stored at submit time */
   mapSnapshotUrl?: string
+  // Offline capture metadata
+  capturedOffline?: boolean       // true when report was saved offline and later synced
+  deviceId?: string               // stable UUID per device/browser (localStorage)
+  userAgent?: string              // navigator.userAgent at capture time
+  /** Upload time (Supabase created_at) — differs from timestamp for offline reports */
+  createdAt?: Date
 }
 
 // A field/paddock within a farm - defined by fence posts (polygon)

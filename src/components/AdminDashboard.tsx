@@ -701,10 +701,39 @@ export default function AdminDashboard() {
                         <div><span className="text-[#92998B]">Count:</span> {report.sheepCount}</div>
                         <div><span className="text-[#92998B]">Condition:</span> {report.condition}</div>
                         <div><span className="text-[#92998B]">Status:</span> <span className={`font-medium ${report.status === 'reported' ? 'text-[#614270]' : report.status === 'claimed' ? 'text-[#7D8DCC]' : 'text-[#9ED663]'}`}>{{ reported: 'Reported', claimed: 'Claimed', resolved: 'Resolved', escalated: 'Escalated', complete: 'Complete' }[report.status] || report.status}</span></div>
-                        <div><span className="text-[#92998B]">Submitted:</span> {new Date(report.timestamp).toLocaleString('en-GB')}</div>
+                        {(report as any).capturedOffline ? (
+                          <>
+                            <div className="flex items-center gap-1.5">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-[#FA9335]/15 text-[#c45f00]">📡 Captured offline</span>
+                            </div>
+                            <div><span className="text-[#92998B]">Captured in field:</span> {new Date(report.timestamp).toLocaleString('en-GB')}</div>
+                            <div><span className="text-[#92998B]">Uploaded:</span> {(report as any).createdAt ? new Date((report as any).createdAt).toLocaleString('en-GB') : '—'}</div>
+                          </>
+                        ) : (
+                          <div><span className="text-[#92998B]">Submitted:</span> {new Date(report.timestamp).toLocaleString('en-GB')}</div>
+                        )}
                         {report.description && <div><span className="text-[#92998B]">Description:</span> {report.description}</div>}
                       </div>
                     </section>
+
+                    {/* Device metadata — shown for all reports that have it */}
+                    {((report as any).deviceType || (report as any).appVersion || (report as any).deviceId || (report as any).userAgent) && (
+                      <section>
+                        <h3 className="text-xs font-semibold text-[#92998B] uppercase tracking-wide mb-2">Device & Submission</h3>
+                        <div className="bg-[#D1D9C5] rounded-lg p-3 text-sm space-y-1">
+                          {(report as any).deviceType && <div><span className="text-[#92998B]">Device type:</span> <span className="capitalize">{(report as any).deviceType}</span></div>}
+                          {(report as any).appVersion && <div><span className="text-[#92998B]">App version:</span> {(report as any).appVersion}</div>}
+                          {(report as any).locationAccuracy && <div><span className="text-[#92998B]">GPS accuracy:</span> ±{(report as any).locationAccuracy}m</div>}
+                          {(report as any).deviceId && <div><span className="text-[#92998B]">Device ID:</span> <span className="font-mono text-xs break-all text-[#614270]">{(report as any).deviceId}</span></div>}
+                          {(report as any).userAgent && (
+                            <div>
+                              <span className="text-[#92998B]">User agent:</span>
+                              <span className="block font-mono text-xs break-all text-[#614270] mt-0.5">{(report as any).userAgent}</span>
+                            </div>
+                          )}
+                        </div>
+                      </section>
+                    )}
 
                     {/* Claimants */}
                     {(report.claimedByFarmerIds?.length ?? 0) > 0 && (
@@ -2007,6 +2036,9 @@ export default function AdminDashboard() {
                       {/* Actions */}
                       <div className="flex items-center gap-1.5 flex-wrap justify-end flex-shrink-0">
                         {getDaysUnclaimedBadge(report)}
+                        {(report as any).capturedOffline && (
+                          <span className="px-2 py-1.5 rounded-lg text-xs font-medium bg-[#FA9335]/10 text-[#c45f00]">📡 Offline</span>
+                        )}
                         {report.screeningRequired && !report.archived && (
                           <span className="px-2 py-1.5 rounded-lg text-xs font-medium bg-[#FA9335]/10 text-[#FA9335]">⚠️ Review</span>
                         )}

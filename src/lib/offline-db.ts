@@ -19,6 +19,10 @@ export interface OfflineReport {
   photoDataUrls: string[] // base64 data URLs stored locally
   synced: boolean
   createdAt: string
+  // Device metadata captured at the moment the report is saved offline
+  deviceId?: string      // UUID from localStorage — stable per device/browser
+  userAgent?: string     // navigator.userAgent at capture time
+  deviceType?: string    // 'mobile' | 'desktop' derived from screen width
 }
 
 function openDB(): Promise<IDBDatabase> {

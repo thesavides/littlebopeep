@@ -147,6 +147,16 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
 
     setSaving(true)
 
+    // Stable device ID — generate once, persist across sessions
+    const getOrCreateDeviceId = (): string | undefined => {
+      try {
+        const key = 'lbp-device-id'
+        let id = localStorage.getItem(key)
+        if (!id) { id = crypto.randomUUID(); localStorage.setItem(key, id) }
+        return id
+      } catch { return undefined }
+    }
+
     const report: OfflineReport = {
       id: `offline-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       latitude,
@@ -161,6 +171,10 @@ export default function OfflineCapture({ onSaved, onCancel }: OfflineCaptureProp
       photoDataUrls,
       synced: false,
       createdAt: new Date().toISOString(),
+      // Device metadata captured at the moment the report is saved
+      deviceId: getOrCreateDeviceId(),
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+      deviceType: typeof window !== 'undefined' ? (window.innerWidth < 768 ? 'mobile' : 'desktop') : undefined,
     }
 
     try {

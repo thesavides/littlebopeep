@@ -99,6 +99,7 @@ export default function OfflineSyncBanner() {
           await createReport({
             id: newId,
             location: { lat: report.latitude, lng: report.longitude },
+            // timestamp = field capture time (preserved from IndexedDB)
             timestamp: new Date(report.timestamp),
             sheepCount: report.sheepCount,
             condition: report.condition,
@@ -111,6 +112,11 @@ export default function OfflineSyncBanner() {
             categoryId: report.categoryId,
             categoryName: report.categoryName,
             categoryEmoji: report.categoryEmoji,
+            // Offline capture metadata (captured at save time, stored in IndexedDB)
+            capturedOffline: true,
+            deviceId: report.deviceId,
+            userAgent: report.userAgent,
+            deviceType: report.deviceType,
           })
           await markReportSynced(report.id)
           synced++

@@ -50,6 +50,10 @@ export interface SheepReportDB {
   metadata_completeness_score?: number | null
   // WS15: map snapshot
   map_snapshot_url?: string | null
+  // Migration 035: offline capture metadata
+  captured_offline?: boolean | null
+  device_id?: string | null
+  user_agent?: string | null
 }
 
 // Convert DB format to App format
@@ -92,6 +96,11 @@ export function dbToAppReport(dbReport: SheepReportDB) {
     screeningRequired: dbReport.screening_required ?? false,
     metadataCompletenessScore: dbReport.metadata_completeness_score ?? undefined,
     mapSnapshotUrl: dbReport.map_snapshot_url || undefined,
+    // Offline capture metadata (migration 035)
+    capturedOffline: dbReport.captured_offline ?? false,
+    deviceId: dbReport.device_id || undefined,
+    userAgent: dbReport.user_agent || undefined,
+    createdAt: dbReport.created_at ? new Date(dbReport.created_at) : undefined,
   }
 }
 
@@ -134,6 +143,10 @@ export function appToDbReport(appReport: any) {
     screening_required: appReport.screeningRequired ?? null,
     metadata_completeness_score: appReport.metadataCompletenessScore ?? null,
     map_snapshot_url: appReport.mapSnapshotUrl || null,
+    // Offline capture metadata (migration 035)
+    captured_offline: appReport.capturedOffline ?? false,
+    device_id: appReport.deviceId || null,
+    user_agent: appReport.userAgent || null,
   }
   // Only include id if provided — omitting lets Supabase generate a UUID
   if (appReport.id !== undefined) {
