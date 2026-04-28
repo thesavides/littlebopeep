@@ -22,11 +22,13 @@ export default function AuthPage() {
   const [legalModal, setLegalModal] = useState<'terms' | 'privacy' | null>(null)
 
   // Pre-select mode and role from query params (e.g. ?mode=signup&role=farmer)
-  // If already logged in, redirect to dashboard immediately
+  // If already logged in, always redirect back to dashboard — covers the
+  // back-button case where the browser history contains /auth but the user
+  // is still authenticated (no query params, so the old guard never fired).
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const { currentRole } = useAppStore.getState()
-    if (currentRole && params.get('mode') === 'signup') {
+    if (currentRole) {
       useAppStore.getState().setShowHomePage(false)
       router.replace('/')
       return
