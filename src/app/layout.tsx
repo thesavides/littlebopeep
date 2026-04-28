@@ -16,7 +16,14 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: '/logo-pin.svg',
-    apple: '/app-icon.png',
+    // Explicit apple-touch-icon sizes — iOS ignores the web manifest and
+    // requires these link tags to show the real icon on the home screen.
+    apple: [
+      { url: '/apple-touch-icon.png',     sizes: '180x180', type: 'image/png' },
+      { url: '/apple-touch-icon-167.png', sizes: '167x167', type: 'image/png' },
+      { url: '/apple-touch-icon-152.png', sizes: '152x152', type: 'image/png' },
+      { url: '/apple-touch-icon-120.png', sizes: '120x120', type: 'image/png' },
+    ],
   },
 }
 
