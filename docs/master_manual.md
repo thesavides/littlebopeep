@@ -1491,6 +1491,8 @@ For anything beyond FAQ help, the bot directs users to `info@littlebopeep.app`.
 | 27 Apr 2026 | cy/ga/gd translations | 8 missing keys (sync.signIn*, offline.notSignedIn, walker.nav.alerts, walker.alerts, walker.notif.*, home.landing.aboutUs) translated into Welsh, Irish, and Scottish Gaelic via `scripts/seed-missing-translations.mjs`. |
 | 27 Apr 2026 | Outstanding features audit | Verified WS5 (admin detail panel), WS6 (admin filters), WS7 (thank-you messaging), PPAP Req 5 (notification prefs), PPAP Req 11 (farmer bottom nav) all fully implemented. Section 15 updated to show completed status. |
 | 28 Apr 2026 | PWA app icon badge + Web Push (#4) | Badge API: `useAppBadge` hook syncs unread count to installed PWA home screen icon (Android Chrome 81+, iOS 16.4+, macOS Safari 17+). Web Push: `push-sender.ts` implements RFC 8291 aesgcm encryption + RFC 8292 VAPID JWT using pure Web Crypto API (Cloudflare Workers compatible). `PushPermissionBanner` shown in Alerts tab for opt-in. `createWalkerNotification` and `sendThankYouMessage` fire push via `/api/push/send`. Service worker handles `push` event and `notificationclick`. Push subscriptions stored in `push_subscriptions` table (migration 034). VAPID keys: P-256 pair, private key stored as Cloudflare Worker secret. |
+| 28 Apr 2026 | Bug fixes: home logout, chat z-index, offline sync null ID | Header logo tap no longer clears user role — logged-in users land on home page with "Report" (primary) + "Go to dashboard →" (secondary) CTAs. Chat FAB lifted above BottomNav on mobile (`bottom-24` / `sm:bottom-6`). Offline sync now generates `crypto.randomUUID()` client-side before INSERT, fixing `null value in column "id"` constraint error. |
+| 28 Apr 2026 | Offline capture metadata (migration 035) | `captured_offline BOOLEAN`, `device_id TEXT`, `user_agent TEXT` added to `sheep_reports`. Device UUID generated once in `localStorage` (`lbp-device-id`) and persisted across sessions. `navigator.userAgent` and device type captured at field save time (not sync time). Admin list shows `📡 Offline` badge; detail panel shows split "Captured in field" / "Uploaded" timestamps plus full Device & Submission section. Walker My Reports view shows `📡` badge on synced offline reports. SQL: migration 035 run 28 Apr 2026. |
 
 ---
 
@@ -1529,4 +1531,4 @@ Features that have been specced, discussed, or partially built but not yet compl
 
 ---
 
-*Document last updated: 28 April 2026. Engineering changes after this date should be reflected by updating the relevant sections.*
+*Document last updated: 28 April 2026 (evening). Engineering changes after this date should be reflected by updating the relevant sections.*
