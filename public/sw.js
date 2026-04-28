@@ -141,10 +141,81 @@ async function notifyClientsToSync() {
   clients.forEach((client) => client.postMessage({ type: 'SYNC_OFFLINE_REPORTS' }))
 }
 
+// ─── Web Push ────────────────────────────────────────────────────────────────
+
+self.addEventListener('push', (event) => {
+  if (!event.data) return
+
+  let payload = {}
+  try { payload = event.data.json() } catch { payload = { title: 'Little Bo Peep', body: event.data.text() } }
+
+  const { title = 'Little Bo Peep', body = '', badge, url = '/', tag } = payload
+
+  // Update the app icon badge
+  if ('setAppBadge' in self.registration) {
+    if (badge > 0) {
+      self.registration.setAppBadge(badge).catch(() => {})
+    }
+  } else if ('setAppBadge' in navigator) {
+    if (badge > 0) navigator.setAppBadge(badge).catch(() => {})
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: '/app-icon.png',
+      badge: '/icon.svg',
+      tag: tag || 'lbp-notification',
+      renotify: true,
+      data: { url },
+      vibrate: [200, 100, 200],
+    })
+  )
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const url = event.notification.data?.url || '/'
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // If the app is already open, focus it and navigate
+      for (const client of clientList) {
+        if (client.url.startsWith(self.registration.scope)) {
+          client.focus()
+          client.postMessage({ type: 'PUSH_NAVIGATE', url })
+          return
+        }
+      }
+      // Otherwise open a new window
+      return self.clients.openWindow(url)
+    })
+  )
+})
+
 // ─── Messages ────────────────────────────────────────────────────────────────
 
 self.addEventListener('message', (event) => {
   if (event.data?.type === 'SKIP_WAITING') {
     self.skipWaiting()
+  }
+  // App tells SW to clear the badge (all notifications read)
+  if (event.data?.type === 'CLEAR_BADGE') {
+    if ('clearAppBadge' in self.registration) {
+      self.registration.clearAppBadge().catch(() => {})
+    } else if ('clearAppBadge' in navigator) {
+      navigator.clearAppBadge().catch(() => {})
+    }
+  }
+  // App tells SW the current unread count (so badge stays correct after app opens)
+  if (event.data?.type === 'SET_BADGE' && typeof event.data.count === 'number') {
+    if (event.data.count > 0) {
+      if ('setAppBadge' in self.registration) {
+        self.registration.setAppBadge(event.data.count).catch(() => {})
+      }
+    } else {
+      if ('clearAppBadge' in self.registration) {
+        self.registration.clearAppBadge().catch(() => {})
+      }
+    }
   }
 })

@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useAppStore, Farm, FarmField, MAP_CONFIG, isReportNearFarm } from '@/store/appStore'
 import { supabase, fetchUserNotifications, markAllNotificationsRead, markReportNotificationsRead, NotificationDB, sendThankYouMessage, subscribeToUserNotifications, updateEmailAlertPreference } from '@/lib/supabase-client'
 import NotificationPrefsPanel from './NotificationPrefsPanel'
+import PushPermissionBanner from './PushPermissionBanner'
+import { useAppBadge } from '@/hooks/useAppBadge'
 import { useTranslation } from '@/contexts/TranslationContext'
 import Header from './Header'
 import Map from './Map'
@@ -55,6 +57,9 @@ export default function FarmerDashboard() {
   const [farmerNotifications, setFarmerNotifications] = useState<NotificationDB[]>([])
   const unreadCount = farmerNotifications.filter(n => !n.read_at).length
   const [loginBannerDismissed, setLoginBannerDismissed] = useState(false)
+
+  // Sync unread count to PWA home screen icon badge
+  useAppBadge(unreadCount)
   const [emailAlertsEnabled, setEmailAlertsEnabled] = useState(false)
   const [savingEmailPref, setSavingEmailPref] = useState(false)
   // Thank You message state — keyed by reportId
@@ -1251,6 +1256,9 @@ export default function FarmerDashboard() {
 
         {viewState === 'notifications' && (
           <div className="space-y-4">
+            {/* Push permission opt-in */}
+            {currentUserId && <PushPermissionBanner userId={currentUserId} />}
+
             {/* Notification preferences panel */}
             {currentUserId && (
               <NotificationPrefsPanel userId={currentUserId} role="farmer" />

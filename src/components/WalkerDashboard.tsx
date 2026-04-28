@@ -16,8 +16,10 @@ import Button from './Button'
 import OfflineSyncBanner from './OfflineSyncBanner'
 import OfflineCapture from './OfflineCapture'
 import { useOnlineStatus } from '@/hooks/useOnlineStatus'
+import { useAppBadge } from '@/hooks/useAppBadge'
 import { btn, input, label, card, text, badge as statusBadge } from '@/lib/ui'
 import { useTranslation } from '@/contexts/TranslationContext'
+import PushPermissionBanner from './PushPermissionBanner'
 
 type ViewState = 'dashboard' | 'reporting' | 'my-reports' | 'notifications'
 
@@ -77,6 +79,11 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
   const [emailAlertsEnabled, setEmailAlertsEnabled] = useState(false)
   const [savingEmailPref, setSavingEmailPref] = useState(false)
   const [loginBannerDismissed, setLoginBannerDismissed] = useState(false)
+
+  const walkerUnreadCount = allNotifications.filter(n => !n.read_at).length
+
+  // Sync unread count to PWA home screen icon badge
+  useAppBadge(walkerUnreadCount)
 
   const [profileOpen, setProfileOpen] = useState(false)
   const [showSubmitSuccess, setShowSubmitSuccess] = useState(false)
@@ -903,6 +910,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
         {/* ===== NOTIFICATIONS VIEW ===== */}
         {viewState === 'notifications' && currentUserId && (
           <div className="space-y-4">
+            <PushPermissionBanner userId={currentUserId} />
             <NotificationPrefsPanel userId={currentUserId} role="walker" />
 
             {allNotifications.length === 0 ? (

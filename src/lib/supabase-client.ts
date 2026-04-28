@@ -328,6 +328,19 @@ export async function markAllNotificationsRead(userId: string): Promise<void> {
   }
 }
 
+// Fire a push notification to a user (best-effort; never throws)
+async function firePush(userId: string, title: string, body: string, tag?: string): Promise<void> {
+  try {
+    await fetch('/api/push/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, title, body, tag, url: '/' }),
+    })
+  } catch {
+    // silently ignore — push is supplementary to in-app notifications
+  }
+}
+
 // Create a status-change notification for the walker who submitted a report
 export async function createWalkerNotification(
   walkerId: string,
@@ -344,7 +357,15 @@ export async function createWalkerNotification(
     message_text: messageText ?? null,
     status: 'sent',
   })
-  if (error) console.error('Error creating walker notification:', error)
+  if (error) { console.error('Error creating walker notification:', error); return }
+
+  // Fire push notification
+  const titles: Record<string, string> = {
+    report_claimed: `🙋 ${actorName ? actorName + ' claimed' : 'Your report was claimed'}`,
+    report_resolved: `✅ ${actorName ? actorName + ' resolved' : 'Your report was resolved'}`,
+    report_complete: '🎉 Report marked complete',
+  }
+  firePush(walkerId, titles[type] || 'Little Bo Peep update', messageText || 'Tap to open the app', `report-${reportId}`)
 }
 
 // Real-time subscription for a user's own notifications
@@ -440,6 +461,9 @@ export async function sendThankYouMessage(
     console.error('Error sending thank you message:', error)
     throw error
   }
+  // Fire push notification
+  const from = senderName ? `🧑‍🌾 ${senderName}` : '🧑‍🌾 A farmer'
+  firePush(reporterId, `💌 ${from} says thank you`, messageText.slice(0, 80), `thankyou-${reportId}`)
 }
 
 // Report categories

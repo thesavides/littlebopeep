@@ -5,3 +5,7 @@ compatibility_flags = ["nodejs_compat"]
 
 [assets]
 directory = ".open-next/assets"
+
+[vars]
+NEXT_PUBLIC_VAPID_PUBLIC_KEY = "BDAzYME9gvafPBIJff16_dkEOYdREZdPA6gdIUL6wA76mUY2-IiFlzXhV1x-dPfek36GZ6FPvW6D72NXXpfVXTE"
+VAPID_SUBJECT = "info@littlebopeep.app"
