@@ -139,18 +139,28 @@ export default function AdminDashboard() {
   const [completeReportId, setCompleteReportId] = useState<string | null>(null)
   const [completeNotes, setCompleteNotes] = useState('')
 
-  // Load real users and reports from Supabase on mount
+  // Load real users and reports from Supabase on mount.
+  // Wait for currentUserId to be set (auth session restored) before querying — otherwise
+  // auth.uid() is null, RLS returns no rows, and the dashboard shows 0 users.
   useEffect(() => {
+    if (!currentUserId) return
     async function loadUsers() {
       setLoadingUsers(true)
       const supabaseUsers = await getAllUsers()
-      setRealUsers(supabaseUsers)
+      // If RLS still returned nothing (edge case: stale JWT), retry once after a short delay
+      if (supabaseUsers.length === 0) {
+        await new Promise(resolve => setTimeout(resolve, 800))
+        const retry = await getAllUsers()
+        setRealUsers(retry)
+      } else {
+        setRealUsers(supabaseUsers)
+      }
       setLoadingUsers(false)
     }
     loadUsers()
     loadReports()
     loadFarms()
-  }, [])
+  }, [currentUserId])
 
   const handleResetUserPassword = async (userId: string, email: string) => {
     if (!confirm(`Send a password reset email to "${email}"?`)) return
