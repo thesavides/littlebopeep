@@ -172,13 +172,14 @@ export default function FarmerDashboard() {
     }
     init()
 
-    // Real-time: prepend new notifications as they arrive
+    // Real-time: prepend new notifications as they arrive.
+    // Guard: only subscribe once currentUserId is known (auth session restored).
     if (!currentUserId) return
     const unsub = subscribeToUserNotifications(currentUserId, (notif) => {
       setFarmerNotifications(prev => [notif, ...prev])
     })
     return unsub
-  }, [])
+  }, [currentUserId])
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -1176,18 +1177,32 @@ export default function FarmerDashboard() {
                   {farmerNotifications.slice(0, 20).map(notif => {
                     const report = reports.find(r => r.id === notif.report_id)
                     const isUnread = !notif.read_at
+                    // Label + icon for every notification type (farmer AND walker)
+                    const notifMeta: Record<string, { icon: string; label: string }> = {
+                      new_report:      { icon: '🚨', label: t('farmer.notif.newReportNearFarm', {}, 'New report near your farm') },
+                      report_claimed:  { icon: '🙋', label: notif.sender_name ? t('farmer.notif.claimedBy', { name: notif.sender_name }, `Your report was claimed by ${notif.sender_name}`) : t('farmer.notif.reportClaimed', {}, 'Your report was claimed') },
+                      report_resolved: { icon: '✅', label: t('farmer.notif.reportResolved', {}, 'Your report has been resolved') },
+                      report_complete: { icon: '🎉', label: t('farmer.notif.reportComplete', {}, 'Your report is complete') },
+                      thank_you:       { icon: '💌', label: notif.sender_name ? t('farmer.notif.thankYouFrom', { name: notif.sender_name }, `Thank you from ${notif.sender_name}`) : t('farmer.notif.thankYou', {}, 'A farmer said thank you') },
+                      sync_complete:   { icon: '📡', label: t('farmer.notif.syncComplete', {}, 'Offline reports uploaded') },
+                    }
+                    const meta = notifMeta[notif.type] ?? { icon: '🔔', label: notif.type }
                     return (
                       <div key={notif.id} className={`p-3 rounded-lg border text-sm ${isUnread ? 'bg-[#EADA69]/20 border-[#EADA69]/40' : 'bg-[#D1D9C5] border-[#D1D9C5]'}`}>
-                        <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-start gap-2">
+                          {isUnread && <span className="inline-block w-2 h-2 bg-[#EADA69] rounded-full mt-1.5 flex-shrink-0" />}
                           <div>
-                            {isUnread && <span className="inline-block w-2 h-2 bg-[#EADA69] rounded-full mr-2 mt-1 flex-shrink-0" />}
-                            <span className="font-medium text-[#614270]">
-                              {notif.type === 'new_report' ? `🚨 ${t('farmer.notif.newReportNearFarm', {}, 'New report near your farm')}` : notif.type}
-                            </span>
+                            <span className="font-medium text-[#614270]">{meta.icon} {meta.label}</span>
+                            {notif.message_text && notif.type === 'thank_you' && (
+                              <p className="text-xs text-[#614270] italic mt-0.5">"{notif.message_text}"</p>
+                            )}
                             {report && (
                               <div className="text-xs text-[#92998B] mt-0.5">
                                 {report.categoryEmoji} {report.categoryName} · {new Date(notif.sent_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                               </div>
+                            )}
+                            {!report && notif.report_id && (
+                              <div className="text-xs text-[#92998B] mt-0.5">{new Date(notif.sent_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
                             )}
                           </div>
                         </div>
