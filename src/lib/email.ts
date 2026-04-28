@@ -11,7 +11,7 @@
  */
 
 const RESEND_FROM = process.env.RESEND_FROM || 'Little Bo Peep <hello@littlebopeep.app>'
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://littlebopeep.chris-bee.workers.dev'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://littlebopeep.app'
 
 export async function sendEmail(params: {
   to: string

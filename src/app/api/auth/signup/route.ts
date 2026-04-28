@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     // Generate a one-time verification magic link (our own flow, correct production URL).
     // When the user clicks it they land at /auth/callback?type=signup → /auth/email-confirmed
     // which upgrades their user_profiles.status from pending_verification to active.
-    const productionUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://littlebopeep.chris-bee.workers.dev'
+    const productionUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://littlebopeep.app'
     let verifyUrl: string | undefined
     try {
       const { data: linkData } = await supabaseAdmin.auth.admin.generateLink({
