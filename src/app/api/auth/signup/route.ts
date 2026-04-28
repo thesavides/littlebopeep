@@ -45,15 +45,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create user in Supabase Auth.
-    // email_confirm is intentionally omitted (defaults to false) so Supabase sends
-    // a real email-confirmation email to the user. Login is NOT blocked pending
-    // confirmation — the Supabase project must have "Confirm email" disabled in
-    // Authentication > Providers > Email so users can sign in immediately while
-    // their email gets verified in the background.
+    // Create user in Supabase Auth with email_confirm: true.
+    // This bypasses Supabase's own confirmation email (which would use whatever
+    // Site URL is configured in the Supabase dashboard — often localhost:3000 in dev).
+    // We send our own branded verification email below with the correct production URL.
+    // The user can sign in immediately; our user_profiles.status tracks verification state.
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
+      email_confirm: true,
       user_metadata: {
         full_name: fullName
       }
@@ -96,8 +96,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Send welcome email (silently skips if RESEND_API_KEY is not configured)
-    const { subject, html } = buildWelcomeEmail({ name: fullName, role })
+    // Generate a one-time verification magic link (our own flow, correct production URL).
+    // When the user clicks it they land at /auth/callback?type=signup → /auth/email-confirmed
+    // which upgrades their user_profiles.status from pending_verification to active.
+    const productionUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://littlebopeep.chris-bee.workers.dev'
+    let verifyUrl: string | undefined
+    try {
+      const { data: linkData } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'magiclink',
+        email,
+        options: { redirectTo: `${productionUrl}/auth/callback?type=signup` },
+      })
+      verifyUrl = (linkData as any)?.properties?.action_link || undefined
+    } catch {
+      // Non-fatal — email will fall back to the plain app link
+    }
+
+    // Send branded welcome + verification email
+    const { subject, html } = buildWelcomeEmail({ name: fullName, role, verifyUrl })
     await sendEmail({ to: email, subject, html })
 
     await writeAuditLogServer(
