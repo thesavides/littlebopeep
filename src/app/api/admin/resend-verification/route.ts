@@ -47,9 +47,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Generate a new signup confirmation link and send it via Supabase
+    // Generate a magic link — the SDK type for 'signup' now requires a
+    // password field which we don't have. A magic link achieves the same
+    // outcome: the user clicks it, is authenticated, and their email is
+    // confirmed by Supabase in the same flow.
     const { error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'signup',
+      type: 'magiclink',
       email: profile.email,
       options: {
         redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://littlebopeep.app'}/auth/callback?type=signup`,

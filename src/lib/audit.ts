@@ -18,6 +18,8 @@ export type AuditAction =
   | 'user.password_reset'
   | 'user.role_change'
   | 'user.profile_update'
+  | 'user.email_verification_sent'
+  | 'user.email_verified'
   // Farm lifecycle
   | 'farm.create'
   | 'farm.update'

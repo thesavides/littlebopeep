@@ -78,7 +78,10 @@ export default function PushPermissionBanner({ userId }: Props) {
 
   const handleDismiss = () => setState('done')
 
-  if (state !== 'prompted') return null
+  // Show banner in both 'prompted' and 'subscribing' states
+  if (state !== 'prompted' && state !== 'subscribing') return null
+
+  const isSubscribing = state === 'subscribing'
 
   return (
     <div className="mx-4 mb-4 rounded-2xl border border-[#7D8DCC]/40 bg-[#7D8DCC]/10 p-4 shadow-sm">
@@ -94,14 +97,15 @@ export default function PushPermissionBanner({ userId }: Props) {
           <div className="flex gap-2 mt-3">
             <button
               onClick={handleEnable}
-              disabled={state === 'subscribing'}
+              disabled={isSubscribing}
               className="flex-1 py-2 bg-[#7D8DCC] text-white rounded-xl text-sm font-semibold hover:bg-[#6b7bb8] disabled:opacity-50 transition-colors"
             >
-              {state === 'subscribing' ? t('common.saving', {}, 'Enabling…') : t('push.enableBtn', {}, 'Enable')}
+              {isSubscribing ? t('common.saving', {}, 'Enabling…') : t('push.enableBtn', {}, 'Enable')}
             </button>
             <button
               onClick={handleDismiss}
-              className="px-3 py-2 text-[#614270] text-xs hover:opacity-70 transition-opacity"
+              disabled={isSubscribing}
+              className="px-3 py-2 text-[#614270] text-xs hover:opacity-70 transition-opacity disabled:opacity-30"
             >
               {t('push.notNow', {}, 'Not now')}
             </button>
