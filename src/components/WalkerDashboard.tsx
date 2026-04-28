@@ -1022,6 +1022,9 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
+                            {(report as any).capturedOffline && (
+                              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#FA9335]/10 text-[#c45f00]">📡</span>
+                            )}
                             {getStatusBadge(report.status)}
                             {(report.status === 'reported' || report.status === 'claimed') && (
                               <button
