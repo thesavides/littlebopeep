@@ -1186,7 +1186,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
             icon: isOnline
               ? (preferredCategory?.imageUrl
                 ? <img src={preferredCategory.imageUrl} alt={preferredCategory.name} className="w-7 h-7 object-contain" />
-                : <span className="text-2xl">{preferredCategory?.emoji ?? '🐑'}</span>)
+                : <img src="/logo-pin.svg" alt="Report" className="w-7 h-7 object-contain" />)
               : <span className="text-2xl">📴</span>,
             onClick: () => isOnline ? setShowCategoryPicker(true) : setShowOfflineCapture(true),
           }}

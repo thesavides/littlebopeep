@@ -15,7 +15,7 @@ import Button from './Button'
 import { btn, input, label as labelCls, card, badge as statusBadge } from '@/lib/ui'
 
 type ViewState = 'dashboard' | 'register' | 'create-farm' | 'add-field' | 'view-farm' | 'subscription' | 'notifications'
-type RegistrationStep = 1 | 2 | 3 | 4 | 5
+type RegistrationStep = 1 | 2 | 3
 
 export default function FarmerDashboard() {
   const { t } = useTranslation()
@@ -263,32 +263,22 @@ export default function FarmerDashboard() {
   }
 
   const handleRegistrationNext = () => {
-    if (registrationStep < 5) {
+    if (registrationStep < 3) {
       setRegistrationStep((registrationStep + 1) as RegistrationStep)
     }
   }
 
   const handleCompleteRegistration = async () => {
     if (currentUserId) {
-      // Update user with billing info
+      // Update user contact info
       updateUser(currentUserId, {
         email: formData.email,
         phone: formData.phone,
-        billingAddress: {
-          line1: formData.billingLine1,
-          line2: formData.billingLine2,
-          city: formData.billingCity,
-          county: formData.billingCounty,
-          postcode: formData.billingPostcode
-        },
         physicalAddress: formData.physicalLat ? {
           lat: formData.physicalLat,
           lng: formData.physicalLng
         } : undefined
       })
-
-      // Start trial
-      startTrial(currentUserId)
 
       // Create first farm if name provided
       if (formData.farmName) {
@@ -363,7 +353,7 @@ export default function FarmerDashboard() {
 
   const getTitle = () => {
     switch (viewState) {
-      case 'register': return t('farmer.registrationStep', { step: registrationStep, total: 5 }, `Registration (Step ${registrationStep}/5)`)
+      case 'register': return t('farmer.registrationStep', { step: registrationStep, total: 3 }, `Registration (Step ${registrationStep}/3)`)
       case 'create-farm': return t('farmer.createFarm', {}, 'Create Farm')
       case 'add-field': return editingFieldBoundaryId ? 'Edit Field Boundary' : t('farmer.addField', {}, 'Add Field')
       case 'subscription': return t('farmer.subscription', {}, 'Subscription')
@@ -406,7 +396,7 @@ export default function FarmerDashboard() {
           <div className="max-w-md mx-auto">
             {/* Progress bar */}
             <div className="h-2 bg-[#D1D9C5] rounded-full mb-6">
-              <div className="h-full bg-[#7D8DCC] rounded-full transition-all" style={{ width: `${(registrationStep / 5) * 100}%` }} />
+              <div className="h-full bg-[#7D8DCC] rounded-full transition-all" style={{ width: `${(registrationStep / 3) * 100}%` }} />
             </div>
 
             {/* Step 1: Contact Details */}
@@ -475,88 +465,8 @@ export default function FarmerDashboard() {
               </div>
             )}
 
-            {/* Step 3: Billing Address */}
+            {/* Step 3: Review & Confirm */}
             {registrationStep === 3 && (
-              <div className="bg-white rounded-xl p-6 shadow">
-                <h2 className="text-xl font-bold text-[#614270] mb-4">{t('farmer.billingAddress', {}, 'Billing Address')}</h2>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-[#614270] mb-1">{t('farmer.addressLine1Label', {}, 'Address Line 1 *')}</label>
-                    <input type="text" value={formData.billingLine1} onChange={(e) => setFormData({...formData, billingLine1: e.target.value})} className={input} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-[#614270] mb-1">{t('farmer.addressLine2Label', {}, 'Address Line 2')}</label>
-                    <input type="text" value={formData.billingLine2} onChange={(e) => setFormData({...formData, billingLine2: e.target.value})} className={input} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-[#614270] mb-1">{t('farmer.cityLabel', {}, 'City *')}</label>
-                      <input type="text" value={formData.billingCity} onChange={(e) => setFormData({...formData, billingCity: e.target.value})} className={input} />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-[#614270] mb-1">{t('farmer.countyLabel', {}, 'County')}</label>
-                      <input type="text" value={formData.billingCounty} onChange={(e) => setFormData({...formData, billingCounty: e.target.value})} className={input} />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-[#614270] mb-1">{t('farmer.postcodeLabel', {}, 'Postcode *')}</label>
-                    <input type="text" value={formData.billingPostcode} onChange={(e) => setFormData({...formData, billingPostcode: e.target.value})} className={input} />
-                  </div>
-                </div>
-                <div className="flex gap-3 mt-6">
-                  <button onClick={handleBack} className="flex-1 py-3 bg-[#D1D9C5] text-[#614270] rounded-xl">{t('farmer.back', {}, 'Back')}</button>
-                  <button onClick={handleRegistrationNext} disabled={!formData.billingLine1 || !formData.billingCity || !formData.billingPostcode} className="flex-1 py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold disabled:bg-[#D1D9C5]">{t('farmer.continue', {}, 'Continue')}</button>
-                </div>
-              </div>
-            )}
-
-            {/* Step 4: Payment Details */}
-            {registrationStep === 4 && (
-              <div className="bg-white rounded-xl p-6 shadow">
-                <h2 className="text-xl font-bold text-[#614270] mb-2">{t('farmer.paymentSetup', {}, 'Payment Setup')}</h2>
-                <p className="text-[#614270] text-sm mb-4">{t('farmer.paymentInstruction', {}, 'Your card will not be charged until after your 30-day free trial ends.')}</p>
-
-                <div className="bg-[#7D8DCC]/10 border border-[#7D8DCC]/30 rounded-lg p-3 mb-6">
-                  <p className="text-sm text-[#614270]">{t('farmer.securePayment', {}, '🔒 Secure payment powered by Stripe')}</p>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-[#614270] mb-1">{t('farmer.cardholderNameLabel', {}, 'Cardholder Name *')}</label>
-                    <input type="text" value={formData.cardName} onChange={(e) => setFormData({...formData, cardName: e.target.value})} placeholder={t('farmer.cardholderNamePlaceholder', {}, 'Name on card')} className={input} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-[#614270] mb-1">{t('farmer.cardNumberLabel', {}, 'Card Number *')}</label>
-                    <input type="text" value={formData.cardNumber} onChange={(e) => setFormData({...formData, cardNumber: e.target.value.replace(/\D/g, '').slice(0, 16)})} placeholder={t('farmer.cardNumberPlaceholder', {}, '1234 5678 9012 3456')} className={`${input} font-mono`} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-[#614270] mb-1">{t('farmer.expiryLabel', {}, 'Expiry *')}</label>
-                      <input type="text" value={formData.cardExpiry} onChange={(e) => setFormData({...formData, cardExpiry: e.target.value})} placeholder={t('farmer.expiryPlaceholder', {}, 'MM/YY')} className={input} />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-[#614270] mb-1">{t('farmer.cvcLabel', {}, 'CVC *')}</label>
-                      <input type="text" value={formData.cardCvc} onChange={(e) => setFormData({...formData, cardCvc: e.target.value.replace(/\D/g, '').slice(0, 4)})} placeholder={t('farmer.cvcPlaceholder', {}, '123')} className={input} />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-[#D1D9C5] rounded-lg p-4 mt-6 text-sm text-[#614270]">
-                  <p className="font-medium text-[#614270] mb-1">{t('farmer.subscriptionDetailsHeading', {}, 'Subscription Details:')}</p>
-                  <p>{t('farmer.trialStarting', {}, '• 30-day free trial starting today')}</p>
-                  <p>{t('farmer.priceAfterTrial', {}, '• £29.99/month after trial')}</p>
-                  <p>{t('farmer.cancelAnytime', {}, '• Cancel anytime before trial ends')}</p>
-                </div>
-
-                <div className="flex gap-3 mt-6">
-                  <button onClick={handleBack} className="flex-1 py-3 bg-[#D1D9C5] text-[#614270] rounded-xl">{t('farmer.back', {}, 'Back')}</button>
-                  <button onClick={handleRegistrationNext} disabled={!formData.cardName || !formData.cardNumber || formData.cardNumber.length < 16 || !formData.cardExpiry || !formData.cardCvc} className="flex-1 py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold disabled:bg-[#D1D9C5]">{t('farmer.continue', {}, 'Continue')}</button>
-                </div>
-              </div>
-            )}
-
-            {/* Step 5: Review & Subscribe */}
-            {registrationStep === 5 && (
               <div className="bg-white rounded-xl p-6 shadow">
                 <h2 className="text-xl font-bold text-[#614270] mb-4">{t('farmer.reviewConfirm', {}, 'Review & Confirm')}</h2>
 
@@ -570,41 +480,20 @@ export default function FarmerDashboard() {
                       {formData.phone && <p><strong>{t('farmer.phoneDisplayLabel', {}, 'Phone:')}</strong> {formData.phone}</p>}
                     </div>
                   </div>
-
-                  <div className="bg-[#D1D9C5] rounded-lg p-4">
-                    <h3 className="font-medium text-[#614270] mb-2">{t('farmer.billingAddressHeading', {}, 'Billing Address')}</h3>
-                    <div className="text-sm text-[#614270]">
-                      <p>{formData.billingLine1}</p>
-                      {formData.billingLine2 && <p>{formData.billingLine2}</p>}
-                      <p>{formData.billingCity}, {formData.billingCounty} {formData.billingPostcode}</p>
-                    </div>
-                  </div>
-
-                  <div className="bg-[#D1D9C5] rounded-lg p-4">
-                    <h3 className="font-medium text-[#614270] mb-2">{t('farmer.paymentMethod', {}, 'Payment Method')}</h3>
-                    <div className="text-sm text-[#614270]">
-                      <p>{t('farmer.cardEnding', { last4: formData.cardNumber.slice(-4) }, `💳 Card ending in ${formData.cardNumber.slice(-4)}`)}</p>
-                      <p>{t('farmer.expires', { expiry: formData.cardExpiry }, `Expires ${formData.cardExpiry}`)}</p>
-                    </div>
-                  </div>
                 </div>
 
-                <div className="bg-[#D1D9C5] border border-[#D1D9C5] rounded-lg p-4 mb-6">
-                  <h3 className="font-semibold text-[#614270] mb-2">{t('farmer.freeTrialHeading', {}, '🎉 30-Day Free Trial')}</h3>
-                  <div className="text-sm text-[#614270] space-y-1">
-                    <p>{t('farmer.trialStartsToday', {}, '• Your trial starts today')}</p>
-                    <p dangerouslySetInnerHTML={{ __html: t('farmer.firstCharge', { date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString() }, `• First charge: <strong>£29.99</strong> on <strong>${new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString()}</strong>`) }} />
-                    <p>{t('farmer.cancelFromDashboard', {}, '• Cancel anytime from your dashboard')}</p>
-                  </div>
+                <div className="bg-[#9ED663]/20 border border-[#9ED663]/40 rounded-lg p-4 mb-6">
+                  <h3 className="font-semibold text-[#614270] mb-1">{t('farmer.freeAccessHeading', {}, '🎉 Free Access')}</h3>
+                  <p className="text-sm text-[#614270]">{t('farmer.freeAccessDescription', {}, 'Little Bo Peep is currently free for all farmers. Set up your farm and fields, receive alerts, and claim reports at no charge.')}</p>
                 </div>
 
                 <div className="flex gap-3">
                   <button onClick={handleBack} className="flex-1 py-3 bg-[#D1D9C5] text-[#614270] rounded-xl">{t('farmer.back', {}, 'Back')}</button>
-                  <button onClick={handleCompleteRegistration} className="flex-1 py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold">{t('farmer.startFreeTrial', {}, 'Start Free Trial')}</button>
+                  <button onClick={handleCompleteRegistration} className="flex-1 py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold">{t('farmer.getStarted', {}, 'Get Started')}</button>
                 </div>
 
                 <p className="text-xs text-[#92998B] text-center mt-4">
-                  {t('farmer.termsAgreement', {}, 'By clicking "Start Free Trial", you agree to our Terms of Service and authorize us to charge your card £29.99/month after the trial period unless you cancel.')}
+                  {t('farmer.termsAgreementFree', {}, 'By continuing, you agree to our Terms of Service. Pricing may be introduced in future.')}
                 </p>
               </div>
             )}

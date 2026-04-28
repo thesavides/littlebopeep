@@ -103,7 +103,7 @@ export function buildWelcomeEmail(params: {
 }): { subject: string; html: string } {
   const roleLabel = params.role === 'farmer' ? 'Farmer' : 'Walker'
   const ctaUrl = params.verifyUrl || APP_URL
-  const ctaLabel = params.verifyUrl ? 'Verify your email & get started →' : 'Go to Little Bo Peep →'
+  const ctaLabel = params.verifyUrl ? 'Confirm your email address →' : 'Go to Little Bo Peep →'
 
   const roleGuidance =
     params.role === 'farmer'
@@ -132,7 +132,9 @@ export function buildWelcomeEmail(params: {
        style="display:inline-block;background:#614270;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">
       ${ctaLabel}
     </a>
-    ${params.verifyUrl ? `<p style="margin:16px 0 0;font-size:13px;color:#94a3b8;">This link expires in 24 hours. If you didn't create an account, you can ignore this email.</p>` : ''}
+    ${params.verifyUrl ? `
+    <p style="margin:16px 0 0;font-size:14px;color:#475569;">You can already use Little Bo Peep — clicking above simply confirms your email address.</p>
+    <p style="margin:8px 0 0;font-size:12px;color:#94a3b8;">This link expires in 24 hours. If you didn't create an account, you can safely ignore this email.</p>` : ''}
   `)
 
   return { subject: `Welcome to Little Bo Peep, ${params.name}!`, html }
