@@ -157,13 +157,22 @@ function LandingPage() {
         className="mx-auto max-w-5xl px-5 py-6 sm:py-8 flex flex-col items-stretch gap-3 sm:items-center"
       >
         {isLoggedIn ? (
-          <button
-            onClick={() => useAppStore.getState().setShowHomePage(false)}
-            className="rounded-full px-8 py-3.5 sm:py-4 text-base font-semibold text-center transition-opacity hover:opacity-90 w-full sm:w-auto sm:min-w-[280px]"
-            style={{ backgroundColor: '#7D8DCC', color: '#fff' }}
-          >
-            {t('home.landing.goToDashboard', {}, 'Go to your dashboard →')}
-          </button>
+          <>
+            <button
+              onClick={() => useAppStore.getState().setShowHomePage(false)}
+              className="rounded-full px-8 py-3.5 sm:py-4 text-base font-semibold text-center transition-opacity hover:opacity-90 w-full sm:w-auto sm:min-w-[280px]"
+              style={{ backgroundColor: '#7D8DCC', color: '#fff' }}
+            >
+              {t('home.landing.report', {}, 'Report')}
+            </button>
+            <button
+              onClick={() => useAppStore.getState().setShowHomePage(false)}
+              className="rounded-full px-8 py-3 sm:py-3.5 text-sm font-medium text-center border transition-colors hover:opacity-80 w-full sm:w-auto sm:min-w-[280px]"
+              style={{ borderColor: '#614270', color: '#614270' }}
+            >
+              {t('home.landing.goToDashboard', {}, 'Go to dashboard →')}
+            </button>
+          </>
         ) : (
           <>
             <Link
