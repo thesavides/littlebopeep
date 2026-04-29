@@ -113,6 +113,8 @@ function LandingPage() {
         </div>
       )}
 
+      <PWAInstallBanner />
+
       <SiteNav />
 
       {showOfflineCapture && (
@@ -310,10 +312,6 @@ function LandingPage() {
           </div>
         </div>
       </section>
-
-      <div className="max-w-lg mx-auto px-0 pb-4">
-        <PWAInstallBanner />
-      </div>
 
       <SiteFooter />
     </div>
