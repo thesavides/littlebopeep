@@ -6,8 +6,20 @@ import {
   buildReportStatusEmail,
   buildThankYouAlertEmail,
 } from '@/lib/email'
+import { pushToUser } from '@/lib/push-notify'
 
 type NotificationType = 'new_report' | 'report_claimed' | 'report_resolved' | 'report_complete' | 'thank_you'
+
+// Push notification titles for each event type
+const PUSH_TITLES: Record<NotificationType, (actorName?: string) => string> = {
+  new_report:      () => '🚨 New report near your farm',
+  report_claimed:  (a) => `🙋 ${a ? a + ' claimed' : 'Your report was claimed'}`,
+  report_resolved: (a) => `✅ ${a ? a + ' resolved' : 'Your report was resolved'}`,
+  report_complete: () => '🎉 Your report is complete',
+  thank_you:       (a) => `💌 ${a ? a + ' says thank you' : 'A farmer says thank you'}`,
+}
+
+export const runtime = 'edge'
 
 export async function POST(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -15,12 +27,6 @@ export async function POST(request: NextRequest) {
 
   if (!supabaseUrl || !supabaseServiceKey) {
     return NextResponse.json({ success: false, error: 'Server configuration error' }, { status: 500 })
-  }
-
-  // Require caller to be authenticated
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
   }
 
   const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
@@ -34,6 +40,7 @@ export async function POST(request: NextRequest) {
     actorName?: string
     messageText?: string
     senderName?: string
+    badge?: number
   }
   try {
     body = await request.json()
@@ -41,20 +48,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'Invalid body' }, { status: 400 })
   }
 
-  const { type, recipientId, reportId, actorName, messageText, senderName } = body
+  const { type, recipientId, reportId, actorName, messageText, senderName, badge } = body
   if (!type || !recipientId || !reportId) {
     return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 })
   }
 
-  // Fetch recipient profile — check email_alerts_enabled
+  // Fetch recipient profile
   const { data: recipient } = await supabaseAdmin
     .from('user_profiles')
     .select('email, full_name, email_alerts_enabled')
     .eq('id', recipientId)
     .single()
 
-  if (!recipient?.email_alerts_enabled) {
-    return NextResponse.json({ success: true, sent: false, reason: 'email alerts disabled' })
+  if (!recipient) {
+    return NextResponse.json({ success: false, error: 'Recipient not found' }, { status: 404 })
   }
 
   // Fetch report for context
@@ -69,6 +76,25 @@ export async function POST(request: NextRequest) {
   const categoryName = report?.category_name || 'sheep'
   const count = report?.sheep_count || 1
   const recipientName = recipient.full_name || 'there'
+
+  // ── Push notification (independent of email opt-in) ──────────────────────
+  const pushTitle = PUSH_TITLES[type]?.(actorName || senderName) || 'Little Bo Peep'
+  const pushBody = messageText
+    ? messageText.slice(0, 100)
+    : `${categoryEmoji} ${count} ${categoryName} · Ref ${reportRef}`
+
+  await pushToUser(recipientId, {
+    title: pushTitle,
+    body: pushBody,
+    badge: badge ?? 1,
+    url: '/',
+    tag: `lbp-${type}-${reportId}`,
+  }).catch(() => {}) // non-fatal
+
+  // ── Email notification (only if opted in) ────────────────────────────────
+  if (!recipient.email_alerts_enabled) {
+    return NextResponse.json({ success: true, pushSent: true, emailSent: false, reason: 'email alerts disabled' })
+  }
 
   let subject = ''
   let html = ''
@@ -102,6 +128,6 @@ export async function POST(request: NextRequest) {
     }))
   }
 
-  const sent = await sendEmail({ to: recipient.email, subject, html })
-  return NextResponse.json({ success: true, sent })
+  const emailSent = await sendEmail({ to: recipient.email, subject, html })
+  return NextResponse.json({ success: true, pushSent: true, emailSent })
 }

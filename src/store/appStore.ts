@@ -41,7 +41,7 @@ function notifyWalker(
   }).catch(() => {})
 }
 
-// Notify farmer(s) of a new report by email (in addition to the in-app notification row)
+// Notify farmer(s) of a new report via push + email
 function emailFarmerNotifications(reportId: string, farmerIds: string[]) {
   farmerIds.forEach(recipientId => {
     fetch('/api/send-notification-email', {
