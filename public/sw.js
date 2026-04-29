@@ -5,7 +5,7 @@
 //   API / Supabase   → network-only (never cache auth/data)
 //   Pages            → network-first with offline fallback
 
-const CACHE_VERSION = 'v1'
+const CACHE_VERSION = 'v2'
 const SHELL_CACHE = `lbp-shell-${CACHE_VERSION}`
 const TILE_CACHE = `lbp-tiles-${CACHE_VERSION}`
 const STATIC_CACHE = `lbp-static-${CACHE_VERSION}`
