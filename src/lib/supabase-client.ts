@@ -455,9 +455,18 @@ export async function sendThankYouMessage(
     console.error('Error sending thank you message:', error)
     throw error
   }
-  // Fire push notification
-  const from = senderName ? `🧑‍🌾 ${senderName}` : '🧑‍🌾 A farmer'
-  firePush(reporterId, `💌 ${from} says thank you`, messageText.slice(0, 80), `thankyou-${reportId}`)
+  // Fire push + email via consolidated server-side route (best-effort)
+  fetch('/api/send-notification-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type: 'thank_you',
+      recipientId: reporterId,
+      reportId,
+      senderName: senderName ?? undefined,
+      messageText,
+    }),
+  }).catch(() => {})
 }
 
 // Report categories
