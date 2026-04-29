@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAppStore, Farm, FarmField, MAP_CONFIG, isReportNearFarm } from '@/store/appStore'
+import { useAppStore, Farm, FarmField, MAP_CONFIG, isReportNearFarm, getLocalizedCategoryName } from '@/store/appStore'
 import { supabase, fetchUserNotifications, markAllNotificationsRead, markReportNotificationsRead, NotificationDB, sendThankYouMessage, subscribeToUserNotifications, updateEmailAlertPreference } from '@/lib/supabase-client'
 import NotificationPrefsPanel from './NotificationPrefsPanel'
 import PushPermissionBanner from './PushPermissionBanner'
@@ -18,7 +18,7 @@ type ViewState = 'dashboard' | 'register' | 'create-farm' | 'add-field' | 'view-
 type RegistrationStep = 1 | 2 | 3
 
 export default function FarmerDashboard() {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const [isUpgradeFlow, setIsUpgradeFlow] = useState(false)
   const {
     currentUserId,
@@ -161,13 +161,15 @@ export default function FarmerDashboard() {
           }))
         }
 
-        // Load notifications + email preference
-        const [notifs, profile] = await Promise.all([
+        // Load notifications, email preference, and previously-sent thank-yous
+        const [notifs, profile, sentThanks] = await Promise.all([
           fetchUserNotifications(currentUserId),
           supabase.from('user_profiles').select('email_alerts_enabled').eq('id', currentUserId).single().then(r => r.data),
+          supabase.from('notifications').select('report_id').eq('sender_id', currentUserId).eq('type', 'thank_you').then(r => r.data),
         ])
         setFarmerNotifications(notifs)
         if (profile) setEmailAlertsEnabled(profile.email_alerts_enabled ?? false)
+        if (sentThanks) setThankYouSent(new Set(sentThanks.map((n: { report_id: string | null }) => n.report_id).filter(Boolean) as string[]))
       }
     }
     init()
@@ -1060,7 +1062,7 @@ export default function FarmerDashboard() {
                         } ${isCompulsory ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                       >
                         <span>{cat.emoji}</span>
-                        <span>{cat.name}</span>
+                        <span>{getLocalizedCategoryName(cat, language)}</span>
                         {isCompulsory && <span className="text-xs opacity-70">🔒</span>}
                       </button>
                     )
@@ -1413,7 +1415,7 @@ export default function FarmerDashboard() {
                           } ${isCompulsory ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                         >
                           {cat.imageUrl ? <img src={cat.imageUrl} alt={cat.name} className="w-4 h-4 object-contain rounded" /> : <span>{cat.emoji}</span>}
-                          <span>{cat.name}</span>
+                          <span>{getLocalizedCategoryName(cat, language)}</span>
                           {isCompulsory && <span className="text-xs opacity-70">🔒</span>}
                         </button>
                       )

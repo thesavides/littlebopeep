@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAppStore } from '@/store/appStore'
@@ -10,6 +10,10 @@ import FarmerDashboard from '@/components/FarmerDashboard'
 import AdminDashboard from '@/components/AdminDashboard'
 import SiteNav from '@/components/SiteNav'
 import SiteFooter from '@/components/SiteFooter'
+import PWAInstallBanner from '@/components/PWAInstallBanner'
+import OfflineCapture from '@/components/OfflineCapture'
+import { useOnlineStatus } from '@/hooks/useOnlineStatus'
+import { getPendingCount } from '@/lib/offline-db'
 
 // ─── Landing page (logged-out view) ──────────────────────────────────────────
 
@@ -17,6 +21,13 @@ function LandingPage() {
   const { t } = useTranslation()
   const { currentRole } = useAppStore()
   const isLoggedIn = !!currentRole
+  const isOnline = useOnlineStatus()
+  const [showOfflineCapture, setShowOfflineCapture] = useState(false)
+  const [pendingCount, setPendingCount] = useState(0)
+
+  useEffect(() => {
+    getPendingCount().then(setPendingCount)
+  }, [showOfflineCapture])
 
   const cards = [
     {
@@ -65,7 +76,51 @@ function LandingPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#D1D9C5' }}>
 
+      {/* Offline banner — user is not signed in and has no connectivity */}
+      {!isOnline && !isLoggedIn && (
+        <div className="bg-[#614270] text-white px-4 py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-lg flex-shrink-0">📴</span>
+            <p className="text-sm font-medium leading-snug">
+              {t('landing.offlineBanner', {}, "You're offline — you can still save a report for later")}
+            </p>
+          </div>
+          <button
+            onClick={() => setShowOfflineCapture(true)}
+            className="flex-shrink-0 bg-white text-[#614270] text-xs font-bold px-3 py-1.5 rounded-full hover:bg-white/90 active:scale-95 transition-all"
+          >
+            {t('landing.saveReport', {}, 'Save report')}
+          </button>
+        </div>
+      )}
+
+      {/* Online with pending offline reports — prompt to sign in to sync */}
+      {isOnline && !isLoggedIn && pendingCount > 0 && (
+        <div className="bg-[#FA9335] text-white px-4 py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-lg flex-shrink-0">📡</span>
+            <p className="text-sm font-medium leading-snug">
+              {t('landing.pendingBanner', { count: pendingCount },
+                `You have ${pendingCount} saved ${pendingCount === 1 ? 'report' : 'reports'} — sign in to upload`)}
+            </p>
+          </div>
+          <Link
+            href="/auth"
+            className="flex-shrink-0 bg-white text-[#FA9335] text-xs font-bold px-3 py-1.5 rounded-full hover:bg-white/90 active:scale-95 transition-all"
+          >
+            {t('auth.signIn', {}, 'Sign in')}
+          </Link>
+        </div>
+      )}
+
       <SiteNav />
+
+      {showOfflineCapture && (
+        <OfflineCapture
+          onSaved={() => { setShowOfflineCapture(false); getPendingCount().then(setPendingCount) }}
+          onCancel={() => setShowOfflineCapture(false)}
+        />
+      )}
 
       {/* ── Hero (with sheep-on-road background) ─────────────────────────── */}
       <section
@@ -255,6 +310,10 @@ function LandingPage() {
           </div>
         </div>
       </section>
+
+      <div className="max-w-lg mx-auto px-0 pb-4">
+        <PWAInstallBanner />
+      </div>
 
       <SiteFooter />
     </div>

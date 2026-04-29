@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAppStore, getDistanceMeters, MAP_CONFIG } from '@/store/appStore'
+import { useAppStore, getDistanceMeters, MAP_CONFIG, getLocalizedCategoryName } from '@/store/appStore'
 import { supabase, fetchUserNotifications, markAllNotificationsRead, subscribeToUserNotifications, updateEmailAlertPreference } from '@/lib/supabase-client'
 import NotificationPrefsPanel from './NotificationPrefsPanel'
 import type { ReportCategory } from '@/store/appStore'
@@ -28,7 +28,7 @@ interface WalkerDashboardProps {
 }
 
 export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps = {}) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const isOnline = useOnlineStatus()
   const {
     currentUserId,
@@ -573,7 +573,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
                               <span className="text-3xl w-10 text-center flex-shrink-0">{cat.emoji}</span>
                             )}
                             <div className="flex-1 min-w-0">
-                              <div className="font-semibold text-[#614270]">{cat.name}</div>
+                              <div className="font-semibold text-[#614270]">{getLocalizedCategoryName(cat, language)}</div>
                               {cat.description && <div className="text-xs text-[#92998B] truncate">{cat.description}</div>}
                             </div>
                           </button>
@@ -971,16 +971,16 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
           <>
             {myReports.length === 0 ? (
               <div className="text-center py-12">
-                <div className="text-6xl mb-4">🐑</div>
+                <div className="text-6xl mb-4">📍</div>
                 <h3 className="text-lg font-semibold text-[#614270] mb-2">{t('walker.noReportsYet', {}, 'No reports yet')}</h3>
                 <p className="text-[#614270] mb-6">
-                  {t('walker.noReportsMessage', {}, 'Spot some sheep and submit a report to help farmers!')}
+                  {t('walker.noReportsMessage', {}, 'Spot something on your walk and submit your first report to help farmers!')}
                 </p>
                 <button
                   onClick={handleStartReport}
                   className="px-6 py-3 bg-[#7D8DCC] text-white rounded-xl font-semibold hover:bg-[#7D8DCC]/90"
                 >
-                  {t('walker.reportASheep', {}, 'Report a Sheep')}
+                  {t('walker.reportASheep', {}, 'Submit a Report')}
                 </button>
               </div>
             ) : (
@@ -1113,6 +1113,20 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
 
                           <div>
                             <label className="block text-xs font-medium text-[#614270] mb-1">{t('walker.photos', {}, 'Photos (optional)')}</label>
+                            {editFields.photoUrls.length > 0 && (
+                              <div className="flex flex-wrap gap-2 mb-2">
+                                {editFields.photoUrls.map((url, i) => (
+                                  <div key={url} className="relative">
+                                    <img src={url} alt="" className="w-16 h-16 object-cover rounded-lg border border-[#D1D9C5]" />
+                                    <button
+                                      type="button"
+                                      onClick={() => setEditFields(f => ({ ...f, photoUrls: f.photoUrls.filter((_, j) => j !== i) }))}
+                                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-white border border-[#D1D9C5] rounded-full text-[#614270] flex items-center justify-center text-xs leading-none hover:bg-red-50 hover:border-red-300 hover:text-red-500"
+                                    >×</button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                             <PhotoUpload
                               reportId={report.id}
                               onPhotosUploaded={(urls) => setEditFields(f => ({ ...f, photoUrls: [...new Set([...f.photoUrls, ...urls])] }))}
@@ -1187,9 +1201,7 @@ export default function WalkerDashboard({ onExitToAdmin }: WalkerDashboardProps 
           fab={{
             label: isOnline ? t('walker.nav.report', {}, 'Report') : t('walker.nav.saveOffline', {}, 'Save offline'),
             icon: isOnline
-              ? (preferredCategory?.imageUrl
-                ? <img src={preferredCategory.imageUrl} alt={preferredCategory.name} className="w-7 h-7 object-contain" />
-                : <img src="/logo-pin.svg" alt="Report" className="w-7 h-7 object-contain" />)
+              ? <img src="/logo-pin.svg" alt="Report" className="w-7 h-7 object-contain" />
               : <span className="text-2xl">📴</span>,
             onClick: () => isOnline ? setShowCategoryPicker(true) : setShowOfflineCapture(true),
           }}

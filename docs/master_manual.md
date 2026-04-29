@@ -853,6 +853,7 @@ Same as admin invite flow, but with ability to select `admin` or `super_admin` r
 - In-app: `createNotificationsForFarmers()` inserts rows into `notifications` table
 - Email: `POST /api/send-notification-email` with `type = new_report` for each farmer
 - Email sent only if `user_profiles.email_alerts_enabled = true` for that farmer
+- Push: `POST /api/push/send` fires a background push notification for each affected farmer who has a push subscription
 - In-app badge shown in FarmerDashboard notification bell
 - Notification read tracking via `read_at` timestamp
 
@@ -866,14 +867,18 @@ Walker notifications sent by `notifyWalker()` on three events:
 Each event:
 - Inserts row into `notifications` table for the walker's user ID
 - Fires `POST /api/send-notification-email` (email sent only if walker has `email_alerts_enabled = true`)
+- Fires `POST /api/push/send` (background push if walker has a push subscription)
 - Walker sees notification in their inbox
 
 ### 6.3 Thank You Notifications
 
-- Triggered when farmer taps "Thank You" on a claimed report
+- Triggered when farmer taps "Thank You" on a claimed **or resolved** report
 - `sendThankYouMessage()` called with optional message text
 - Inserts `thank_you` notification row for the walker
-- Walker sees it in their "Messages" section
+- Fires `POST /api/push/send` to deliver background push to the walker
+- Fires `POST /api/send-notification-email` for email delivery
+- Walker sees it in their Alerts inbox
+- **Sent state persistence:** `FarmerDashboard` queries `notifications` on mount (`sender_id = currentUserId, type = 'thank_you'`) to pre-populate the `thankYouSent` Set, so "✓ Sent" labels survive page reload
 
 ### 6.4 Proximity Logic
 
@@ -929,17 +934,90 @@ Field-level subscriptions override farm-level for that specific field's reports.
 
 ---
 
+### 6.7 Web Push Notifications
+
+Web Push delivers background notifications to users even when the app is not open — including to installed PWAs on Android and iOS 16.4+.
+
+#### Infrastructure
+
+| Component | Detail |
+|---|---|
+| **VAPID key pair** | P-256 elliptic curve. Private key stored as Cloudflare Worker secret `VAPID_PRIVATE_KEY`. Public key in `wrangler.toml [vars]` as `NEXT_PUBLIC_VAPID_PUBLIC_KEY` and in `.env.local` |
+| **Encryption** | RFC 8291 aesgcm + RFC 8292 VAPID JWT — implemented in `src/lib/push-sender.ts` using Web Crypto API (no npm deps; Cloudflare Workers compatible) |
+| **Subscription storage** | `push_subscriptions` table (migration 034): `user_id`, `endpoint`, `p256dh`, `auth`, `created_at` |
+| **Send route** | `POST /api/push/send` — server-side, accepts `{ userId, title, body, url, tag }` |
+| **Service worker** | `public/sw.js` handles `push` event (shows notification) and `notificationclick` event (focuses or opens the app) |
+
+#### Permission Request Flow
+
+1. User submits the sign-in or sign-up form
+2. On successful auth, **before the router redirect**, `Notification.requestPermission()` is called
+3. This is valid because the form-submit handler is a user gesture — Android shows the native OS permission dialog at this exact point
+4. If the user grants: `PushPermissionBanner` detects `permission === 'granted'` on first dashboard mount and calls `subscribeToPush(userId)` silently
+5. If the user denies or dismisses: the `try/catch` swallows the error; the `PushPermissionBanner` inside the dashboard shows as `state = 'denied'` and renders nothing
+6. If the browser does not support push (`'Notification' not in window` or `'PushManager' not in window`): the permission request is skipped; `PushPermissionBanner` sets `state = 'unsupported'` and renders nothing
+
+#### Manual Opt-In (PushPermissionBanner)
+
+For users who did not grant permission during auth (e.g., dismissed the dialog):
+
+- `PushPermissionBanner` renders in the Alerts tab of `WalkerDashboard` and on the main dashboard view
+- Shows when `Notification.permission === 'default'` (not yet decided)
+- User taps "Enable" → `Notification.requestPermission()` called → if granted, `subscribeToPush(userId)` registers the subscription
+- "Not now" dismisses the banner for the session (sets local `state = 'done'`)
+- Denied state hides the banner entirely
+
+#### subscribeToPush Flow
+
+```
+navigator.serviceWorker.ready
+  → reg.pushManager.getSubscription()       existing sub? re-use it
+  → reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey })
+  → POST /api/push/subscribe                save endpoint + keys to push_subscriptions
+```
+
+#### PWA App Icon Badge
+
+- `useAppBadge` hook keeps the installed PWA icon badge count in sync with unread notifications
+- Sends `SET_BADGE` / `CLEAR_BADGE` messages to the service worker
+- Supported: Android Chrome 81+, iOS 16.4+, macOS Safari 17+
+- Gracefully ignored on unsupported platforms
+
+#### Known Limitations
+
+- iOS Safari does not fire `beforeinstallprompt`; PWA install requires manual "Share → Add to Home Screen"
+- Push notifications on iOS require the PWA to be installed to the home screen (not just opened in Safari)
+- If `NEXT_PUBLIC_VAPID_PUBLIC_KEY` is not set at build time, `subscribeToPush` returns `false` silently; no error is shown to the user
+- Notification permission cannot be re-requested after denial without the user manually going to browser settings
+
+---
+
 ## SECTION 7 — OFFLINE MODE
 
 ### 7.1 Offline Capabilities
 
 When the device has no internet connection:
-- Walker can still create and save reports
+
+**Logged-in users** (WalkerDashboard):
+- Can create and save reports via `OfflineCapture` (full-screen overlay launched from the FAB)
 - All data entry available: category, conditions, count, description, photos
-- Photos stored as base64 data URLs (not uploaded to Supabase Storage)
-- Report saved to IndexedDB (browser local database)
+- Photos stored as base64 data URLs in IndexedDB; uploaded to Supabase Storage on sync
+- `OfflineSyncBanner` shown at top of screen with pending count
 - Map may not load tiles (depends on cached tiles from previous sessions)
 - Cannot submit to Supabase; cannot receive notifications
+
+**Logged-out users** (LandingPage):
+- A plum banner appears at the top of the landing page: "You're offline — you can still save a report for later"
+- "Save report" button opens the same `OfflineCapture` overlay
+- A warning inside the overlay tells the user to sign in before syncing
+- Reports are saved to IndexedDB with the same schema as logged-in offline reports
+- When back online and still logged out, an amber "sign in to sync" banner appears instead, with a direct link to `/auth`
+- Once the user signs in, `WalkerDashboard` mounts, `OfflineSyncBanner` detects pending records, and sync proceeds normally
+
+**Category availability offline:**
+- Categories are loaded from Supabase on each session. If the app has never been opened while online on a given device, `reportCategories` will be empty.
+- In that case `OfflineCapture` shows only the hardcoded Sheep category. All other categories require a prior online session to be cached in memory.
+- There is currently no persistent local category cache; this is a known limitation.
 
 ### 7.2 Local Storage
 
@@ -953,12 +1031,12 @@ When the device has no internet connection:
 
 Sync is triggered in two ways:
 
-**Manual sync** — Walker taps "Upload now" or "Retry" on the `OfflineSyncBanner`:
+**Manual sync** — Walker taps "Upload now" or "Retry" on the `OfflineSyncBanner` (inside `WalkerDashboard`):
 - Session is refreshed via `supabase.auth.refreshSession()` first (see Section 7.4)
 - `getPendingReports()` returns all records with `synced = false`
 - For each: `createReportInSupabase()` called with location, category, conditions, count, and description
+- Photos: `dataUrlToFile()` + `uploadPhotoFromDataUrl()` upload each base64 photo to Supabase Storage before `createReportInSupabase()`
 - On success: `markReportSynced(id)` in IndexedDB; report added to Zustand store
-- **Note:** Photos are stored as base64 data URLs in IndexedDB and are NOT uploaded to Supabase Storage on sync (known limitation — photos appear as empty `[]` in the synced report)
 
 **Automatic on startup** (`loadReports()`):
 - `fetchAllReports()` from Supabase
@@ -971,16 +1049,60 @@ Sync is triggered in two ways:
 **Auth token expiry (most common failure cause):**
 - Supabase JWTs are valid for 1 hour. If the device is offline longer than 1 hour, the token expires
 - When back online, `autoRefreshToken` is async — there is a race condition where the sync fires before the token refreshes, causing 401 errors
-- **Fix implemented:** `handleSync` in `OfflineSyncBanner` calls `supabase.auth.getSession()` then `supabase.auth.refreshSession()` before any INSERT attempts. If refresh fails, sync bails immediately with a clear error: "Session expired — please reload the app and try again"
-- This error is shown in the banner UI as a specific string (`sync.authError`) rather than a generic count
+- **Fix:** `handleSync` in `OfflineSyncBanner` calls `supabase.auth.getSession()` then `supabase.auth.refreshSession()` before any INSERT attempts. If refresh fails, sync bails immediately with the error: "Session expired — please reload the app and try again" (key: `sync.authError`)
 
 **Other failures:**
-- If Supabase write fails for any other reason: report stays in IndexedDB with `synced = false`
-- The actual error message is captured from the Supabase error object and shown in monospace below the retry button (for diagnostics)
-- On next manual or startup sync: retry attempted automatically
-- No maximum retry limit (retried every time sync runs)
-- Sync failures do not block the UI — each report failure is caught individually
-- `OfflineSyncBanner` shows pending count and a separate failed count if sync partially succeeds
+- Report stays in IndexedDB with `synced = false`; raw Supabase error shown in monospace for diagnostics
+- Retried automatically on next manual or startup sync; no maximum retry limit
+- Sync failures are caught individually; partial success is possible
+
+### 7.5 Logged-Out Offline Flow (Full Detail)
+
+This section covers the scenario: **PWA installed → user is logged out → device loses connectivity**.
+
+#### State machine
+
+```
+Offline + logged out
+  → LandingPage shows plum offline banner
+  → User taps "Save report"
+  → OfflineCapture overlay opens (full-screen, z-[60])
+  → User fills report (location, category, conditions, count, description, photos)
+  → User taps "Save for later"
+  → Report written to IndexedDB with synced = false
+  → Overlay closes; pending count increments
+
+Device comes back online
+  → Banner changes to amber: "You have N saved reports — sign in to upload"
+  → User taps "Sign in"
+  → /auth page shown
+
+User signs in
+  → Push permission requested during auth (see Section 6.7)
+  → router.push('/') → WalkerDashboard mounts
+  → loadReports() fetches from Supabase; OfflineSyncBanner detects pending IndexedDB records
+  → OfflineSyncBanner shows "N pending" with "Sync now" button
+  → User taps "Sync now"
+  → Session refreshed → photos uploaded → reports created in Supabase
+  → IndexedDB records marked synced; banner clears
+```
+
+#### Component responsibilities
+
+| Component | Responsibility in this flow |
+|---|---|
+| `LandingPage` (`src/app/page.tsx`) | Detects `!isOnline && !currentRole`; renders offline banner and `OfflineCapture` modal |
+| `LandingPage` (online state) | Reads `pendingCount` from IndexedDB; renders amber "sign in to sync" banner if `pendingCount > 0 && !currentRole` |
+| `OfflineCapture` (`src/components/OfflineCapture.tsx`) | Full-screen capture overlay; reads `currentUserId` from store (null = logged-out); shows "not signed in" warning; saves to IndexedDB regardless of auth state |
+| `OfflineSyncBanner` (`src/components/OfflineSyncBanner.tsx`) | Lives inside `WalkerDashboard`; handles all sync logic including session refresh, photo upload, and error display |
+| `useOnlineStatus` (`src/hooks/useOnlineStatus.ts`) | `navigator.onLine` + event listeners; reactive; used in both `LandingPage` and `WalkerDashboard` |
+| `offline-db.ts` (`src/lib/offline-db.ts`) | IndexedDB abstraction; `getPendingCount()` used by `LandingPage` to show badge |
+
+#### Auth requirement at sync time
+
+Offline reports captured while logged out **require a sign-in before syncing**. The `OfflineSyncBanner` calls `supabase.auth.refreshSession()` before any INSERT — if there is no valid session, sync bails with `sync.authError`. The "sign in to sync" banner on the landing page is the primary prompt for this.
+
+Guest offline capture (saving and uploading reports without ever creating an account) is **not supported by design**. A Supabase auth session is required to write to `sheep_reports` due to RLS policies.
 
 ---
 

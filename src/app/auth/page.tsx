@@ -18,6 +18,7 @@ export default function AuthPage() {
   const [fullName, setFullName] = useState('')
   const [role, setRoleSelection] = useState<'walker' | 'farmer'>('walker')
   const [emailAlerts, setEmailAlerts] = useState(false)
+  const [keepSignedIn, setKeepSignedIn] = useState(true)
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [legalModal, setLegalModal] = useState<'terms' | 'privacy' | null>(null)
 
@@ -88,6 +89,13 @@ export default function AuthPage() {
         setCurrentUserId(user.id)
         setRole(user.role as any)
 
+        // Request push permission now while still in user-gesture context
+        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+          try { await Notification.requestPermission() } catch {}
+        }
+
+        if (!keepSignedIn) localStorage.setItem('lbp-session-temp', '1')
+
         // Redirect to homepage
         router.push('/')
         return
@@ -105,6 +113,13 @@ export default function AuthPage() {
       // Set user state
       setCurrentUserId(user.id)
       setRole(user.role as any) // Set to primary role
+
+      // Request push permission now while still in user-gesture context
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+        try { await Notification.requestPermission() } catch {}
+      }
+
+      if (!keepSignedIn) localStorage.setItem('lbp-session-temp', '1')
 
       // Check if password reset is required
       if (user.password_reset_required) {
@@ -223,6 +238,18 @@ export default function AuthPage() {
               <label className="flex items-start gap-3 cursor-pointer select-none">
                 <input
                   type="checkbox"
+                  checked={keepSignedIn}
+                  onChange={(e) => setKeepSignedIn(e.target.checked)}
+                  className="mt-0.5 accent-[#7D8DCC] w-4 h-4 flex-shrink-0"
+                />
+                <span className="text-sm text-[#614270]">
+                  {t('auth.keepSignedIn', {}, '📴 Keep me signed in on this device — required for offline report sync')}
+                </span>
+              </label>
+
+              <label className="flex items-start gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
                   checked={termsAccepted}
                   onChange={(e) => setTermsAccepted(e.target.checked)}
                   className="mt-0.5 accent-[#614270] w-4 h-4 flex-shrink-0"
@@ -270,6 +297,20 @@ export default function AuthPage() {
             minLength={6}
             placeholder="••••••••"
           />
+
+          {mode === 'signin' && (
+            <label className="flex items-start gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={keepSignedIn}
+                onChange={(e) => setKeepSignedIn(e.target.checked)}
+                className="mt-0.5 accent-[#7D8DCC] w-4 h-4 flex-shrink-0"
+              />
+              <span className="text-sm text-[#614270]">
+                {t('auth.keepSignedIn', {}, '📴 Keep me signed in on this device — required for offline report sync')}
+              </span>
+            </label>
+          )}
 
           {error && (
             <div className="bg-[#FA9335]/10 border border-[#FA9335]/30 text-[#a0522d] px-4 py-3 rounded-lg text-sm">
